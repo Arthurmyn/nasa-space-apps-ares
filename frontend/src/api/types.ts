@@ -192,6 +192,17 @@ export interface SitesResponse {
   sites: SiteEntry[];
 }
 
+/** /app/data/<site>/thermal.json: what the thermal layer image shows, for its legend and credit. */
+export interface ThermalInfo {
+  nativePixelM: number;
+  dnMin: number;
+  dnMax: number;
+  /** Colormap stops from low (0) to high (1), as [position, "#rrggbb"]. */
+  stops: ReadonlyArray<readonly [number, string]>;
+  observationStartUtc: string | null;
+  productId: string | null;
+}
+
 // ---- Client-side error model ----------------------------------------------
 
 export type ApiErrorKind = "network" | "timeout" | "http" | "invalid" | "aborted";

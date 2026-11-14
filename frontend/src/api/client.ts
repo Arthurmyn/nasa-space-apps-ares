@@ -1,7 +1,7 @@
 // Types mirror backend/app/schemas/. Route types live in ./types.ts (proposal, see docs/api.md).
 import { requestJson } from "./request.ts";
 import { siteFileUrl } from "./siteFiles.ts";
-import { parseLayersResponse, parseRouteResponse, parseSiteMeta, parseSitesResponse } from "./validate.ts";
+import { parseLayersResponse, parseRouteResponse, parseSiteMeta, parseSitesResponse, parseThermalInfo } from "./validate.ts";
 import {
   ApiError,
   type LayersResponse,
@@ -9,6 +9,7 @@ import {
   type RouteResponse,
   type SiteMeta,
   type SitesResponse,
+  type ThermalInfo,
 } from "./types.ts";
 
 // Dev: the backend on :8000. Production build: same origin, where Vercel routes /api/* to the
@@ -35,6 +36,23 @@ export async function fetchSiteMeta(siteId: string, signal?: AbortSignal): Promi
   } catch (e) {
     if (e instanceof ApiError) throw e;
     throw new ApiError("invalid", "Site metadata was not valid JSON");
+  }
+}
+
+/** Legend data of the thermal layer: static JSON next to the layer image. */
+export async function fetchThermalInfo(siteId: string, signal?: AbortSignal): Promise<ThermalInfo> {
+  let res: Response;
+  try {
+    res = await fetch(siteFileUrl(siteId, "thermal.json"), { signal });
+  } catch {
+    throw new ApiError(signal?.aborted ? "aborted" : "network", signal?.aborted ? "Request cancelled" : "Network error");
+  }
+  if (!res.ok) throw new ApiError("http", `HTTP ${res.status}`, res.status);
+  try {
+    return parseThermalInfo(await res.json());
+  } catch (e) {
+    if (e instanceof ApiError) throw e;
+    throw new ApiError("invalid", "Thermal layer info was not valid JSON");
   }
 }
 
