@@ -145,3 +145,72 @@ export function computeHud(route: RouteResponse, posDistM: number, limits: Slope
     hazards,
   };
 }
+
+const WINDS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
+
+/** Eight-point compass side for a heading in degrees. */
+export function compassPoint(deg: number): (typeof WINDS)[number] {
+  return WINDS[Math.round(normalizeDeg(deg) / 45) % 8] as (typeof WINDS)[number];
+}
+
+/** "000° N", the heading as three digits and its compass side. */
+export function formatHeading(deg: number): string {
+  const whole = Math.round(normalizeDeg(deg)) % 360;
+  return `${String(whole).padStart(3, "0")}° ${compassPoint(whole)}`;
+}
+
+/** The API writes "Slope over 15 deg"; the HUD shows the degree sign. */
+export function hazardLabel(label: string): string {
+  return label.replace(/\s*deg\b/g, "°");
+}
+
+export interface NearestHazard {
+  id: string;
+  label: string;
+  /** Metres from the position to the edge of the zone; 0 when the position is inside it. */
+  distM: number;
+}
+
+type Pair = readonly [number, number];
+
+function distanceToSegment(p: Pair, a: Pair, b: Pair): number {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const len2 = dx * dx + dy * dy;
+  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len2));
+  return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+}
+
+function insideRing(p: Pair, ring: readonly Pair[]): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
+    const a = ring[i] as Pair;
+    const b = ring[j] as Pair;
+    if (a[1] > p[1] !== b[1] > p[1] && p[0] < ((b[0] - a[0]) * (p[1] - a[1])) / (b[1] - a[1]) + a[0]) inside = !inside;
+  }
+  return inside;
+}
+
+/**
+ * The hazard zone whose edge is nearest to `position` (metres, flat local approximation), or null
+ * when the route has no zones. A zone the position is inside counts as 0 m away.
+ */
+export function nearestHazard(route: RouteResponse, position: LonLat): NearestHazard | null {
+  const mLon = metresPerDegLon(position[1]);
+  const local = (p: LonLat): Pair => [(p[0] - position[0]) * mLon, (p[1] - position[1]) * METRES_PER_DEG_LAT];
+  const origin: Pair = [0, 0];
+  let best: NearestHazard | null = null;
+  for (const zone of route.hazards) {
+    const [outer, ...holes] = zone.polygon.coordinates.map((ring) => ring.map(local));
+    if (!outer || outer.length < 2) continue;
+    let d = Infinity;
+    if (insideRing(origin, outer) && !holes.some((h) => insideRing(origin, h))) d = 0;
+    else {
+      for (const ring of [outer, ...holes]) {
+        for (let i = 1; i < ring.length; i += 1) d = Math.min(d, distanceToSegment(origin, ring[i - 1] as Pair, ring[i] as Pair));
+      }
+    }
+    if (!best || d < best.distM) best = { id: zone.id, label: zone.label, distM: d };
+  }
+  return best;
+}

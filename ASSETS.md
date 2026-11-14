@@ -137,6 +137,13 @@ Planning assumptions (`assumptions.json`) are a copy of the `gale-bx` ones: the 
 
 **Targets and description.** This site has no science targets and no "Why this site" text: no verified source describing this exact area was found, so nothing was written. The stop list is empty and the interface shows neither a group picker nor a context note. The name only states what the data is: "Gale crater: HiRISE DTM 001488 area".
 
+## HUD 3D view
+
+- **Design concept** `docs/brand/hud-reference.png`: an AI-generated design concept, used only as visual direction for the HUD tab layout and style, **not shipped** (it is not loaded by the app). Every number and label on it (792 m, 3.5, Stop A, 288 m, 84 m, 21:54:58 UTC) is invented; the HUD shows values from the route response and the site data only. Source and license: generated for this project, no third-party rights known; origin and tool were not recorded.
+- **three.js** 0.187.0, `https://threejs.org/`, MIT license, `https://github.com/mrdoob/three.js/blob/dev/LICENSE`. Used by `frontend/src/hud3d/TerrainScene.ts` for the terrain mesh, the route tube and the orbit controls (`three/examples/jsm/controls/OrbitControls.js`, same license). Loaded only when the HUD tab is opened.
+- **@types/three** 0.187.0, MIT, TypeScript types for three.js (development only).
+- **Terrain data** for the 3D view: `elevation.bin`, `hillshade.png` and `slope.png` of the open site from `frontend/public/data/<site>/` (sources in the site grid sections above). `elevation.bin` is a byte-for-byte copy of the backend file, written by `scripts/make_slope_grid.py`.
+
 ## Stop images
 
 One Curiosity raw image per science stop `bx-1` to `bx-6`, chosen from the Navcam frames of the stop's own sol (the sol in the stop's name). They come from the NASA Curiosity raw images service (`https://mars.nasa.gov/msl/multimedia/raw-images/`, API `https://mars.nasa.gov/api/v1/raw_image_items/`). Every image was opened and looked at before it was chosen: each shows the terrain around the rover and the horizon. The files are copies served by this site, not hotlinks (`image.url` in `backend/data/gale-bx/stops.json` is `/app/stops/<file>`, `/app/` being the Vite `base`).

@@ -752,3 +752,10 @@ def test_shipped_second_site_grid_is_consistent_and_small():
     assert (public / "meta.json").read_text() == (root / "meta.json").read_text()
     total = sum(p.stat().st_size for d in (root, public) for p in d.rglob("*") if p.is_file())
     assert total <= 3_000_000
+
+
+@pytest.mark.parametrize("site_id", ["gale-bx", "gale-001488"])
+def test_frontend_elevation_copy_equals_the_backend_file(site_id):
+    backend = DATA_ROOT / site_id / "elevation.bin"
+    frontend = DATA_ROOT.parents[1] / "frontend/public/data" / site_id / "elevation.bin"
+    assert backend.read_bytes() == frontend.read_bytes()
