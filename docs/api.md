@@ -1,22 +1,22 @@
-# API-контракт
+# API contract
 
-Base URL: `http://localhost:8000/api/v1` · Интерактивная дока: `/docs` (Swagger).
+Base URL: `http://localhost:8000/api/v1` · Interactive docs: `/docs` (Swagger).
 
-Источник правды - Pydantic-схемы в [`backend/app/schemas/`](../backend/app/schemas/). Этот файл - человекочитаемая версия для фронта.
+The source of truth is the Pydantic schemas in [`backend/app/schemas/`](../backend/app/schemas/). This file is the human-readable version for the frontend.
 
 ## `GET /health`
 ```json
 { "status": "ok", "data_loaded": true }
 ```
 
-`data_loaded` показывает, загружена ли сетка при старте. Без файлов health остаётся доступным, а `/layers`, `/sites`, `/route` возвращают `503` с понятным `detail`. ML-заглушка `/predict` удалена.
+`data_loaded` shows whether the grid was loaded at startup. Without the data files, health stays available, while `/layers`, `/sites` and `/route` return `503` with a clear `detail`. The ML stub `/predict` was removed.
 
 ---
 
-### Как менять контракт
-1. Обнови схему в `backend/app/schemas/`.
-2. Обнови этот файл и типы в `frontend/src/api/client.ts`.
-3. Всё - в одном PR, отметь фронт и бэк ревьюерами.
+### How to change the contract
+1. Update the schema in `backend/app/schemas/`.
+2. Update this file and the types in `frontend/src/api/client.ts`.
+3. Do it all in one PR and request both frontend and backend reviewers.
 
 ---
 
