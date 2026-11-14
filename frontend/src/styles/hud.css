@@ -1,0 +1,340 @@
+/* ---- HUD mode: sparse overlay driven by the planned route ---- */
+
+.hud-screen {
+  overflow: auto;
+  min-height: 0;
+  padding: var(--space-4);
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: var(--space-4);
+  background: radial-gradient(ellipse at 50% 35%, var(--panel) 0%, var(--bg) 70%);
+}
+
+.hud-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: min(980px, 100%);
+  padding: var(--space-3);
+  border: 1px solid var(--amber);
+  border-radius: var(--radius);
+  background: var(--panel);
+  font-size: var(--fs-sm);
+}
+
+.hud-banner .tag {
+  flex: none;
+  margin: 0;
+}
+
+.hud {
+  position: relative;
+  display: grid;
+  gap: var(--space-5);
+  width: min(980px, 100%);
+  padding: var(--space-5);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: rgb(11 7 5 / 0.6);
+}
+
+/* Corner brackets: the only decoration. */
+.hud::before,
+.hud::after {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--rust);
+  pointer-events: none;
+}
+
+.hud::before {
+  top: -1px;
+  left: -1px;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.hud::after {
+  right: -1px;
+  bottom: -1px;
+  border-left: 0;
+  border-top: 0;
+}
+
+.hud__top {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+}
+
+.hud__heading {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 500;
+}
+
+.hud__heading .eyebrow {
+  margin-right: var(--space-2);
+}
+
+.hud__compass {
+  width: min(600px, 100%);
+  height: auto;
+  overflow: visible;
+}
+
+.hud__axis {
+  stroke: var(--line-strong);
+  fill: none;
+}
+
+.hud__tick {
+  stroke: var(--text-muted);
+}
+
+.hud__cardinal {
+  fill: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hud__degree {
+  fill: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.hud__caret {
+  fill: var(--rust);
+}
+
+.hud__m-stop {
+  fill: var(--rust);
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+
+.hud__m-hazard {
+  fill: var(--bg);
+  stroke: var(--hazard);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.hud__m-text {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--text-on-accent);
+}
+
+.hud__m-hazard + .hud__m-text {
+  fill: var(--hazard);
+}
+
+.hud__m-arrow {
+  fill: var(--text);
+}
+
+.hud__row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--space-5);
+  align-items: center;
+}
+
+.hud__block {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.hud__ahead,
+.hud__slope {
+  justify-items: center;
+}
+
+.hud__slope {
+  justify-items: end;
+  text-align: right;
+}
+
+.hud__name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.hud__big {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.hud__caption {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.hud__status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-weight: 600;
+}
+
+.hud__slope--ok .hud__status,
+.hud__slope--ok .hud__gauge-line {
+  color: var(--class-ok);
+  stroke: var(--class-ok);
+}
+
+.hud__slope--caution .hud__status,
+.hud__slope--caution .hud__gauge-line {
+  color: var(--class-caution);
+  stroke: var(--class-caution);
+}
+
+.hud__slope--avoid .hud__status,
+.hud__slope--avoid .hud__gauge-line {
+  color: var(--class-avoid);
+  stroke: var(--class-avoid);
+}
+
+.hud__gauge {
+  width: 130px;
+  height: auto;
+}
+
+.hud__gauge-base {
+  stroke: var(--line-strong);
+  stroke-width: 2;
+  fill: none;
+}
+
+.hud__gauge-line {
+  stroke-width: 3;
+  fill: none;
+  stroke-linecap: round;
+}
+
+.hud__gauge-rise {
+  stroke: var(--line-strong);
+  stroke-dasharray: 3 3;
+  fill: none;
+}
+
+.hud__ring {
+  width: 220px;
+  height: 220px;
+}
+
+.hud__ring-bg {
+  fill: var(--panel);
+  stroke: var(--line-strong);
+}
+
+.hud__ring-mid {
+  fill: none;
+  stroke: var(--line);
+  stroke-dasharray: 2 4;
+}
+
+.hud__route {
+  fill: none;
+  stroke: var(--rust);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hud__zone {
+  fill: rgb(229 72 77 / 0.25);
+  stroke: var(--hazard);
+  stroke-dasharray: 4 3;
+}
+
+.hud__stop {
+  fill: var(--text-muted);
+  stroke: var(--bg);
+  stroke-width: 1.5;
+}
+
+.hud__stop--next {
+  fill: var(--cyan);
+}
+
+.hud__me {
+  fill: var(--text);
+  stroke: var(--bg);
+}
+
+.hud__north {
+  fill: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.hud__alert {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--hazard);
+  border-radius: var(--radius);
+}
+
+.hud__alert svg {
+  color: var(--hazard);
+  flex: none;
+}
+
+.hud-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: min(980px, 100%);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  font-size: var(--fs-sm);
+}
+
+.hud-control input[type="range"] {
+  flex: 1;
+  min-height: var(--hit);
+  accent-color: var(--rust);
+}
+
+.hud-control input[type="range"]:focus-visible {
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 899px) {
+  .hud__row {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .hud__block,
+  .hud__slope {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .hud-control {
+    flex-wrap: wrap;
+  }
+}
