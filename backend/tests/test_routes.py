@@ -466,7 +466,7 @@ def test_hazard_zones_keep_at_most_eight_nearest_the_route(terrain):
     zones = data["hazards"]
     assert len(zones) == 8
     assert [h["id"] for h in zones] == [f"hazard-{n}" for n in range(1, 9)]
-    # The big hill by the route is the nearest region, so it comes first and is wider than a 3x4 hill.
+    # The big hill by the route is the nearest region: it comes first and is wider than a 3x4 hill.
     first = zones[0]["polygon"]["coordinates"][0]
     assert max(x for x, _ in first) - min(x for x, _ in first) > 0.00015
 
