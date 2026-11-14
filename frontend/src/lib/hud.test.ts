@@ -70,7 +70,7 @@ const route: RouteResponse = {
 };
 
 describe("computeHud", () => {
-  it("uses 20 metres of route for heading rather than tiny endpoint connectors", () => {
+  it("ignores tiny endpoint connectors when computing heading", () => {
     const connected = { ...route, polyline: [[0.00001, 0], [0, 0], [0, 0.001], [0.00001, 0.001]] as LonLat[] };
     close(relativeBearing(computeHud(connected, 0, limits)!.headingDeg, 0), 0, 3);
     close(relativeBearing(computeHud(connected, 1000, limits)!.headingDeg, 0), 0, 3);
@@ -113,5 +113,24 @@ describe("computeHud", () => {
 
   it("is null for a route without geometry or profile", () => {
     assert.equal(computeHud({ ...route, profile: [] }, 10, limits), null);
+  });
+});
+
+describe("HUD heading at turns", () => {
+  const makeRoute = (polyline: LonLat[]): RouteResponse => ({ ...route, polyline, distance_m: 200,
+    profile: [{ dist_m: 0, elev_m: 0, slope_deg: 0 }, { dist_m: 200, elev_m: 0, slope_deg: 0 }] });
+
+  it("keeps the incoming and outgoing directions at a sharp corner", () => {
+    const corner = makeRoute([[0, 0], [0.001, 0], [0.001, 0.001]]);
+    close(computeHud(corner, 95, limits)!.headingDeg, 90, 0.01);
+    close(computeHud(corner, 100, limits)!.headingDeg, 0, 0.01);
+    close(computeHud(corner, 105, limits)!.headingDeg, 0, 0.01);
+  });
+
+  it("changes direction at an out-and-back stop without looking across the turn", () => {
+    const turnaround = makeRoute([[0, 0], [0.001, 0], [0, 0]]);
+    close(computeHud(turnaround, 99, limits)!.headingDeg, 90, 0.01);
+    close(computeHud(turnaround, 100, limits)!.headingDeg, 270, 0.01);
+    close(computeHud(turnaround, 101, limits)!.headingDeg, 270, 0.01);
   });
 });

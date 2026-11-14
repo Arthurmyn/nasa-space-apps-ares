@@ -30,10 +30,11 @@ Conventions: coordinates are `[lon, lat]` in degrees on Mars, longitude east-pos
 
 ### `GET /layers`
 
-Which data layers exist for the site. A layer that is missing or has `available: false` is shown disabled with its `reason`.
+Which data layers exist for the site. An explicit `available: false` is authoritative and disables the layer with its `reason`. When the API has no entry, the UI may fall back to configured global tiles or a site-specific inventory of bundled images. Unknown sites never inherit another site's terrain PNGs.
 
 ```json
 {
+  "supports_alternatives": false,
   "layers": [
     { "id": "slope",   "available": true,  "reason": null, "source": "Dataset name, provider" },
     { "id": "thermal", "available": false, "reason": "No data for this site", "source": null }
@@ -43,12 +44,15 @@ Which data layers exist for the site. A layer that is missing or has `available:
 
 | Field | Type | Notes |
 |-------|------|-------|
+| `supports_alternatives` | boolean | Whether Compare can request an alternative. Missing on older servers defaults to false. The current backend returns false; the mock provider returns true |
 | `layers[].id` | `"slope" \| "optical" \| "thermal" \| "geology" \| "radiation"` | Unknown ids make the whole response invalid |
 | `layers[].available` | boolean | |
 | `layers[].reason` | string \| null | Shown when not available. Default text: "No data for this site" |
 | `layers[].source` | string \| null | Dataset and provider, shown in the layer legend |
 
-Layer imagery itself is not served by the API. Grid images are in `frontend/public/data/gale-bx/` per `DATA_CONTRACT.md`; tile sources are configured separately in `frontend/src/config/tiles.ts`.
+Layer imagery itself is not served by the API. Grid images are in `frontend/public/data/gale-bx/` per `DATA_CONTRACT.md`; tile sources and the per-site `SITE_GRID_IMAGES` inventory are configured in `frontend/src/config/tiles.ts`.
+
+The API badge reflects the last completed request. Network failures show `API offline`; HTTP 5xx show `API service error`; unreadable JSON or an invalid success schema show `Invalid API response`; timeouts show `API timed out`. Success is recorded only after JSON decoding and endpoint validation. Caller cancellation, including during body decoding, preserves the previous status and returns an `aborted` error.
 
 ### `GET /sites`
 

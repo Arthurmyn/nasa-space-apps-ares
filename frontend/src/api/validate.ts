@@ -186,7 +186,10 @@ export function parseLayersResponse(raw: unknown): LayersResponse {
       source: strOrNull(p.source, `layers[${i}].source`),
     };
   });
-  return { layers };
+  if (o.supports_alternatives !== undefined && typeof o.supports_alternatives !== "boolean") {
+    fail("supports_alternatives", "a boolean");
+  }
+  return { layers, supports_alternatives: o.supports_alternatives === true };
 }
 
 const latitude = (v: unknown, path: string): number => {

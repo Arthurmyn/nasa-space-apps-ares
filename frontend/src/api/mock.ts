@@ -227,6 +227,7 @@ export async function mockLayers(signal?: AbortSignal): Promise<LayersResponse> 
   const available = (id: LayerId): LayerInfo => ({ id, available: true, reason: null, source: SAMPLE_SOURCE });
   const missing = (id: LayerId): LayerInfo => ({ id, available: false, reason: NO_DATA_REASON, source: null });
   return {
+    supports_alternatives: true,
     layers: [available("slope"), available("optical"), missing("thermal"), missing("geology"), available("radiation")],
   };
 }

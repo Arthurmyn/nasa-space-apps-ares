@@ -31,6 +31,8 @@ export interface LayerInfo {
 
 export interface LayersResponse {
   layers: LayerInfo[];
+  /** Explicit backend capability; absent on older servers means unsupported. */
+  supports_alternatives: boolean;
 }
 
 // ---- POST /route -----------------------------------------------------------

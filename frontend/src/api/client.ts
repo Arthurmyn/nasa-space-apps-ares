@@ -21,10 +21,6 @@ const BASE = (import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "" : "http
  */
 export const dataSource: "mock" | "live" = import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === "true" ? "mock" : "live";
 
-async function request<T>(path: string, init?: RequestInit, signal?: AbortSignal): Promise<T> {
-  return requestJson<T>(BASE + path, init, signal);
-}
-
 /** Static JSON next to the app, not the API: /app/data/<site>/meta.json. */
 export async function fetchSiteMeta(siteId: string, signal?: AbortSignal): Promise<SiteMeta> {
   let res: Response;
@@ -48,7 +44,7 @@ export const api = {
       const { mockRoute } = await import("./mock.ts");
       return mockRoute(body, signal);
     }
-    return parseRouteResponse(await request<unknown>("/route", { method: "POST", body: JSON.stringify(body) }, signal));
+    return requestJson(BASE + "/route", { method: "POST", body: JSON.stringify(body) }, signal, parseRouteResponse);
   },
 
   sites: async (signal?: AbortSignal): Promise<SitesResponse> => {
@@ -56,7 +52,7 @@ export const api = {
       const { mockSites } = await import("./mock.ts");
       return mockSites(signal);
     }
-    return parseSitesResponse(await request<unknown>("/sites", undefined, signal));
+    return requestJson(BASE + "/sites", undefined, signal, parseSitesResponse);
   },
 
   layers: async (signal?: AbortSignal): Promise<LayersResponse> => {
@@ -64,6 +60,6 @@ export const api = {
       const { mockLayers } = await import("./mock.ts");
       return mockLayers(signal);
     }
-    return parseLayersResponse(await request<unknown>("/layers", undefined, signal));
+    return requestJson(BASE + "/layers", undefined, signal, parseLayersResponse);
   },
 };

@@ -1,9 +1,8 @@
 import { useId, useState } from "react";
-import { dataSource } from "../api/client.ts";
 import type { RouteResponse } from "../api/types.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
 import { formatDistance, formatDuration, formatSigned, formatSlope } from "../lib/format.ts";
-import { usePlanner } from "../state/PlannerContext.tsx";
+import { useLayers, usePlanner } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
 import { Icon } from "./Icon.tsx";
 import { SafetyBadge } from "./SafetyBadge.tsx";
@@ -146,6 +145,7 @@ function HowComputed({ route }: { route: RouteResponse }) {
 
 export function RouteSummary() {
   const p = usePlanner();
+  const { supportsAlternatives } = useLayers();
   const { state, view, stale, fetching } = p;
   const route = state.route;
 
@@ -219,7 +219,7 @@ export function RouteSummary() {
           >
             <Icon name="refresh" /> Recalculate
           </button>
-          {dataSource === "mock" && <button
+          {supportsAlternatives && <button
             type="button"
             className="btn"
             aria-pressed={state.compare}
@@ -234,7 +234,7 @@ export function RouteSummary() {
         </div>
       )}
 
-      {state.compare && route && (
+      {supportsAlternatives && state.compare && route && (
         <div className="compare">
           {fetching && !route.alternative ? (
             <p className="progress-text" role="status">

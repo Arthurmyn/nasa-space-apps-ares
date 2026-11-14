@@ -3,7 +3,7 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 import { LAYER_IDS, type LayerId } from "../api/types.ts";
 import { siteFileUrl } from "../api/siteFiles.ts";
 import type { SiteConfig } from "../config/site.ts";
-import { GRID_IMAGES, TILE_SOURCES } from "../config/tiles.ts";
+import { gridImagesForSite, TILE_SOURCES } from "../config/tiles.ts";
 import { imageCorners } from "../lib/siteGeo.ts";
 import type { LayersModel } from "../state/PlannerContext.tsx";
 import { EQUIRECT_SCHEME, registerEquirectProtocol } from "./equirectProtocol.ts";
@@ -47,7 +47,7 @@ export function useRasterLayers(map: MapLibreMap | null, layers: LayersModel, si
         map.removeSource(tileId(id));
       }
 
-      const image = GRID_IMAGES[id];
+      const image = gridImagesForSite(site.id)[id];
       if (!image) continue;
       const imageWanted = active.has(id) && info[id]?.available === true;
       const imagePresent = map.getLayer(imageId(id)) !== undefined;

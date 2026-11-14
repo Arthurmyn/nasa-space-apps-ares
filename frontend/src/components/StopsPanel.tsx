@@ -39,8 +39,8 @@ function GroupPicker() {
 
   if (sites.status === "loading") return <p className="muted">Loading target groups</p>;
   if (sites.status === "error") return (
-    <div role="status">
-      <p className="muted">Target groups are unavailable</p>
+    <div>
+      <p className="muted" role="status">Target groups are unavailable</p>
       <button type="button" className="btn" onClick={retrySites}><Icon name="refresh" /> Retry target groups</button>
     </div>
   );

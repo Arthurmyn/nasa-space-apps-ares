@@ -33,6 +33,7 @@ export type LayersStatus = "loading" | "ready" | "error";
 export interface LayersModel {
   status: LayersStatus;
   info: Partial<Record<LayerId, LayerInfo>>;
+  supportsAlternatives: boolean;
   /** Layers the user switched on. A layer only draws when it is also available. */
   active: ReadonlySet<LayerId>;
   toggle: (id: LayerId) => void;
@@ -76,6 +77,7 @@ function useLayersModel(): LayersModel {
   const { site } = useSite();
   const [status, setStatus] = useState<LayersStatus>("loading");
   const [info, setInfo] = useState<Partial<Record<LayerId, LayerInfo>>>({});
+  const [supportsAlternatives, setSupportsAlternatives] = useState(false);
   const [active, setActive] = useState<ReadonlySet<LayerId>>(() => new Set(DEFAULT_ACTIVE_LAYERS));
   const inflight = useRef<AbortController | null>(null);
 
@@ -89,11 +91,13 @@ function useLayersModel(): LayersModel {
       .then((res) => {
         if (ctrl.signal.aborted) return;
         setInfo(Object.fromEntries(res.layers.map((l) => [l.id, l])));
+        setSupportsAlternatives(res.supports_alternatives);
         setStatus("ready");
       })
       .catch((e: unknown) => {
         if (ctrl.signal.aborted) return;
         console.error("Failed to load layer list", e);
+        setSupportsAlternatives(false);
         setStatus("error");
       });
   }, []);
@@ -112,7 +116,7 @@ function useLayersModel(): LayersModel {
     });
   }, []);
 
-  return useMemo(() => ({ status, info: availableLayers(site, info), active, toggle, retry: load }), [status, info, active, toggle, load, site]);
+  return useMemo(() => ({ status, info: availableLayers(site, info), supportsAlternatives, active, toggle, retry: load }), [status, info, supportsAlternatives, active, toggle, load, site]);
 }
 
 export function PlannerProvider({ children }: { children: ReactNode }) {

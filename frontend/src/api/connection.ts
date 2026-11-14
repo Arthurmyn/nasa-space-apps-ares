@@ -1,4 +1,4 @@
-export type ApiConnection = "unknown" | "online" | "offline";
+export type ApiConnection = "unknown" | "online" | "offline" | "service-error" | "invalid" | "timeout";
 
 let status: ApiConnection = "unknown";
 const listeners = new Set<() => void>();

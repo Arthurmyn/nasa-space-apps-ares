@@ -105,6 +105,11 @@ describe("parseRouteResponse", () => {
 });
 
 describe("parseLayersResponse", () => {
+  it("defaults alternative support to false and accepts an explicit capability", () => {
+    assert.equal(parseLayersResponse({ layers: [] }).supports_alternatives, false);
+    assert.equal(parseLayersResponse({ layers: [], supports_alternatives: true }).supports_alternatives, true);
+    assert.throws(() => parseLayersResponse({ layers: [], supports_alternatives: "yes" }), ApiError);
+  });
   it("accepts known layer ids", () => {
     const r = parseLayersResponse({
       layers: [{ id: "slope", available: true, reason: null, source: "X" }],

@@ -61,23 +61,45 @@ export function toHeadingFrame(point: LonLat, origin: LonLat, headingDeg: number
   };
 }
 
+// Route geometry is immutable. Reuse distances while the position slider moves.
+const pathLengths = new WeakMap<readonly LonLat[], readonly number[]>();
+
+function hudPathLengths(path: readonly LonLat[]): readonly number[] {
+  let lengths = pathLengths.get(path);
+  if (!lengths) {
+    lengths = cumulativeLengths(path);
+    pathLengths.set(path, lengths);
+  }
+  return lengths;
+}
+
+/** Tangent of the current segment; at a vertex use the outgoing direction. */
+function pathHeading(path: readonly LonLat[], lengths: readonly number[], targetM: number): number {
+  const segments = path.length - 1;
+  let index = 0;
+  while (index < segments - 1 && (lengths[index + 1] ?? 0) <= targetM + 1e-7) index += 1;
+  // Only the two endpoint click-to-cell connectors may borrow the adjacent tangent.
+  // Never smooth across an interior corner or a stop's out-and-back turn.
+  const size = (i: number) => (lengths[i + 1] ?? 0) - (lengths[i] ?? 0);
+  if (index === 0 && segments > 1 && size(index) < 1.5 && size(1) >= 1.5) index += 1;
+  if (index === segments - 1 && segments > 1 && size(index) < 1.5 && size(index - 1) >= 1.5) index -= 1;
+  while (index > 0 && size(index) <= 1e-9) index -= 1;
+  const from = path[index];
+  const to = path[index + 1];
+  return from && to ? bearing(from, to) : 0;
+}
+
 /** Everything the HUD shows for a position `posDistM` metres along the route. */
 export function computeHud(route: RouteResponse, posDistM: number, limits: SlopeLimits): HudModel | null {
-  const at = pointAtFraction(route.polyline, profileDistToFraction(route.profile, posDistM));
+  const lengths = hudPathLengths(route.polyline);
+  const fraction = profileDistToFraction(route.profile, posDistM);
+  const at = pointAtFraction(route.polyline, fraction, lengths);
   const sample = interpolateProfile(route.profile, posDistM);
   if (!at || !sample) return null;
 
   const position = at.point;
-  // A 20m window follows the path, smoothing sub-metre click-to-cell connectors.
-  // Shift the whole window inward at either endpoint, preserving forward travel direction.
-  const lengths = cumulativeLengths(route.polyline);
   const length = lengths[lengths.length - 1] ?? 0;
-  const windowM = Math.min(20, length);
-  const fraction = profileDistToFraction(route.profile, posDistM);
-  const fromM = Math.max(0, Math.min(length - windowM, fraction * length - windowM / 2));
-  const from = length > 0 ? pointAtFraction(route.polyline, fromM / length) : null;
-  const to = length > 0 ? pointAtFraction(route.polyline, (fromM + windowM) / length) : null;
-  const headingDeg = from && to && haversine(from.point, to.point) > 1e-6 ? bearing(from.point, to.point) : at.bearingDeg;
+  const headingDeg = pathHeading(route.polyline, lengths, fraction * length);
   const nextIndex = route.stops.findIndex((s) => s.dist_m > posDistM + 0.5);
   const nextStop = nextIndex >= 0 ? route.stops[nextIndex] : undefined;
   const lastStop = route.stops[route.stops.length - 1];

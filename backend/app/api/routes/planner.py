@@ -22,6 +22,7 @@ GridDependency = Annotated[Grid, Depends(get_grid)]
 def layers(grid: GridDependency):
     source = "; ".join(grid.meta["sources"])
     return {
+        "supports_alternatives": False,
         "layers": [
             {
                 "id": id,
@@ -30,7 +31,7 @@ def layers(grid: GridDependency):
                 "source": source if id in ("slope", "optical") else None,
             }
             for id in ("slope", "optical", "thermal", "geology", "radiation")
-        ]
+        ],
     }
 
 

@@ -179,7 +179,9 @@ def test_layers_sites_and_cached_data(terrain):
     path, meta, _ = terrain
     with TestClient(create_app(path)) as client:
         (path / "slope.bin").unlink()
-        layers = client.get("/api/v1/layers").json()["layers"]
+        response = client.get("/api/v1/layers").json()
+        assert response["supports_alternatives"] is False
+        layers = response["layers"]
         assert {x["id"] for x in layers if x["available"]} == {"slope", "optical"}
         assert all(x["reason"] for x in layers if not x["available"])
         site = client.get("/api/v1/sites").json()["sites"][0]

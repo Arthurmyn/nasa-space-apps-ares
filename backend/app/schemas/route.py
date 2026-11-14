@@ -98,6 +98,7 @@ class LayerInfo(Model):
 
 class LayersResponse(Model):
     layers: list[LayerInfo]
+    supports_alternatives: bool = False
 
 
 class SiteStop(Model):
