@@ -12,7 +12,7 @@ label() { gh label create "$1" --repo "$REPO" --color "$2" --description "$3" --
 label "area:frontend" "1d76db" "Frontend"
 label "area:backend"  "5319e7" "Backend"
 label "area:ml"       "0e8a16" "Machine learning"
-label "area:infra"    "6a737d" "CI, Docker, deploy"
+label "area:infra"    "6a737d" "Docker, deploy"
 label "area:docs"     "c5def5" "Documentation"
 label "type:feature"  "a2eeef" "New functionality"
 label "type:bug"      "d73a4a" "Something is broken"
@@ -33,8 +33,8 @@ gh project link "$PROJECT_NUM" --owner "$OWNER" --repo "$REPO"
 echo "  Project #$PROJECT_NUM created and linked."
 echo "  Добавь колонки Backlog/To Do/In Progress/Review/Done в поле Status и включи Workflows (см. docs/project-board.md)."
 
-echo "==> Branch protection (main, dev)"
-for b in main dev; do
+echo "==> Branch protection (main)"
+for b in main; do
   gh api -X PUT "repos/$REPO/branches/$b/protection" --input - <<JSON || echo "  ! не удалось защитить $b (нужен push ветки / платный план для private)"
 {
   "required_status_checks": null,
@@ -47,5 +47,5 @@ for b in main dev; do
 JSON
 done
 
-gh repo edit "$REPO" --default-branch dev --enable-squash-merge --delete-branch-on-merge
+gh repo edit "$REPO" --default-branch main --enable-squash-merge --delete-branch-on-merge
 echo "Done."

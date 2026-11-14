@@ -8,7 +8,7 @@
 | **To Do** | Взята в текущий спринт/этап хакатона |
 | **In Progress** | Есть исполнитель и ветка |
 | **Review** | Открыт PR |
-| **Done** | PR смержен в `dev` |
+| **Done** | PR смержен в `main` |
 
 Автоматизации (включить в *Project → ⋯ → Workflows*):
 - *Item added to project* → Status = Backlog

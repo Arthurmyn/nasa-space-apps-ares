@@ -23,7 +23,7 @@ _Что делает продукт? Ключевые фичи (3–5 пункт
 | Frontend | React 18, TypeScript, Vite | [`frontend/`](frontend/) |
 | Backend | Python 3.11, FastAPI, Pydantic | [`backend/`](backend/) |
 | ML | Python, scikit-learn (→ PyTorch при необходимости), Jupyter | [`ml/`](ml/) |
-| Infra | Docker Compose, GitHub Actions | [`docker-compose.yml`](docker-compose.yml), [`.github/`](.github/) |
+| Infra | Docker Compose, шаблоны GitHub | [`docker-compose.yml`](docker-compose.yml), [`.github/`](.github/) |
 
 Подробнее — [docs/architecture.md](docs/architecture.md), контракт API — [docs/api.md](docs/api.md).
 
@@ -31,7 +31,7 @@ _Что делает продукт? Ключевые фичи (3–5 пункт
 
 ```
 nasa-space-apps-ares/
-├── .github/                # шаблоны PR/issue, CI
+├── .github/                # шаблоны PR/issue
 ├── docs/                   # архитектура, API-контракт, доска задач
 ├── frontend/               # клиент (React + Vite + TS)
 │   └── src/api/            # клиент к backend
