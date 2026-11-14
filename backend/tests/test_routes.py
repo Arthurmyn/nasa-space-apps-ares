@@ -598,3 +598,22 @@ def test_site_without_context_has_none(terrain):
     path, _, _ = terrain
     with TestClient(create_app(path)) as client:
         assert client.get("/api/v1/sites").json()["sites"][0]["context"] is None
+
+
+def test_shipped_stop_images_are_local_credited_and_small():
+    root = Path(__file__).parents[2]
+    with TestClient(create_app(root / "backend/data/gale-bx")) as client:
+        stops = client.get("/api/v1/sites").json()["sites"][0]["stops"]
+    assert len(stops) == 6
+    for stop in stops:
+        sol = stop["note"].split("sol ")[1].split(",")[0]
+        image = stop["image"]
+        assert stop["name"] == f"Boxwork traverse point, sol {sol}"
+        assert image["url"].startswith("/app/stops/")  # served by the frontend, never hotlinked
+        assert image["credit"].startswith("NASA/JPL-Caltech, Mars Science Laboratory, sol " + sol)
+        assert image["alt"].strip()
+        path = root / "frontend/public" / image["url"].removeprefix("/app/")
+        assert path.is_file() and path.stat().st_size <= 150_000
+        from PIL import Image
+
+        assert Image.open(path).size[0] == 800
