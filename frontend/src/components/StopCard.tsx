@@ -51,8 +51,8 @@ export function StopCard() {
           {entry.kind === "stop" && (
             <>
               <div>
-                <h4 className="eyebrow">Science note</h4>
-                <p className={entry.note ? "" : "muted"}>{entry.note ?? "No science note provided for this stop"}</p>
+                <h4 className="eyebrow">Note</h4>
+                <p className={entry.note ? "" : "muted"}>{entry.note ?? "No note for this stop"}</p>
               </div>
 
               <figure className="image-slot">
