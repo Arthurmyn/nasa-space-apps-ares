@@ -9,13 +9,15 @@ npm install
 npm run dev          # http://localhost:5173/app/, talks to the backend at VITE_API_URL
 ```
 
-No backend yet? Use the built-in sample data:
+No backend yet? Use the built-in sample data (dev server only):
 
 ```bash
 VITE_USE_MOCK=true npm run dev
 ```
 
-Mock mode shows a **Sample data** badge in the top bar. The data is synthetic (a sine-wave terrain), never real. `VITE_USE_MOCK` and `VITE_API_URL` are read from the environment or from the repo-root `.env` (Vite `envDir` is `..`). `.env.example` does not list `VITE_USE_MOCK` yet; add `VITE_USE_MOCK=false` there when convenient.
+Mock mode shows a **Sample data** badge in the top bar. The data is synthetic (a sine-wave terrain), never real. A production build ignores `VITE_USE_MOCK`: the mock code is not reachable there and not bundled. `VITE_USE_MOCK` and `VITE_API_URL` are read from the environment or from the repo-root `.env` (Vite `envDir` is `..`).
+
+The site comes from `public/data/<site>/meta.json` (served at `/app/data/<site>/meta.json`, see `docs/DATA_CONTRACT.md`): map centre, zoom, bbox, the `hillshade.png` and `slope.png` layers, and the data sources shown under "How this is computed". If `is_test_data` is true the top bar shows a **Test data** badge. The list of target groups comes from `GET /api/v1/sites`.
 
 | Command | What it does |
 |---------|--------------|

@@ -6,6 +6,14 @@ export interface PlanPoint {
   id: string;
   lon: number;
   lat: number;
+  /** Name of a preset target, sent to the API and shown instead of "Stop A". */
+  name?: string;
+}
+
+export interface PresetStop {
+  lon: number;
+  lat: number;
+  name: string;
 }
 
 export type RouteStatus = "idle" | "loading" | "ready" | "error";
@@ -31,6 +39,7 @@ export type PlannerAction =
   | { type: "point/add"; lon: number; lat: number }
   | { type: "point/move"; id: string; lon: number; lat: number }
   | { type: "point/remove"; id: string }
+  | { type: "stops/preset"; stops: readonly PresetStop[] }
   | { type: "select"; id: string | null }
   | { type: "compare/set"; value: boolean }
   | { type: "route/loading" }
@@ -102,6 +111,15 @@ export function plannerReducer(s: PlannerState, a: PlannerAction): PlannerState 
       if (!s.stops.some((p) => p.id === a.id)) return s;
       return edited(s, { stops: s.stops.filter((p) => p.id !== a.id), selectedId });
     }
+    case "stops/preset": {
+      // Replace the stops with a preset group. The start is kept; without one, the user still
+      // has to click a start, and the route appears as soon as they do.
+      const picked = a.stops.slice(0, MAX_STOPS);
+      const stops = picked.map((p, i): PlanPoint => ({ id: `stop-${s.nextStopNo + i}`, lon: p.lon, lat: p.lat, name: p.name }));
+      const clipped = a.stops.length - picked.length;
+      const notice = clipped > 0 ? `Showing the first ${MAX_STOPS} of ${a.stops.length} targets` : null;
+      return { ...edited(s, { stops, nextStopNo: s.nextStopNo + stops.length, selectedId: stops[0]?.id ?? null }), notice };
+    }
     case "select":
       return s.selectedId === a.id ? s : { ...s, selectedId: a.id };
     case "compare/set":
@@ -123,7 +141,7 @@ export function buildRouteRequest(s: PlannerState): RouteRequest | null {
   if (!s.start || s.stops.length === 0) return null;
   return {
     start: { id: s.start.id, lon: s.start.lon, lat: s.start.lat },
-    stops: s.stops.map((p) => ({ id: p.id, lon: p.lon, lat: p.lat })),
+    stops: s.stops.map((p) => ({ id: p.id, lon: p.lon, lat: p.lat, ...(p.name ? { name: p.name } : {}) })),
     constraints: { max_slope_deg: SLOPE_LIMITS.maxDeg },
     ...(s.compare ? { compare: true } : {}),
   };

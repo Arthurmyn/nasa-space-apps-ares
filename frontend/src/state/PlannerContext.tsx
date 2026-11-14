@@ -22,6 +22,7 @@ import {
   plannerReducer,
   routeView,
   type PlannerState,
+  type PresetStop,
   type RouteView,
 } from "./plannerReducer.ts";
 
@@ -43,6 +44,8 @@ export interface PlannerModel {
   /** True while a route request is in flight. */
   fetching: boolean;
   addPoint: (lon: number, lat: number) => void;
+  /** Replace the stops with a preset group of targets (at most MAX_STOPS are used). */
+  setPresetStops: (stops: readonly PresetStop[]) => void;
   movePoint: (id: string, lon: number, lat: number) => void;
   removePoint: (id: string) => void;
   select: (id: string | null) => void;
@@ -171,6 +174,7 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       stale: isStale(state),
       fetching: state.status === "loading",
       addPoint: (lon, lat) => dispatch({ type: "point/add", lon, lat }),
+      setPresetStops: (stops) => dispatch({ type: "stops/preset", stops }),
       movePoint: (id, lon, lat) => dispatch({ type: "point/move", id, lon, lat }),
       removePoint: (id) => dispatch({ type: "point/remove", id }),
       select: (id) => dispatch({ type: "select", id }),
