@@ -5,6 +5,8 @@ import {
   formatDistance,
   formatDuration,
   formatSigned,
+  documentId,
+  formatUtcStamp,
   formatSignedElevation,
   formatSlope,
   formatUtcTime,
@@ -91,5 +93,22 @@ describe("formatSignedElevation", () => {
   it("never prints a minus before zero", () => {
     assert.equal(formatSignedElevation(0, "−"), "0\u00a0m");
     assert.equal(formatSignedElevation(0.3, "−"), "0\u00a0m");
+  });
+});
+
+describe("documentId", () => {
+  it("builds the ID from the UTC time", () => {
+    assert.equal(documentId("2026-11-15T09:05:42Z"), "ARES-RC-20261115-0905");
+  });
+
+  it("returns null for a bad timestamp", () => {
+    assert.equal(documentId("not a date"), null);
+  });
+});
+
+describe("formatUtcStamp", () => {
+  it("prints date and minutes in UTC", () => {
+    assert.equal(formatUtcStamp("2026-11-15T09:05:42Z"), "2026-11-15 09:05 UTC");
+    assert.equal(formatUtcStamp("nope"), null);
   });
 });
