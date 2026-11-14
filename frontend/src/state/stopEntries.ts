@@ -48,7 +48,7 @@ export function buildStopEntries(state: PlannerState): StopEntry[] {
       id: p.id,
       kind: "stop",
       label,
-      title: (matched && api.name) || `Stop ${label}`,
+      title: (matched && api.name) || p.name || `Stop ${label}`,
       lon: p.lon,
       lat: p.lat,
       distM: matched ? api.dist_m : null,

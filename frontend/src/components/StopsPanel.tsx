@@ -1,7 +1,10 @@
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import { MAX_STOPS } from "../config/route.ts";
+import type { SiteEntry } from "../api/types.ts";
 import { formatDistance } from "../lib/format.ts";
+import { groupTargets } from "../lib/presets.ts";
 import { usePlanner } from "../state/PlannerContext.tsx";
+import { useSite } from "../state/SiteContext.tsx";
 import { buildStopEntries, type StopEntry } from "../state/stopEntries.ts";
 import { viewportStore } from "../state/viewportStore.ts";
 import { Icon } from "./Icon.tsx";
@@ -23,6 +26,45 @@ function StopChip({ entry, selected }: { entry: StopEntry; selected: boolean }) 
         {dist && <span className="sr-only">along route</span>}
       </button>
     </li>
+  );
+}
+
+/** Picks a named group of science targets (for example "Boxwork") and places them as stops. */
+function GroupPicker() {
+  const p = usePlanner();
+  const { sites } = useSite();
+  const selectId = useId();
+  const entries = sites.entries;
+  const groups = entries.flatMap((site) => site.groups.map((group) => ({ site, group, key: `${site.id}:${group.id}` })));
+
+  if (sites.status === "loading") return <p className="muted">Loading target groups</p>;
+  if (sites.status === "error") return <p className="muted">Target groups are unavailable</p>;
+  if (groups.length === 0) return null;
+
+  const label = (site: SiteEntry, name: string) => (entries.length > 1 ? `${site.name}: ${name}` : name);
+
+  return (
+    <div className="field">
+      <label htmlFor={selectId} className="field__label">
+        Science targets
+      </label>
+      <select
+        id={selectId}
+        className="select"
+        value=""
+        onChange={(e) => {
+          const hit = groups.find((g) => g.key === e.target.value);
+          if (hit) p.setPresetStops(groupTargets(hit.site, hit.group));
+        }}
+      >
+        <option value="">Choose a group to place its targets</option>
+        {groups.map(({ site, group, key }) => (
+          <option key={key} value={key}>
+            {label(site, group.name)} ({group.stop_ids.length})
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 
@@ -58,6 +100,8 @@ export function StopsPanel() {
           ))}
         </ul>
       )}
+
+      <GroupPicker />
 
       <button type="button" className="btn btn--block" onClick={addAtCentre} disabled={atMax}>
         <Icon name="crosshair" /> {addLabel}
