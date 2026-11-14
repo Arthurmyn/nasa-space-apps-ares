@@ -21,6 +21,22 @@ ROOT = Path(__file__).resolve().parents[2]
 HANDOFF = ROOT / "docs/research/r0/gale_bx_handoff.json"
 
 
+def test_stop_sources_follow_data_and_do_not_leak_into_terrain_metadata(tmp_path):
+    grid = build_grid(json.loads(HANDOFF.read_text()), 2)
+    assert not any("src-msl-traverse" in source for source in grid.meta["sources"])
+    assert slope_grid.read_stop_sources(tmp_path) == []
+    (tmp_path / "sources.json").write_text(json.dumps({
+        "src-old": "Old targets", "src-new": "New targets, verified document",
+    }))
+    (tmp_path / "stops.json").write_text(json.dumps({
+        "groups": [], "stops": [{"source_id": "src-new"}, {"source_id": "src-new"}],
+    }))
+    assert slope_grid.read_stop_sources(tmp_path) == ["src-new: New targets, verified document"]
+    (tmp_path / "stops.json").write_text(json.dumps({"stops": [{"source_id": "src-missing"}]}))
+    with pytest.raises(ValueError, match="src-missing"):
+        slope_grid.read_stop_sources(tmp_path)
+
+
 @pytest.mark.parametrize("cell", [1.0, 2.0])
 def test_fake_terrain_connects_west_and_east_at_fifteen_degrees(cell):
     grid = build_grid(json.loads(HANDOFF.read_text()), cell)
@@ -209,6 +225,7 @@ def test_committed_real_grid_stops_and_assumptions_match_contract():
         assert all(isinstance(value, str) and value for value in item.values())
         assert item["source"].startswith("TO VERIFY:")
     stops = json.loads((backend / "stops.json").read_text())
+    sources = json.loads((backend / "sources.json").read_text())
     assert set(stops) == {"groups", "stops"}
     assert 3 <= len(stops["stops"]) <= 6
     ids = [stop["id"] for stop in stops["stops"]]
@@ -222,7 +239,7 @@ def test_committed_real_grid_stops_and_assumptions_match_contract():
         assert set(stop) == {"id", "name", "lon", "lat", "note", "image", "source_id"}
         assert all(isinstance(stop[k], str) and stop[k] for k in ["id", "name", "note", "source_id"])
         assert stop["image"] is None
-        assert any(source.startswith(stop["source_id"] + ":") for source in meta["sources"])
+        assert f"{stop['source_id']}: {sources[stop['source_id']]}" in meta["sources"]
         matching = [f for f in rover["features"] if f["geometry"]["coordinates"][:2] == [stop["lon"], stop["lat"]]]
         assert len(matching) == 1
         assert str(matching[0]["properties"]["sol"]) in stop["note"]
@@ -241,7 +258,9 @@ def test_committed_real_grid_stops_and_assumptions_match_contract():
     generated = [backend / name for name in ["meta.json", "elevation.bin", "slope.bin"]]
     generated += [ROOT / "frontend/public/data/gale-bx" / name for name in ["meta.json", "hillshade.png", "slope.png"]]
     assert sum(p.stat().st_size for p in generated) <= 3_000_000 - 100_000
-    assert sum(p.stat().st_size for p in generated + [backend / "stops.json", backend / "assumptions.json"]) <= 3_000_000
+    all_files = [p for directory in [backend, ROOT / "frontend/public/data/gale-bx"]
+                 for p in directory.rglob("*") if p.is_file()]
+    assert sum(p.stat().st_size for p in all_files) <= 3_000_000
 
 
 @pytest.mark.parametrize("cell", [0, -1, float("nan"), float("inf")])
