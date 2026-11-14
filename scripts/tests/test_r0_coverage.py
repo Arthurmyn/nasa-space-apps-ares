@@ -1,10 +1,13 @@
+import hashlib
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
 import rasterio
+from pyproj import CRS, Transformer
 from rasterio.transform import from_origin
-from shapely.geometry import Point, box
+from shapely.geometry import Point, box, shape
 
 from scripts import r0_coverage
 from scripts.r0_coverage import (
@@ -34,9 +37,16 @@ def test_empty_sol_selection_is_an_error():
         select_waypoints({"features": [waypoint(3)]})
 
 
-def test_missing_sol_is_an_error():
-    with pytest.raises(ValueError, match="sol"):
-        select_waypoints({"features": [{"properties": {}}]})
+def test_invalid_sols_outside_campaign_do_not_break_selection():
+    selected = select_waypoints(
+        {"features": [waypoint(None), waypoint("unknown"), waypoint(12.5), waypoint(4534)]}
+    )
+    assert [f["properties"]["sol"] for f in selected] == [4534]
+
+
+def test_fractional_sol_in_campaign_is_rejected():
+    with pytest.raises(ValueError, match="integer sol"):
+        select_waypoints({"features": [waypoint(4534.5)]})
 
 
 def test_footprint_preserves_holes_and_disconnected_pixels(tmp_path):
@@ -118,7 +128,8 @@ def test_rover_crs_check_rejects_planetographic_latitude():
         rover_crs_check([feature])
 
 
-def test_offline_workflow_writes_evidence_and_preserves_region_work(tmp_path, monkeypatch):
+@pytest.mark.parametrize("handoff_directory", ["evidence", "handoffs"])
+def test_offline_workflow_writes_evidence_and_preserves_region_work(tmp_path, handoff_directory):
     raw, output = tmp_path / "raw", tmp_path / "evidence"
     raw.mkdir()
     feature = waypoint(4534, 137.4, -4.8)
@@ -129,9 +140,6 @@ def test_offline_workflow_writes_evidence_and_preserves_region_work(tmp_path, mo
         }
     )
     (raw / "MSL_waypoints.json").write_text(json.dumps({"features": [feature]}))
-    monkeypatch.setattr(
-        r0_coverage, "PRODUCTS", {"A": "https://example.org/A", "B": "https://example.org/B"}
-    )
     for product in ["A", "B"]:
         data = np.ones((20, 20), dtype="float32")
         if product == "A":
@@ -149,12 +157,74 @@ def test_offline_workflow_writes_evidence_and_preserves_region_work(tmp_path, mo
             transform=from_origin(-10.5, feature["properties"]["northing"] + 10.5, 1, 1),
         ) as dst:
             dst.write(data, 1)
-    region = tmp_path / "gale_bx.json"
-    region.write_text(json.dumps({"id": "GALE-BX", "habitat": {"name": "keep me"}}))
-    result = r0_coverage.run(raw, output, region)
+    entries = [
+        {
+            "role": "waypoints",
+            "file": "MSL_waypoints.json",
+            "snapshot": "raw/MSL_waypoints.json",
+            "url": "https://example.org/waypoints",
+        }
+    ]
+    entries.extend(
+        {"role": "raster", "file": f"{p}.IMG", "product_id": p, "url": f"https://example.org/{p}"}
+        for p in ["A", "B"]
+    )
+    for entry in entries:
+        payload = (raw / entry["file"]).read_bytes()
+        entry.update(sha256=hashlib.sha256(payload).hexdigest(), bytes=len(payload))
+    manifest = tmp_path / "inputs.json"
+    manifest.write_text(json.dumps({"inputs": entries}))
+    region = tmp_path / "backend" / "data" / "gale_bx.json"
+    region.parent.mkdir(parents=True)
+    accepted = json.dumps({"id": "GALE-BX", "habitat": {"name": "keep me"}})
+    region.write_text(accepted)
+    handoff = tmp_path / handoff_directory / "gale_bx_handoff.json"
+    result = r0_coverage.run(raw, output.resolve(), handoff, manifest=manifest)
     assert result["selected_dtm"] == "B"
-    config = json.loads(region.read_text())
-    assert config["habitat"] == {"name": "keep me"}
-    assert config["centre_lonlat_E"] == [137.4, -4.8]
+    assert region.read_text() == accepted
+    config = json.loads(handoff.read_text())
+    assert config["schema"] == "ares.r0-handoff/v1"
+    evidence = config["coverage_evidence"]
+    assert not Path(evidence).is_absolute()
+    assert (handoff.parent / evidence).resolve() == (output / "r0_result.json").resolve()
+    proposal = config["aoi_proposal"]
+    assert proposal["crs_proj"].find("+no_defs=True") == -1
+    crs = CRS.from_user_input(proposal["crs_proj"])
+    parallel = next(
+        p.value
+        for p in crs.coordinate_operation.params
+        if p.name == "Latitude of 1st standard parallel"
+    )
+    assert parallel == pytest.approx(proposal["centre_lonlat_E"][1])
+    polygon = shape(proposal["aoi_geojson"])
+    assert proposal["centre_lonlat_E"] == pytest.approx([polygon.centroid.x, polygon.centroid.y])
+    assert polygon.covers(Point(proposal["centre_lonlat_E"]))
+    lon, lat = proposal["centre_lonlat_E"]
+    projected = Transformer.from_crs(crs.geodetic_crs, crs, always_xy=True)
+    start, end = projected.transform(lon, lat), projected.transform(lon + 0.01, lat)
+    distance = crs.get_geod().inv(lon, lat, lon + 0.01, lat)[2]
+    assert end[0] - start[0] == pytest.approx(distance, abs=0.001)
     assert json.loads((output / "r0_result.json").read_text())["decision"] == "campaign-covered"
     assert (output / "r0_overlay.png").stat().st_size > 0
+
+    # No covering candidate: publish the failed report but preserve the accepted handoff/config.
+    with rasterio.open(raw / "B.IMG", "r+") as dst:
+        data = dst.read(1)
+        data[10, 10] = -9999
+        dst.write(data, 1)
+    payload = (raw / "B.IMG").read_bytes()
+    entries[-1].update(sha256=hashlib.sha256(payload).hexdigest(), bytes=len(payload))
+    manifest.write_text(json.dumps({"inputs": entries}))
+    accepted_handoff = handoff.read_bytes()
+    failed = r0_coverage.run(raw, output, handoff, manifest=manifest)
+    assert failed["decision"] == "unresolved"
+    assert handoff.read_bytes() == accepted_handoff
+    assert region.read_text() == accepted
+
+
+def test_plot_accepts_three_candidates(tmp_path):
+    output = tmp_path / "three.png"
+    r0_coverage.plot_overlay(
+        {p: box(0, 0, 1, 1) for p in ["A", "B", "C"]}, [waypoint(4534)], [0.5, 0.5], output
+    )
+    assert output.stat().st_size > 0
