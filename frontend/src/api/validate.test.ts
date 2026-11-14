@@ -43,6 +43,34 @@ const valid = () => ({
 });
 
 describe("parseRouteResponse", () => {
+  it("reads route capabilities without any layer metadata", () => {
+    assert.equal(parseRouteResponse(valid()).supports_alternatives, false);
+    assert.equal(parseRouteResponse({ ...valid(), supports_alternatives: true }).supports_alternatives, true);
+    assert.throws(() => parseRouteResponse({ ...valid(), supports_alternatives: "yes" }), ApiError);
+  });
+
+  it("validates exact vertex distances and canonical heading references", () => {
+    const navigation = { vertex_dist_m: [0, 100], heading_segments: [0] };
+    assert.deepEqual(parseRouteResponse({ ...valid(), navigation }).navigation, navigation);
+    assert.equal(parseRouteResponse(valid()).navigation, null);
+    for (const bad of [
+      { vertex_dist_m: [0], heading_segments: [0] },
+      { vertex_dist_m: [0, 99], heading_segments: [0] },
+      { vertex_dist_m: [0, 100], heading_segments: [] },
+      { vertex_dist_m: [0, 100], heading_segments: [1] },
+      { vertex_dist_m: [0, 100], heading_segments: [0.5] },
+      { vertex_dist_m: [-1, 100], heading_segments: [0] },
+    ]) assert.throws(() => parseRouteResponse({ ...valid(), navigation: bad }), ApiError);
+  });
+
+  it("rejects chained references, reversed distances and zero-length heading references", () => {
+    const polyline = [[0, 0], [0.0005, 0], [0.001, 0]];
+    for (const navigation of [
+      { vertex_dist_m: [0, 50, 100], heading_segments: [1, 0] },
+      { vertex_dist_m: [0, 101, 100], heading_segments: [0, 1] },
+      { vertex_dist_m: [0, 0, 100], heading_segments: [0, 0] },
+    ]) assert.throws(() => parseRouteResponse({ ...valid(), polyline, navigation }), ApiError);
+  });
   it("accepts a well-formed response and normalises slope to absolute", () => {
     const r = parseRouteResponse(valid());
     assert.equal(r.safety, "ok");
@@ -105,11 +133,6 @@ describe("parseRouteResponse", () => {
 });
 
 describe("parseLayersResponse", () => {
-  it("defaults alternative support to false and accepts an explicit capability", () => {
-    assert.equal(parseLayersResponse({ layers: [] }).supports_alternatives, false);
-    assert.equal(parseLayersResponse({ layers: [], supports_alternatives: true }).supports_alternatives, true);
-    assert.throws(() => parseLayersResponse({ layers: [], supports_alternatives: "yes" }), ApiError);
-  });
   it("accepts known layer ids", () => {
     const r = parseLayersResponse({
       layers: [{ id: "slope", available: true, reason: null, source: "X" }],

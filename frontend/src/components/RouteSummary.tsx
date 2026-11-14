@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 import type { RouteResponse } from "../api/types.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
 import { formatDistance, formatDuration, formatSigned, formatSlope } from "../lib/format.ts";
-import { useLayers, usePlanner } from "../state/PlannerContext.tsx";
+import { usePlanner } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
 import { Icon } from "./Icon.tsx";
 import { SafetyBadge } from "./SafetyBadge.tsx";
@@ -145,9 +145,9 @@ function HowComputed({ route }: { route: RouteResponse }) {
 
 export function RouteSummary() {
   const p = usePlanner();
-  const { supportsAlternatives } = useLayers();
   const { state, view, stale, fetching } = p;
   const route = state.route;
+  const supportsAlternatives = route?.supports_alternatives === true;
 
   return (
     <section className="panel__section" aria-labelledby="summary-title">

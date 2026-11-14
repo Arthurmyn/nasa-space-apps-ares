@@ -31,8 +31,6 @@ export interface LayerInfo {
 
 export interface LayersResponse {
   layers: LayerInfo[];
-  /** Explicit backend capability; absent on older servers means unsupported. */
-  supports_alternatives: boolean;
 }
 
 // ---- POST /route -----------------------------------------------------------
@@ -108,6 +106,13 @@ export interface RouteAlternative {
   polyline: LonLat[];
 }
 
+export interface RouteNavigation {
+  /** Exact cumulative route distance for each polyline vertex, in backend metres. */
+  vertex_dist_m: number[];
+  /** For each edge, the index of the geometry edge that supplies its heading. */
+  heading_segments: number[];
+}
+
 export interface RouteResponse {
   /** ISO 8601 UTC timestamp of when the backend computed this route. */
   computed_at: string;
@@ -126,6 +131,10 @@ export interface RouteResponse {
   assumptions: Assumption[];
   /** Present only when the request set `compare: true` and the backend found one. */
   alternative: RouteAlternative | null;
+  /** Missing on legacy responses; use the raw geometric tangent in that case. */
+  navigation?: RouteNavigation | null;
+  /** Route-service capability, independent of layer-list availability. */
+  supports_alternatives?: boolean;
 }
 
 // ---- Site data: docs/DATA_CONTRACT.md -----------------------------------------

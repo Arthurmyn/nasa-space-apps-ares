@@ -12,6 +12,7 @@ import {
   type ProfilePoint,
   type RouteAlternative,
   type RouteResponse,
+  type RouteNavigation,
   type RouteStop,
   type SafetyLevel,
   type SiteEntry,
@@ -148,10 +149,38 @@ function alternative(v: unknown, path: string): RouteAlternative | null {
   };
 }
 
+function navigation(v: unknown, polyline: readonly LonLat[], distance: number): RouteNavigation | null {
+  if (v === undefined || v === null) return null;
+  const n = obj(v, "navigation");
+  const distances = arr(n.vertex_dist_m, "navigation.vertex_dist_m").map((d) => num(d, "navigation.vertex_dist_m"));
+  const refs = arr(n.heading_segments, "navigation.heading_segments").map((r) => num(r, "navigation.heading_segments"));
+  if (distances.length !== polyline.length || distances[0] !== 0 || distances[distances.length - 1] !== distance) {
+    fail("navigation.vertex_dist_m", "one exact cumulative distance per vertex, from 0 to distance_m");
+  }
+  for (let i = 1; i < distances.length; i += 1) {
+    const a = distances[i - 1]!;
+    const b = distances[i]!;
+    const samePoint = polyline[i - 1]![0] === polyline[i]![0] && polyline[i - 1]![1] === polyline[i]![1];
+    if (b < a || (b === a && !samePoint)) fail("navigation.vertex_dist_m", "increasing along moving edges");
+  }
+  if (refs.length !== polyline.length - 1) fail("navigation.heading_segments", "one reference per edge");
+  for (const ref of refs) {
+    if (!Number.isInteger(ref) || ref < 0 || ref >= refs.length || refs[ref] !== ref ||
+        (distance > 0 && distances[ref + 1]! <= distances[ref]!)) {
+      fail("navigation.heading_segments", "indices of nonzero canonical heading edges");
+    }
+  }
+  return { vertex_dist_m: distances, heading_segments: refs };
+}
+
 export function parseRouteResponse(raw: unknown): RouteResponse {
   const o = obj(raw, "response");
   const polyline = arr(o.polyline, "polyline").map((p, i) => lonLat(p, `polyline[${i}]`));
   if (polyline.length < 2) fail("polyline", "at least 2 points");
+  const distance = num(o.distance_m, "distance_m");
+  if (o.supports_alternatives !== undefined && typeof o.supports_alternatives !== "boolean") {
+    fail("supports_alternatives", "a boolean");
+  }
 
   const profile = arr(o.profile, "profile").map((p, i) => profilePoint(p, `profile[${i}]`));
   for (let i = 1; i < profile.length; i += 1) {
@@ -160,7 +189,7 @@ export function parseRouteResponse(raw: unknown): RouteResponse {
 
   return {
     computed_at: str(o.computed_at, "computed_at"),
-    distance_m: num(o.distance_m, "distance_m"),
+    distance_m: distance,
     max_slope_deg: num(o.max_slope_deg, "max_slope_deg"),
     est_time_s: num(o.est_time_s, "est_time_s"),
     safety: oneOf(o.safety, SAFETY, "safety"),
@@ -171,6 +200,8 @@ export function parseRouteResponse(raw: unknown): RouteResponse {
     profile,
     assumptions: arr(o.assumptions, "assumptions").map((a, i) => assumption(a, `assumptions[${i}]`)),
     alternative: alternative(o.alternative, "alternative"),
+    navigation: navigation(o.navigation, polyline, distance),
+    supports_alternatives: o.supports_alternatives === true,
   };
 }
 
@@ -186,10 +217,7 @@ export function parseLayersResponse(raw: unknown): LayersResponse {
       source: strOrNull(p.source, `layers[${i}].source`),
     };
   });
-  if (o.supports_alternatives !== undefined && typeof o.supports_alternatives !== "boolean") {
-    fail("supports_alternatives", "a boolean");
-  }
-  return { layers, supports_alternatives: o.supports_alternatives === true };
+  return { layers };
 }
 
 const latitude = (v: unknown, path: string): number => {

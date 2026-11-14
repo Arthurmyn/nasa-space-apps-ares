@@ -61,45 +61,57 @@ export function toHeadingFrame(point: LonLat, origin: LonLat, headingDeg: number
   };
 }
 
-// Route geometry is immutable. Reuse distances while the position slider moves.
-const pathLengths = new WeakMap<readonly LonLat[], readonly number[]>();
-
-function hudPathLengths(path: readonly LonLat[]): readonly number[] {
-  let lengths = pathLengths.get(path);
-  if (!lengths) {
-    lengths = cumulativeLengths(path);
-    pathLengths.set(path, lengths);
-  }
-  return lengths;
+interface HudPath {
+  lengths: readonly number[];
+  headings: readonly number[];
 }
 
-/** Tangent of the current segment; at a vertex use the outgoing direction. */
-function pathHeading(path: readonly LonLat[], lengths: readonly number[], targetM: number): number {
-  const segments = path.length - 1;
-  let index = 0;
-  while (index < segments - 1 && (lengths[index + 1] ?? 0) <= targetM + 1e-7) index += 1;
-  // Only the two endpoint click-to-cell connectors may borrow the adjacent tangent.
-  // Never smooth across an interior corner or a stop's out-and-back turn.
-  const size = (i: number) => (lengths[i + 1] ?? 0) - (lengths[i] ?? 0);
-  if (index === 0 && segments > 1 && size(index) < 1.5 && size(1) >= 1.5) index += 1;
-  if (index === segments - 1 && segments > 1 && size(index) < 1.5 && size(index - 1) >= 1.5) index -= 1;
-  while (index > 0 && size(index) <= 1e-9) index -= 1;
-  const from = path[index];
-  const to = path[index + 1];
-  return from && to ? bearing(from, to) : 0;
+// Responses are immutable. Prepare distance and heading lookups once per route.
+const hudPaths = new WeakMap<RouteResponse, HudPath>();
+
+function hudPath(route: RouteResponse): HudPath {
+  let prepared = hudPaths.get(route);
+  if (!prepared) {
+    const lengths = route.navigation?.vertex_dist_m ?? cumulativeLengths(route.polyline);
+    const headings = route.polyline.slice(1).map((_, edge) => {
+      const reference = route.navigation?.heading_segments[edge] ?? edge;
+      const from = route.polyline[reference];
+      const to = route.polyline[reference + 1];
+      return from && to ? bearing(from, to) : 0;
+    });
+    prepared = { lengths, headings };
+    hudPaths.set(route, prepared);
+  }
+  return prepared;
+}
+
+/** Use the outgoing edge at a vertex, and the incoming edge at the final vertex. */
+function pathHeading(path: HudPath, targetM: number): number {
+  let lo = 0;
+  let hi = path.headings.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if ((path.lengths[mid + 1] ?? 0) <= targetM + 1e-9) lo = mid + 1;
+    else hi = mid;
+  }
+  return path.headings[lo] ?? 0;
 }
 
 /** Everything the HUD shows for a position `posDistM` metres along the route. */
 export function computeHud(route: RouteResponse, posDistM: number, limits: SlopeLimits): HudModel | null {
-  const lengths = hudPathLengths(route.polyline);
-  const fraction = profileDistToFraction(route.profile, posDistM);
+  const path = hudPath(route);
+  const lengths = path.lengths;
+  const total = lengths[lengths.length - 1] ?? 0;
+  const fraction = route.navigation
+    ? (total > 0 ? Math.min(1, Math.max(0, posDistM / total)) : 0)
+    : profileDistToFraction(route.profile, posDistM);
   const at = pointAtFraction(route.polyline, fraction, lengths);
   const sample = interpolateProfile(route.profile, posDistM);
   if (!at || !sample) return null;
 
   const position = at.point;
   const length = lengths[lengths.length - 1] ?? 0;
-  const headingDeg = pathHeading(route.polyline, lengths, fraction * length);
+  const headingDeg = pathHeading(path, fraction * length);
   const nextIndex = route.stops.findIndex((s) => s.dist_m > posDistM + 0.5);
   const nextStop = nextIndex >= 0 ? route.stops[nextIndex] : undefined;
   const lastStop = route.stops[route.stops.length - 1];

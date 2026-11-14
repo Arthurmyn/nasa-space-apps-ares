@@ -194,6 +194,8 @@ export async function mockRoute(req: RouteRequest, signal?: AbortSignal): Promis
   }
 
   return {
+    supports_alternatives: true,
+    navigation: { vertex_dist_m: dist, heading_segments: main.polyline.slice(1).map((_, i) => i) },
     computed_at: new Date().toISOString(),
     distance_m: distance,
     max_slope_deg: maxSlope,
@@ -227,7 +229,6 @@ export async function mockLayers(signal?: AbortSignal): Promise<LayersResponse> 
   const available = (id: LayerId): LayerInfo => ({ id, available: true, reason: null, source: SAMPLE_SOURCE });
   const missing = (id: LayerId): LayerInfo => ({ id, available: false, reason: NO_DATA_REASON, source: null });
   return {
-    supports_alternatives: true,
     layers: [available("slope"), available("optical"), missing("thermal"), missing("geology"), available("radiation")],
   };
 }

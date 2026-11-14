@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { LonLat, RouteResponse } from "../api/types.ts";
 import { computeHud, normalizeDeg, relativeBearing, toHeadingFrame } from "./hud.ts";
+import { offsetLonLat } from "./geo.ts";
 
 const close = (a: number, b: number, tol: number) => assert.ok(Math.abs(a - b) <= tol, `${a} vs ${b}`);
 const limits = { cautionDeg: 8, maxDeg: 14 } as const;
@@ -71,7 +72,8 @@ const route: RouteResponse = {
 
 describe("computeHud", () => {
   it("ignores tiny endpoint connectors when computing heading", () => {
-    const connected = { ...route, polyline: [[0.00001, 0], [0, 0], [0, 0.001], [0.00001, 0.001]] as LonLat[] };
+    const connected = { ...route, polyline: [[0.00001, 0], [0, 0], [0, 0.001], [0.00001, 0.001]] as LonLat[],
+      navigation: { vertex_dist_m: [0, 1, 999, 1000], heading_segments: [1, 1, 1] } };
     close(relativeBearing(computeHud(connected, 0, limits)!.headingDeg, 0), 0, 3);
     close(relativeBearing(computeHud(connected, 1000, limits)!.headingDeg, 0), 0, 3);
   });
@@ -113,6 +115,30 @@ describe("computeHud", () => {
 
   it("is null for a route without geometry or profile", () => {
     assert.equal(computeHud({ ...route, profile: [] }, 10, limits), null);
+  });
+});
+
+describe("HUD navigation supplied by the route service", () => {
+  it("uses grid directions on 1m steps and connectors at intermediate out-and-back stops", () => {
+    const points = [[0.2, -0.2], [0, 0], [0, 1], [0, 2], [0.2, 1.8],
+      [0, 2], [1, 2], [2, 2], [2.2, 1.8], [2, 2], [1, 2], [0, 2], [0.2, 1.8]];
+    const distances = [0, 0.3, 1.3, 2.3, 2.6, 2.9, 3.9, 4.9, 5.2, 5.5, 6.5, 7.5, 7.8];
+    const navRoute: RouteResponse = { ...route,
+      polyline: points.map(([x, y]) => offsetLonLat([0, 0], x!, y!)), distance_m: 7.8,
+      navigation: { vertex_dist_m: distances, heading_segments: [1, 1, 2, 2, 5, 5, 6, 6, 9, 9, 10, 10] },
+      profile: [{ dist_m: 0, elev_m: 0, slope_deg: 0 }, { dist_m: 7.8, elev_m: 0, slope_deg: 0 }],
+    };
+    for (const [distance, expected] of [[0, 0], [2.5, 0], [2.6, 90], [2.8, 90], [5.1, 90], [5.2, 270], [5.4, 270], [7.8, 270]]) {
+      close(relativeBearing(computeHud(navRoute, distance!, limits)!.headingDeg, expected!), 0, 0.01);
+    }
+  });
+
+  it("does not discard a genuine short segment just because it is short", () => {
+    const small: RouteResponse = { ...route, polyline: [[0, 0], offsetLonLat([0, 0], 0.2, 0), offsetLonLat([0, 0], 0.2, 2)],
+      navigation: { vertex_dist_m: [0, 0.2, 2.2], heading_segments: [0, 1] }, distance_m: 2.2,
+      profile: [{ dist_m: 0, elev_m: 0, slope_deg: 0 }, { dist_m: 2.2, elev_m: 0, slope_deg: 0 }] };
+    close(computeHud(small, 0, limits)!.headingDeg, 90, 0.01);
+    close(computeHud(small, 0.2, limits)!.headingDeg, 0, 0.01);
   });
 });
 

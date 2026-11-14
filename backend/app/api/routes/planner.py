@@ -22,7 +22,6 @@ GridDependency = Annotated[Grid, Depends(get_grid)]
 def layers(grid: GridDependency):
     source = "; ".join(grid.meta["sources"])
     return {
-        "supports_alternatives": False,
         "layers": [
             {
                 "id": id,

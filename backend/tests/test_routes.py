@@ -1,5 +1,6 @@
 import json
 import math
+from bisect import bisect_right
 from pathlib import Path
 from time import perf_counter
 
@@ -96,6 +97,8 @@ def test_route_avoids_hill_and_matches_contract(terrain):
         "profile",
         "assumptions",
         "alternative",
+        "navigation",
+        "supports_alternatives",
     }
     assert data["distance_m"] > 52
     assert data["max_slope_deg"] == 0
@@ -146,6 +149,81 @@ def test_profile_preserves_slope_peaks_on_each_leg(terrain):
     assert max(p["slope_deg"] for p in profile) == data["max_slope_deg"]
 
 
+@pytest.mark.parametrize("cell_m", [0.5, 1.0, 2.0, 10.0])
+def test_navigation_ignores_connectors_at_all_five_stops(terrain, cell_m):
+    path, meta, slope = terrain
+    meta["cell_m"] = cell_m
+    (path / "meta.json").write_text(json.dumps(meta))
+    slope[:] = 0
+    slope.tofile(path / "slope.bin")
+    cells = [(15, 2), (12, 2), (12, 6), (12, 2), (8, 2), (4, 6)]
+    points = []
+    for i, (row, col) in enumerate(cells):
+        p = point(meta, row, col, "start" if i == 0 else f"stop-{i}")
+        # Off-centre clicks: these create connectors before AND after each stop.
+        p["lon"] += math.degrees(
+            0.2 * cell_m / (meta["mars_radius_m"] * math.cos(math.radians(meta["center"]["lat"])))
+        )
+        p["lat"] -= math.degrees(0.2 * cell_m / meta["mars_radius_m"])
+        points.append(p)
+    payload = {"start": points[0], "stops": points[1:], "constraints": {"max_slope_deg": 15}}
+    with TestClient(create_app(path)) as client:
+        response = client.post("/api/v1/route", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["supports_alternatives"] is False
+    nav = data["navigation"]
+    distances = nav["vertex_dist_m"]
+    refs = nav["heading_segments"]
+    assert len(distances) == len(data["polyline"])
+    assert len(refs) == len(distances) - 1
+    assert distances[0] == 0 and distances[-1] == data["distance_m"]
+    assert all(a < b for a, b in zip(distances[:-1], distances[1:], strict=True))
+    assert all(0 <= ref < len(refs) and refs[ref] == ref for ref in refs)
+
+    def heading_at(distance):
+        segment = min(bisect_right(distances, distance) - 1, len(refs) - 1)
+        ref = refs[segment]
+        a, b = data["polyline"][ref : ref + 2]
+        east = (b[0] - a[0]) * math.cos(math.radians(meta["center"]["lat"]))
+        north = b[1] - a[1]
+        return math.degrees(math.atan2(east, north)) % 360
+
+    boundaries = [0, *[s["dist_m"] for s in data["stops"]]]
+    for i, expected in enumerate([0, 90, 270, 0, 45]):
+        # Start/departure, actual grid travel, and arrival connector of EVERY leg.
+        for distance in [
+            boundaries[i],
+            (boundaries[i] + boundaries[i + 1]) / 2,
+            boundaries[i + 1] - cell_m * 0.01,
+        ]:
+            assert heading_at(distance) == pytest.approx(expected, abs=1e-4)
+    assert heading_at(data["distance_m"]) == pytest.approx(45, abs=1e-4)
+
+
+@pytest.mark.parametrize("same_position", [False, True])
+def test_navigation_for_same_cell_and_coincident_stops(terrain, same_position):
+    path, meta, _ = terrain
+    start = point(meta, 2, 2, "start")
+    stop = {**start, "id": "one"}
+    if not same_position:
+        stop["lat"] += math.degrees(0.2 * meta["cell_m"] / meta["mars_radius_m"])
+    payload = {
+        "start": start,
+        "stops": [stop, {**stop, "id": "two"}],
+        "constraints": {"max_slope_deg": 15},
+    }
+    with TestClient(create_app(path)) as client:
+        response = client.post("/api/v1/route", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["navigation"] == {
+        "vertex_dist_m": [0, data["distance_m"]],
+        "heading_segments": [0],
+    }
+    assert data["stops"][0]["dist_m"] == data["stops"][1]["dist_m"]
+
+
 @pytest.mark.parametrize("barrier", [40, 255])
 def test_unreachable_segment_returns_explanation(terrain, barrier):
     path, meta, slope = terrain
@@ -180,7 +258,6 @@ def test_layers_sites_and_cached_data(terrain):
     with TestClient(create_app(path)) as client:
         (path / "slope.bin").unlink()
         response = client.get("/api/v1/layers").json()
-        assert response["supports_alternatives"] is False
         layers = response["layers"]
         assert {x["id"] for x in layers if x["available"]} == {"slope", "optical"}
         assert all(x["reason"] for x in layers if not x["available"])
