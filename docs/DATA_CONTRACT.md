@@ -9,6 +9,7 @@ It lives at `docs/DATA_CONTRACT.md`.
 - Real data and test (fake) data have the **same format**. Swapping means replacing files; the code does not change.
 
 ## 2. Where the files are
+Each site has its own folder, `backend/data/<site_id>/` and `frontend/public/data/<site_id>/`, with the files below. The backend loads every folder under `backend/data/` that has a `meta.json` at startup; the folder name must equal `site_id` in its `meta.json`. `gale-bx` is the default site. A frontend site inventory (`SITE_GRID_IMAGES` in `frontend/src/config/tiles.ts`) lists the layer images of each site. The slope grid script takes the site from the handoff (`site_id`, `site_name`; `scripts/make_slope_grid.py --handoff <file>`), and `scripts/make_site_handoff.py` writes a handoff for a DTM that has no rover positions.
 ```
 backend/data/gale-bx/
   meta.json        grid description (see section 3)
@@ -113,9 +114,9 @@ We state the source explicitly and refer to a numbered document `[n]`; the list 
 
 ## 7. API (backend)
 The base path is `/api/v1`. The response shapes are already described in `docs/api.md` (the Frontend proposal section) and in `frontend/src/api/types.ts`. Do not change them.
-- `GET /api/v1/layers`: the `slope` and `optical` (hillshade) layers are always available; `thermal` is available if a valid `thermal.json` exists (section 2b); `radiation` is unavailable with the reason "Single value for the whole site, see route summary"; the others are `available: false` with the reason "No data for this site".
-- `GET /api/v1/sites`: `{ "sites": [ { "id", "name", "groups": [...], "stops": [...] } ] }` from `meta.json` and `stops.json` (a new endpoint, the frontend needs it for the selection list).
-- `POST /api/v1/route`: A* over `slope.bin`, 8 neighbours. A cell with a slope above `slope_limit_deg` is impassable. The cost of a step = length * (1 + (slope/limit)^2). Stops in order: start, stop-1, stop-2, ...
+- `GET /api/v1/layers?site_id=<id>` (default `gale-bx`, unknown id `404`): the `slope` and `optical` (hillshade) layers are always available; `thermal` is available if a valid `thermal.json` exists (section 2b); `radiation` is unavailable with the reason "Single value for the whole site, see route summary"; the others are `available: false` with the reason "No data for this site".
+- `GET /api/v1/sites`: every loaded site, the default first: `{ "sites": [ { "id", "name", "groups": [...], "stops": [...] } ] }` from `meta.json` and `stops.json` (a new endpoint, the frontend needs it for the selection list).
+- `POST /api/v1/route` (optional `site_id` in the body, default `gale-bx`, unknown id `404`): A* over `slope.bin`, 8 neighbours. A cell with a slope above `slope_limit_deg` is impassable. The cost of a step = length * (1 + (slope/limit)^2). Stops in order: start, stop-1, stop-2, ...
   - If there is no path: HTTP 422 and `{ "detail": "<a clear reason, which leg and why>" }`.
   - `profile` is taken along the route from `elevation.bin` and `slope.bin`.
   - `est_time_s = distance_m / (speed_kmh / 3.6)`.

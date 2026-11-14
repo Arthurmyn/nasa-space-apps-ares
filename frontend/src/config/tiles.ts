@@ -76,6 +76,13 @@ export interface GridImageConfig {
 }
 
 /** Explicit inventory of bundled assets, scoped to the site that owns their bbox. */
+const GRID_LAYER_IMAGES: Partial<Record<LayerId, GridImageConfig>> = {
+  optical: { file: "hillshade.png", opacity: 0.6 },
+  slope: { file: "slope.png", opacity: 0.8 },
+  // THEMIS, 100 m per pixel: drawn as blocks (see scripts/make_thermal_layer.py).
+  thermal: { file: "thermal.png", opacity: 0.75, resampling: "nearest" },
+};
+
 export const SITE_GRID_IMAGES: Record<string, Partial<Record<LayerId, GridImageConfig>>> = {
   "gale-bx": {
     optical: { file: "optical.jpg", dir: "imagery", opacity: 1 },
@@ -83,6 +90,7 @@ export const SITE_GRID_IMAGES: Record<string, Partial<Record<LayerId, GridImageC
     // No thermal image: the only raster at hand is THEMIS daytime IR brightness, which is not
     // thermal inertia. The thermal layer shows the published value as a card instead.
   },
+  "gale-001488": GRID_LAYER_IMAGES,
 };
 
 export const gridImagesForSite = (siteId: string): Partial<Record<LayerId, GridImageConfig>> => SITE_GRID_IMAGES[siteId] ?? {};

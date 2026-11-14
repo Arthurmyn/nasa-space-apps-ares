@@ -30,7 +30,7 @@ Conventions: coordinates are `[lon, lat]` in degrees on Mars, longitude east-pos
 
 ### `GET /layers`
 
-Which data layers exist for the site. An explicit `available: false` is authoritative and disables the layer with its `reason`. When the API has no entry, the UI may fall back to configured global tiles or a site-specific inventory of bundled images. Unknown sites never inherit another site's terrain PNGs.
+Which data layers exist for a site. `?site_id=<id>` picks the site (default `gale-bx`, so older clients keep working); an unknown id is `404` with a `detail`. An explicit `available: false` is authoritative and disables the layer with its `reason`. When the API has no entry, the UI may fall back to configured global tiles or a site-specific inventory of bundled images. Unknown sites never inherit another site's terrain PNGs.
 
 ```json
 {
@@ -54,7 +54,7 @@ The API badge reflects the last completed request. Network failures show `API of
 
 ### `GET /sites`
 
-Returns `{ "sites": [{ "id", "name", "groups": [...], "stops": [...], "context" }] }`. `context` is `null` or `{ title, text, sources: [{ title, url, credit }] }`: a short cited text about the site, read from `stops.json`.
+Returns every site the backend loaded, the default site (`gale-bx`) first and the others by id: `{ "sites": [{ "id", "name", "groups": [...], "stops": [...], "context" }] }`. A site may have no groups or stops. A site folder that fails to load is logged and left out; it never falls back to another site's terrain. `context` is `null` or `{ title, text, sources: [{ title, url, credit }] }`: a short cited text about the site, read from `stops.json`.
 The site identity comes from `meta.json`; groups and catalog stops (including note, image and source_id) come from `stops.json`, as specified in `DATA_CONTRACT.md`.
 
 ### `POST /route`
@@ -63,6 +63,7 @@ Request:
 
 ```json
 {
+  "site_id": "gale-bx",
   "start": { "id": "start", "lon": 77.5, "lat": 18.4 },
   "stops": [
     { "id": "stop-1", "lon": 77.51, "lat": 18.41 },
@@ -75,6 +76,7 @@ Request:
 
 | Field | Type | Notes |
 |-------|------|-------|
+| `site_id` | string, optional | The site whose terrain is used. Omitted means the default site `gale-bx`; an unknown id is `404`. Points outside that site's grid are `422`. |
 | `start`, `stops[]` | `{ id, lon, lat, name? }` | 1 to 5 stops, in visiting order. `id` is client-generated and stable ("start", "stop-1", ...); echo it back. |
 | `constraints.max_slope_deg` | number | Positive hard slope limit, capped at `assumptions.json`'s `slope_limit_deg` |
 | `compare` | boolean, optional | Accepted; this implementation returns `alternative: null` |
