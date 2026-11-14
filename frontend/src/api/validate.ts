@@ -21,6 +21,7 @@ import {
   type SitesResponse,
   type StopGroup,
   type StopImage,
+  type ThermalInfo,
 } from "./types.ts";
 
 // Runtime checks at the network boundary. A response that does not match the contract is
@@ -295,4 +296,28 @@ export function parseSitesResponse(raw: unknown): SitesResponse {
     };
   });
   return { sites };
+}
+
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
+
+export function parseThermalInfo(raw: unknown): ThermalInfo {
+  const o = obj(raw, "thermal");
+  if (o.schema !== "ares.thermal/v1") fail("thermal.schema", '"ares.thermal/v1"');
+  const value = obj(o.value, "thermal.value");
+  const source = obj(o.source, "thermal.source");
+  const stops = arr(obj(o.colormap, "thermal.colormap").stops, "thermal.colormap.stops").map((s, i) => {
+    const pair = arr(s, `thermal.colormap.stops[${i}]`);
+    const color = str(pair[1], `thermal.colormap.stops[${i}][1]`);
+    if (!HEX_COLOR.test(color)) fail(`thermal.colormap.stops[${i}][1]`, "a #rrggbb colour");
+    return [num(pair[0], `thermal.colormap.stops[${i}][0]`), color] as const;
+  });
+  if (stops.length < 2) fail("thermal.colormap.stops", "at least 2 stops");
+  return {
+    nativePixelM: num(o.native_pixel_m, "thermal.native_pixel_m"),
+    dnMin: num(value.site_dn_min, "thermal.value.site_dn_min"),
+    dnMax: num(value.site_dn_max, "thermal.value.site_dn_max"),
+    stops,
+    observationStartUtc: strOrNull(source.observation_start_utc, "thermal.source.observation_start_utc"),
+    productId: strOrNull(source.product_id, "thermal.source.product_id"),
+  };
 }
