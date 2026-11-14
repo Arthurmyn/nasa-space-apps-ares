@@ -8,6 +8,7 @@ import { boundsOfBbox } from "../lib/siteGeo.ts";
 import { formatCoordinates } from "../lib/format.ts";
 import { useApp } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
+import { useUi } from "../state/uiStore.ts";
 import { buildStopEntries } from "../state/stopEntries.ts";
 import { viewportStore } from "../state/viewportStore.ts";
 import { CoordinateTicks, NorthArrow, ScaleBar, ZoomControls } from "./MapOverlays.tsx";
@@ -55,6 +56,7 @@ function MapStatus() {
 export default function MapView() {
   const { planner, layers } = useApp();
   const { site } = useSite();
+  const ui = useUi();
   const { state } = planner;
   const hostRef = useRef<HTMLDivElement>(null);
   const readoutRef = useRef<HTMLOutputElement>(null);
@@ -118,6 +120,13 @@ export default function MapView() {
 
   useRouteOverlay(map, { route, stale: planner.stale, compare: state.compare, slopeOn });
   useRasterLayers(map, layers, site);
+
+  // Folding a side panel changes the map's width; tell MapLibre once the layout has settled.
+  useEffect(() => {
+    if (!map) return;
+    const frame = requestAnimationFrame(() => map.resize());
+    return () => cancelAnimationFrame(frame);
+  }, [map, ui.leftCollapsed, ui.rightCollapsed]);
   usePinMarkers(map, entries, state.selectedId, { select: planner.select, move: planner.movePoint });
   useHazardLabels(map, route?.hazards ?? []);
   useHoverMarker(map, route && !planner.stale ? route : null);
