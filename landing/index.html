@@ -28,6 +28,7 @@
     @font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:block;src:url("/fonts/inter-latin-opsz-normal.woff2") format("woff2")}
     :root{
       --bar-h: calc(46 * var(--u));
+      --bar-top: calc(24 * var(--u));
       --u: max( min(calc(100vw / 1563), calc(100vh / 460)), 0.80px );
       --ink:#ffffff; --ink-mark:rgba(255,255,255,.98); --ink-nav:rgba(255,255,255,.91);
       --ink-sub:rgba(255,255,255,.50); --ink-pill:rgba(255,255,255,.88); --ink-dark:#000000;
@@ -104,7 +105,7 @@
     .bar{
       position:fixed;
       left:calc(50% - 550 * var(--u));
-      top:calc(8 * var(--u));
+      top:var(--bar-top);
       width:calc(1100 * var(--u));
       height:var(--bar-h);
       z-index:20;
@@ -129,9 +130,9 @@
     }
     .brand span{
       font-size:calc(26 * var(--u));
-      font-weight:550;
-      font-variation-settings:'opsz' 22;
-      letter-spacing:0;
+      font-weight:600;
+      font-variation-settings:'opsz' 14;
+      letter-spacing:calc(-0.3 * var(--u));
       line-height:1;
     }
 
