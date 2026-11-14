@@ -137,8 +137,11 @@ def smoothed_gradient(z, cell):
 
 
 def compute_slope(z, cell):
-    dx, dy, valid = smoothed_gradient(z, cell)
-    encoded = np.full(z.shape, 255, dtype="uint8")
+    return slope_from_gradient(*smoothed_gradient(z, cell))
+
+
+def slope_from_gradient(dx, dy, valid):
+    encoded = np.full(dx.shape, 255, dtype="uint8")
     degrees = np.degrees(np.arctan(np.hypot(dx, dy)))
     encoded[valid] = np.rint(degrees[valid]/0.5).astype("uint8")
     return encoded
@@ -151,10 +154,10 @@ def png_bytes(array):
 
 
 def encode_files(grid, z):
-    slope = compute_slope(z, grid.meta["cell_m"])
     dx, dy, valid = smoothed_gradient(z, grid.meta["cell_m"])
+    slope = slope_from_gradient(dx, dy, valid)
     # Light from the northwest at 45 degrees; array y increases southwards.
-    light = (-dx*0.5 + dy*0.5 + math.sqrt(0.5))/np.sqrt(1+dx*dx+dy*dy)
+    light = (dx*0.5 + dy*0.5 + math.sqrt(0.5))/np.sqrt(1+dx*dx+dy*dy)
     shade = np.rint(np.clip(light, 0, 1)*255).astype("uint8")
     hillshade = np.stack([shade, shade, shade, valid.astype("uint8")*255], axis=-1)
     colors = np.zeros((*z.shape, 4), dtype="uint8")
