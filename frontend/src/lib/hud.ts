@@ -1,5 +1,5 @@
 import type { LonLat, RouteResponse } from "../api/types.ts";
-import { bearing, haversine, metresPerDegLon, METRES_PER_DEG_LAT, pointAtFraction, ringCentroid } from "./geo.ts";
+import { bearing, cumulativeLengths, haversine, metresPerDegLon, METRES_PER_DEG_LAT, pointAtFraction, ringCentroid } from "./geo.ts";
 import { interpolateProfile } from "./profile.ts";
 import { profileDistToFraction } from "./routeGeo.ts";
 import { classifySlope, type SlopeClass, type SlopeLimits } from "./slope.ts";
@@ -61,13 +61,57 @@ export function toHeadingFrame(point: LonLat, origin: LonLat, headingDeg: number
   };
 }
 
+interface HudPath {
+  lengths: readonly number[];
+  headings: readonly number[];
+}
+
+// Responses are immutable. Prepare distance and heading lookups once per route.
+const hudPaths = new WeakMap<RouteResponse, HudPath>();
+
+function hudPath(route: RouteResponse): HudPath {
+  let prepared = hudPaths.get(route);
+  if (!prepared) {
+    const lengths = route.navigation?.vertex_dist_m ?? cumulativeLengths(route.polyline);
+    const headings = route.polyline.slice(1).map((_, edge) => {
+      const reference = route.navigation?.heading_segments[edge] ?? edge;
+      const from = route.polyline[reference];
+      const to = route.polyline[reference + 1];
+      return from && to ? bearing(from, to) : 0;
+    });
+    prepared = { lengths, headings };
+    hudPaths.set(route, prepared);
+  }
+  return prepared;
+}
+
+/** Use the outgoing edge at a vertex, and the incoming edge at the final vertex. */
+function pathHeading(path: HudPath, targetM: number): number {
+  let lo = 0;
+  let hi = path.headings.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if ((path.lengths[mid + 1] ?? 0) <= targetM + 1e-9) lo = mid + 1;
+    else hi = mid;
+  }
+  return path.headings[lo] ?? 0;
+}
+
 /** Everything the HUD shows for a position `posDistM` metres along the route. */
 export function computeHud(route: RouteResponse, posDistM: number, limits: SlopeLimits): HudModel | null {
-  const at = pointAtFraction(route.polyline, profileDistToFraction(route.profile, posDistM));
+  const path = hudPath(route);
+  const lengths = path.lengths;
+  const total = lengths[lengths.length - 1] ?? 0;
+  const fraction = route.navigation
+    ? (total > 0 ? Math.min(1, Math.max(0, posDistM / total)) : 0)
+    : profileDistToFraction(route.profile, posDistM);
+  const at = pointAtFraction(route.polyline, fraction, lengths);
   const sample = interpolateProfile(route.profile, posDistM);
   if (!at || !sample) return null;
 
   const position = at.point;
+  const length = lengths[lengths.length - 1] ?? 0;
+  const headingDeg = pathHeading(path, fraction * length);
   const nextIndex = route.stops.findIndex((s) => s.dist_m > posDistM + 0.5);
   const nextStop = nextIndex >= 0 ? route.stops[nextIndex] : undefined;
   const lastStop = route.stops[route.stops.length - 1];
@@ -84,7 +128,7 @@ export function computeHud(route: RouteResponse, posDistM: number, limits: Slope
 
   return {
     position,
-    headingDeg: at.bearingDeg,
+    headingDeg,
     slopeDeg: sample.slope_deg,
     slopeClass: classifySlope(sample.slope_deg, limits),
     next:

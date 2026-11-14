@@ -1,4 +1,7 @@
+import { useSyncExternalStore } from "react";
 import { dataSource } from "../api/client.ts";
+import { apiConnection } from "../api/connection.ts";
+import type { ApiConnection } from "../api/connection.ts";
 import { formatUtcTime } from "../lib/format.ts";
 import { usePlanner } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
@@ -18,20 +21,31 @@ interface TopBarProps {
   onDrawer: (drawer: Drawer) => void;
 }
 
-/** Only the dev mock needs a badge. Real data is the normal case and is not labelled. */
+/** Status of the last completed API request, or a sample-data label in dev mock mode. */
 function DataBadge() {
-  if (dataSource !== "mock") return null;
+  const sample = dataSource === "mock";
+  const connection = useSyncExternalStore(apiConnection.subscribe, apiConnection.getSnapshot);
+  const labels: Record<ApiConnection, string> = {
+    unknown: "Connecting to API", online: "Live API", offline: "API offline",
+    "service-error": "API service error", invalid: "Invalid API response", timeout: "API timed out",
+  };
+  const label = sample ? "Sample data" : labels[connection];
   return (
-    <span className="badge badge--caution" title="Values come from built-in sample data, not the route service">
-      <Icon name="info" />
-      <span>Sample data</span>
+    <span
+      className={`badge topbar__data-badge ${sample || connection !== "online" ? "badge--caution" : "badge--ok"}`}
+      title={label}
+      role="status"
+      aria-label={label}
+    >
+      <Icon name={sample || connection === "unknown" ? "info" : connection === "offline" ? "wifiOff" : connection === "online" ? "check" : "alert"} />
+      <span>{label}</span>
     </span>
   );
 }
 
 function TestDataBadge() {
   return (
-    <span className="badge badge--caution" title="The terrain grid is generated for testing, not measured Mars data">
+    <span className="badge badge--caution topbar__data-badge" aria-label="Test data" title="The terrain grid is generated for testing, not measured Mars data">
       <Icon name="alert" />
       <span>Test data</span>
     </span>

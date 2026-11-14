@@ -30,7 +30,7 @@ def layers(grid: GridDependency):
                 "source": source if id in ("slope", "optical") else None,
             }
             for id in ("slope", "optical", "thermal", "geology", "radiation")
-        ]
+        ],
     }
 
 

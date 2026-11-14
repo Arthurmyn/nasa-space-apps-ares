@@ -74,6 +74,12 @@ class HazardZone(Model):
     polygon: GeoJsonPolygon
 
 
+class RouteNavigation(Model):
+    vertex_dist_m: list[float]
+    # For each polyline edge, index of the edge whose direction the HUD should use.
+    heading_segments: list[int]
+
+
 class RouteResponse(Model):
     computed_at: str
     distance_m: float
@@ -87,6 +93,8 @@ class RouteResponse(Model):
     profile: list[ProfilePoint]
     assumptions: list[Assumption]
     alternative: RouteAlternative | None
+    navigation: RouteNavigation | None = None
+    supports_alternatives: bool = False
 
 
 class LayerInfo(Model):
