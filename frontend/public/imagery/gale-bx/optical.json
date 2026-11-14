@@ -1,0 +1,25 @@
+{
+  "schema": "ares.optical/v1",
+  "layer": "optical",
+  "file": "optical.jpg",
+  "site_id": "gale-bx",
+  "label": "HiRISE orthoimage PSP_009149_1750 (MRO), same stereo pair as the DTM, acquired 9 Jul 2008.",
+  "credit": "NASA/JPL-Caltech/UArizona",
+  "page_url": "https://www.uahirise.org/dtm/PSP_009149_1750",
+  "source_file": "PSP_009149_1750_RED_C_01_ORTHO.JP2",
+  "pixel_m": 1.0,
+  "width": 1314,
+  "height": 1848,
+  "bbox": {
+    "lon_min": 137.3761770719427,
+    "lon_max": 137.39842292805733,
+    "lat_min": -4.811338438888899,
+    "lat_max": -4.780161561111101
+  },
+  "covered_percent": 100.0,
+  "stretch_dn": [
+    12.19440299987793,
+    152.64393753051758
+  ],
+  "resampling": "average, display only"
+}
