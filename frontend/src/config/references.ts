@@ -28,7 +28,7 @@ export const REFERENCES: readonly Reference[] = [
   },
   {
     n: 5,
-    citation: "Hassler, D. M. et al., Mars' Surface Radiation Environment Measured with the Mars Science Laboratory's Curiosity Rover, Science 343 (6169), 1244797, 2014. Figure as quoted in the SwRI release.",
+    citation: "Hassler, D. M. et al., Mars' Surface Radiation Environment Measured with the Mars Science Laboratory's Curiosity Rover, Science 343 (6169), 1244797, 2014, Table 1 (GCR only): 0.64 ± 0.12 mSv/day.",
     url: "https://doi.org/10.1126/science.1244797",
   },
   {
