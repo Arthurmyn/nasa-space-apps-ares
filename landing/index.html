@@ -25,6 +25,7 @@
   <style>
     @font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:block;src:url("/fonts/inter-latin-opsz-normal.woff2") format("woff2")}
     :root{
+      --bar-h: calc(46 * var(--u));
       --u: max( min(calc(100vw / 1563), calc(100vh / 460)), 0.80px );
       --ink:#ffffff; --ink-mark:rgba(255,255,255,.98); --ink-nav:rgba(255,255,255,.91);
       --ink-sub:rgba(255,255,255,.50); --ink-pill:rgba(255,255,255,.88); --ink-dark:#000000;
@@ -100,10 +101,10 @@
 
     .bar{
       position:fixed;
-      left:calc(50% - 495.5 * var(--u));
-      top:calc(7.5 * var(--u));
-      width:calc(983.5 * var(--u));
-      height:calc(36.2 * var(--u));
+      left:calc(50% - 550 * var(--u));
+      top:calc(8 * var(--u));
+      width:calc(1100 * var(--u));
+      height:var(--bar-h);
       z-index:20;
     }
 
@@ -114,18 +115,18 @@
       transform:translateY(-50%);
       display:flex;
       align-items:center;
-      gap:calc(11.4 * var(--u));
+      gap:calc(13 * var(--u));
       color:var(--ink-mark);
       text-decoration:none;
     }
     .brand svg{
-      width:calc(26.9 * var(--u));
-      height:calc(16.6 * var(--u));
+      width:calc(32 * var(--u));
+      height:calc(19.8 * var(--u));
       display:block;
       flex:none;
     }
     .brand span{
-      font-size:calc(21 * var(--u));
+      font-size:calc(26 * var(--u));
       font-weight:550;
       font-variation-settings:'opsz' 22;
       letter-spacing:0;
@@ -134,15 +135,15 @@
 
     .links{
       position:absolute;
-      left:calc(300 * var(--u));
+      left:calc(335 * var(--u));
       top:50%;
       transform:translateY(-50%);
       display:flex;
       align-items:center;
-      gap:calc(22 * var(--u));
+      gap:calc(26 * var(--u));
     }
     .links a{
-      font-size:calc(13.6 * var(--u));
+      font-size:calc(16.5 * var(--u));
       font-weight:450;
       font-variation-settings:'opsz' 15;
       letter-spacing:calc(-0.30 * var(--u));
@@ -173,8 +174,9 @@
       white-space:nowrap;
       line-height:1;
       border:0;
-      transition:background-color .18s ease, color .18s ease, border-color .18s ease;
+      transition:background-color .18s ease, color .18s ease, border-color .18s ease, transform .12s cubic-bezier(.23,1,.32,1);
     }
+    .btn:active{ transform:scale(.97); }
     .ghost{
       background:transparent;
       color:#fff;
@@ -192,27 +194,41 @@
     }
 
     .bar .btn{
-      height:calc(36.2 * var(--u));
-      line-height:calc(36.2 * var(--u));
-      font-size:calc(13.4 * var(--u));
+      height:var(--bar-h);
+      line-height:var(--bar-h);
+      font-size:calc(15.5 * var(--u));
       font-weight:500;
       font-variation-settings:'opsz' 15;
       letter-spacing:calc(-0.38 * var(--u));
     }
     .bar .ghost{
-      width:calc(97 * var(--u));
+      width:calc(122 * var(--u));
     }
     .bar .solid{
-      width:calc(100 * var(--u));
-      font-size:calc(13.6 * var(--u));
+      width:calc(128 * var(--u));
+      font-size:calc(15.8 * var(--u));
       font-weight:550;
       letter-spacing:calc(-0.35 * var(--u));
     }
 
+
+    .demo-arrow{
+      position:absolute;
+      width:calc(220 * var(--u));
+      height:calc(150 * var(--u));
+      right:calc(-94 * var(--u));
+      top:calc(100% - 16 * var(--u));
+      overflow:visible;
+      pointer-events:none;
+      transition:opacity .25s cubic-bezier(.23,1,.32,1);
+    }
+    .bar.is-scrolled .demo-arrow{ opacity:0; }
+    @media (max-width: 1023px){ .demo-arrow{ display:none; } }
+
     .menu{
       display:none;
-      width:calc(36.2 * var(--u));
-      height:calc(36.2 * var(--u));
+      width:var(--bar-h);
+      height:var(--bar-h);
       border-radius:var(--r-btn);
       border:calc(1 * var(--u)) solid rgba(255,255,255,.35);
       background:transparent;
@@ -254,7 +270,7 @@
       padding:calc(9 * var(--u)) calc(10 * var(--u));
       border-radius:calc(9 * var(--u));
       color:var(--ink-nav);
-      font-size:calc(14 * var(--u));
+      font-size:calc(16 * var(--u));
       font-weight:450;
       font-variation-settings:'opsz' 15;
       letter-spacing:calc(-0.30 * var(--u));
@@ -303,7 +319,7 @@
       transform:translateX(-50%);
       display:inline-flex;
       align-items:center;
-      width:calc(194.5 * var(--u));
+      width:calc(214 * var(--u));
       height:calc(22.4 * var(--u));
       padding-left:calc(4.0 * var(--u));
       padding-right:calc(8.6 * var(--u));
@@ -341,7 +357,7 @@
       position:relative;
       top:calc(1 * var(--u));
       color:var(--ink-pill);
-      font-size:calc(12.4 * var(--u));
+      font-size:calc(13.6 * var(--u));
       font-weight:450;
       font-variation-settings:'opsz' 15;
       letter-spacing:calc(-0.48 * var(--u));
@@ -408,16 +424,16 @@
       height:calc(36.4 * var(--u));
       line-height:calc(36.4 * var(--u));
       padding-top:calc(2 * var(--u));
-      font-size:calc(13.3 * var(--u));
+      font-size:calc(14.6 * var(--u));
       font-weight:480;
       font-variation-settings:'opsz' 16;
       letter-spacing:calc(-0.34 * var(--u));
     }
     .cta .ghost{
-      width:calc(99.6 * var(--u));
+      width:calc(110 * var(--u));
     }
     .cta .solid{
-      width:calc(96.4 * var(--u));
+      width:calc(116 * var(--u));
     }
 
     @media (max-width: 1023px){
@@ -515,6 +531,12 @@
       .intro-play .hero p{ animation:i-sub .70s var(--e-soft) .86s both; }
       .intro-play .cta .btn:nth-child(1){ animation:i-btn .62s var(--e-soft) 1.00s both; }
       .intro-play .cta .btn:nth-child(2){ animation:i-btn .62s var(--e-soft) 1.07s both; }
+
+      /* The arrow draws itself once the intro has settled; the head lands after the line. */
+      .da-halo, .da-line{ stroke-dasharray:1; stroke-dashoffset:1; animation:da-draw 1s var(--e-reveal) 2.1s forwards; }
+      .da-head{ opacity:0; animation:da-head .28s var(--e-soft) 2.95s forwards; }
+      @keyframes da-draw{ to{ stroke-dashoffset:0; } }
+      @keyframes da-head{ from{ opacity:0; } to{ opacity:1; } }
     }
 
     @media (prefers-reduced-motion: reduce){
@@ -540,24 +562,24 @@
 
     <div class="screen">
       <main class="hero">
-        <a class="pill" href="/app/">
-          <span class="chip">New</span>
-          <span class="pill-label">Go beyond the ordinary</span>
+        <a class="pill" href="#about">
+          <span class="chip">2026</span>
+          <span class="pill-label">Space Apps challenge</span>
           <svg viewBox="0 0 9.5 8" fill="none" aria-hidden="true">
             <path d="M0.7 4H8.8M5.6 0.75 8.85 4 5.6 7.25" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </a>
 
         <h1>
-          <span class="ln"><span class="ln-i">See beyond now</span></span>
-          <span class="ln"><span class="ln-i">Explore the stars</span></span>
+          <span class="ln"><span class="ln-i">Plan one walk</span></span>
+          <span class="ln"><span class="ln-i">on Mars</span></span>
         </h1>
 
-        <p>Everything you need to discover, understand, and explore what is out there.</p>
+        <p>A candidate route across real NASA Mars data, with a source for every number.</p>
 
         <div class="cta">
-          <a class="btn ghost" href="/app/">Try for free</a>
-          <a class="btn solid" href="/app/">Explore</a>
+          <a class="btn ghost" href="/app/">Launch app</a>
+          <a class="btn solid" href="#how">How it works</a>
         </div>
       </main>
     </div>
@@ -585,8 +607,16 @@
       </nav>
 
       <div class="actions">
-        <a class="btn ghost" href="/app/">Try for free</a>
-        <a class="btn solid" href="/app/">Get a demo</a>
+        <a class="btn ghost" href="/app/">Launch app</a>
+        <a class="btn solid" href="#demo">Get a demo</a>
+        <svg class="demo-arrow" viewBox="0 0 220 150" aria-hidden="true" focusable="false">
+          <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path class="da-halo" pathLength="1" d="M206 138C132 150 70 112 62 30" stroke="#fff" stroke-width="7"/>
+            <path class="da-line" pathLength="1" d="M206 138C132 150 70 112 62 30" stroke="#7b3cff" stroke-width="3.6"/>
+            <path class="da-head da-head-halo" d="M43 52L62 24L83 49" stroke="#7b3cff" stroke-width="8"/>
+            <path class="da-head" d="M43 52L62 24L83 49" stroke="#fff" stroke-width="3.6"/>
+          </g>
+        </svg>
         <button class="menu" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu-sheet">
           <svg viewBox="0 0 20 14" fill="none" aria-hidden="true">
             <path d="M0 1h20M0 7h20M0 13h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -598,7 +628,8 @@
           <a href="#data">Data</a>
           <a href="#team">Team</a>
           <a href="#sources">Sources</a>
-          <a class="btn solid" href="/app/">Get a demo</a>
+          <a href="/app/">Launch app</a>
+          <a class="btn solid" href="#demo">Get a demo</a>
         </nav>
       </div>
     </header>
@@ -629,7 +660,28 @@
       </div>
     </section>
 
-    <section id="features" class="alt" aria-labelledby="features-title">
+    <section id="demo" class="alt" aria-labelledby="demo-title">
+      <div class="wrap">
+        <h2 id="demo-title">See the planner work</h2>
+        <p class="lead">A one-minute walkthrough: place stops, watch the route update as you move them, compare an alternative, and print the route card.</p>
+        <figure class="demo">
+          <div class="demo__frame" data-reveal="clip">
+            <video id="demo-video" controls playsinline preload="metadata" poster="/media/demo-poster.jpg" aria-describedby="demo-notes">
+              <source src="/media/demo.mp4" type="video/mp4">
+              Your browser cannot play this video. The planner is at <a href="/app/">/app/</a>.
+            </video>
+          </div>
+          <figcaption id="demo-notes">
+            <strong>Recorded on sample data, not real terrain.</strong> In the video: click the map to set a start and three stops, read the route summary,
+            hover the elevation profile to follow the route on the map, drag a stop and watch the old route fade until the new one arrives,
+            compare an alternative, open &ldquo;How this is computed&rdquo;, then the printable card and the HUD preview. The video has no sound.
+          </figcaption>
+        </figure>
+        <a class="btn solid" href="/app/">Launch the app</a>
+      </div>
+    </section>
+
+    <section id="features" aria-labelledby="features-title">
       <div class="wrap">
         <h2 id="features-title">What the planner does</h2>
         <p class="lead">Status is shown on every card. The planner runs on sample data today; real terrain data is the next step.</p>
