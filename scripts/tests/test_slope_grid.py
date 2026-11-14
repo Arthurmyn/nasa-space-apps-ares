@@ -145,8 +145,8 @@ def test_polygon_clipping_nodata_and_transparent_pngs(tmp_path):
     ring = handoff["aoi_proposal"]["aoi_geojson"]["coordinates"][0]
     # A triangular AOI leaves half of the bounding rectangle outside the AOI.
     handoff["aoi_proposal"]["aoi_geojson"]["coordinates"] = [[ring[0], ring[1], ring[2], ring[0]]]
-    grid = build_grid(handoff, 2)
     meta = generate(handoff, tmp_path, cell=2, fake=True)
+    grid = build_grid(handoff, meta["cell_m"])   # the full AOI falls back to 3 m
     z = np.fromfile(tmp_path / "backend/data/gale-bx/elevation.bin", dtype="<f4").reshape(grid.inside.shape)
     assert np.isnan(z[~grid.inside]).all()
     assert np.isfinite(z[grid.inside]).all()
@@ -161,8 +161,9 @@ def test_polygon_clipping_nodata_and_transparent_pngs(tmp_path):
 def test_size_fallback_and_failure_do_not_publish_oversized_files(tmp_path, capsys):
     handoff = json.loads(HANDOFF.read_text())
     meta = generate(handoff, tmp_path, cell=0.5, fake=True)
-    assert meta["cell_m"] == 2
-    assert "--cell 2" in capsys.readouterr().out
+    assert meta["cell_m"] == 3                   # 0.5 m -> 2 m -> 3 m for the full team AOI
+    out = capsys.readouterr().out
+    assert "--cell 2" in out and "--cell 3" in out
     backend = tmp_path / "backend/data/gale-bx"
     before = (backend / "meta.json").read_bytes()
     (backend / "stops.json").write_bytes(b" " * 3_000_000)
@@ -200,13 +201,17 @@ def test_slope_png_uses_assumption_thresholds_or_defaults(tmp_path, thresholds):
     slope = np.fromfile(backend / "slope.bin", dtype="u1").reshape(meta["height"], meta["width"])
     with Image.open(tmp_path / "frontend/public/data/gale-bx/slope.png") as im:
         colors = np.asarray(im)
+    steep = max(limit, slope_grid.STEEP_DEG)
     for mask, color in [
         (slope <= caution / 0.5, (75, 180, 110, 125)),
         ((slope > caution / 0.5) & (slope <= limit / 0.5), (245, 180, 65, 155)),
-        ((slope > limit / 0.5) & (slope != 255), (220, 65, 60, 175)),
+        ((slope > limit / 0.5) & (slope <= steep / 0.5), (220, 65, 60, 175)),
+        ((slope > steep / 0.5) & (slope != 255), (120, 20, 20, 200)),
     ]:
-        assert mask.any()
-        assert np.all(colors[mask] == color)
+        if mask.any():
+            assert np.all(colors[mask] == color)
+    # The browser copy of slope.bin is identical to the backend one.
+    assert (tmp_path / "frontend/public/data/gale-bx/slope.bin").read_bytes() == (backend / "slope.bin").read_bytes()
 
 
 def test_committed_real_grid_stops_and_assumptions_match_contract():

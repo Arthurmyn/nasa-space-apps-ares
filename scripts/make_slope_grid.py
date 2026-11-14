@@ -30,6 +30,11 @@ RADIUS = 3396190
 MAX_BYTES = 3_000_000
 RESERVE_BYTES = 100_000
 WINDOW_M = 5
+# Cell sizes tried in turn when the grid does not fit the 3 MB budget.
+# The full team AOI (about 1.3 x 1.8 km) needs 3 m.
+FALLBACK_CELLS = (2.0, 3.0)
+# Upper display break of the slope layer (NASA EVA-EXP-0075 lunar suit design case, 20 deg).
+STEEP_DEG = 20
 
 
 @dataclass
@@ -165,14 +170,20 @@ def encode_files(grid, z, caution_deg=10, limit_deg=15):
     hillshade = np.stack([shade, shade, shade, valid.astype("uint8")*255], axis=-1)
     colors = np.zeros((*z.shape, 4), dtype="uint8")
     degrees = slope.astype("float64") * grid.meta["slope_unit_deg"]
+    # Display classes <=10 / 10-15 / 15-20 / >20 deg. All are lunar analogs, not Mars suit limits:
+    # 15 deg Pena-Asensio et al. 2024 (doi:10.1016/j.actaastro.2023.10.010), 20 deg NASA EVA-EXP-0075
+    # design case; 10 deg is a display break only.
     colors[(degrees <= caution_deg) & valid] = (75, 180, 110, 125)
     colors[(degrees > caution_deg) & (degrees <= limit_deg) & valid] = (245, 180, 65, 155)
-    colors[(degrees > limit_deg) & valid] = (220, 65, 60, 175)
+    colors[(degrees > limit_deg) & (degrees <= STEEP_DEG) & valid] = (220, 65, 60, 175)
+    colors[(degrees > max(limit_deg, STEEP_DEG)) & valid] = (120, 20, 20, 200)
     meta = (json.dumps(grid.meta, ensure_ascii=False, indent=2, allow_nan=False)+"\n").encode("utf-8")
     return {"backend/data/gale-bx/meta.json": meta,
             "backend/data/gale-bx/elevation.bin": z.astype("<f4").tobytes(order="C"),
             "backend/data/gale-bx/slope.bin": slope.tobytes(order="C"),
             "frontend/public/data/gale-bx/meta.json": meta,
+            # Copy for the browser: a stop on a DTM gap or over the limit is refused on click.
+            "frontend/public/data/gale-bx/slope.bin": slope.tobytes(order="C"),
             "frontend/public/data/gale-bx/hillshade.png": png_bytes(hillshade),
             "frontend/public/data/gale-bx/slope.png": png_bytes(colors)}
 
@@ -231,13 +242,14 @@ def generate(handoff, output_root, cell=1.0, dtm=None, fake=False):
                     total += path.stat().st_size
         if grid_bytes <= MAX_BYTES - RESERVE_BYTES and total <= MAX_BYTES:
             break
-        if cell >= 2:
+        larger = [c for c in FALLBACK_CELLS if c > cell]
+        if not larger:
             raise ValueError(f"3 MB limit or {RESERVE_BYTES}-byte reserve exceeded at cell={cell}: "
                              f"grid={grid_bytes}, total={total} bytes; nothing written")
         print(f"Grid={grid_bytes} bytes (budget {MAX_BYTES - RESERVE_BYTES}, "
               f"reserve {RESERVE_BYTES}); total={total} bytes (limit {MAX_BYTES}); "
-              "rebuilding with --cell 2")
-        cell = 2.0
+              f"rebuilding with --cell {larger[0]:g}")
+        cell = larger[0]
     # Do not publish the oversized first attempt.
     for relative, data in files.items():
         path = output_root / relative

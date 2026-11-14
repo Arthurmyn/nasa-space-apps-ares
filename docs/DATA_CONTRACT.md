@@ -21,11 +21,13 @@ backend/data/gale-bx/
 frontend/public/data/gale-bx/
   meta.json        copy (the script copies it itself)
   hillshade.png    grey terrain background, RGBA, size width x height
-  slope.png        coloured slope layer, RGBA with transparency, size width x height
+  slope.png        coloured slope layer, RGBA with transparency, size width x height;
+                   classes <=10 / 10-15 / 15-20 / >20 deg (lunar analogs, 10 deg is a display break only)
+  slope.bin        copy of backend slope.bin; the browser refuses a stop on a gap or over the limit
   thermal.png      THEMIS thermal layer, RGBA, size width x height, bbox from meta.json (section 2b)
   thermal.json     thermal layer description: source, pixel size, value range, colours
 ```
-Size: all files together up to 3,000,000 bytes. Of these, 100,000 bytes are reserved for the companion JSON files: the grid itself (meta.json ×2, elevation.bin, slope.bin, hillshade.png, slope.png) must take no more than 2,900,000 bytes. If either limit is exceeded, the script uses a 2 m cell (`--cell 2`); if a limit is still exceeded, it exits with an error before writing.
+Size: all files together up to 3,000,000 bytes. Of these, 100,000 bytes are reserved for the companion JSON files: the grid itself (meta.json ×2, elevation.bin, slope.bin ×2, hillshade.png, slope.png) must take no more than 2,900,000 bytes. If either limit is exceeded, the script tries a 2 m cell (`--cell 2`), then a 3 m cell (`--cell 3`); if a limit is still exceeded, it exits with an error before writing. The full team AOI (137.3762-137.3984 E, -4.8113 to -4.7802) fits only at 3 m.
 ### 2b. Thermal layer (THEMIS)
 Made by `scripts/make_thermal_layer.py` from the USGS Astropedia cube "Gale Crater THEMIS Daytime IR ISIS" (link and credit in `ASSETS.md` and in `thermal.json`). It is a **single observation** by Mars Odyssey THEMIS (product `I24545011RDR`, band 9, 12.57 µm), with a native pixel of 100 m; about 70 pixels fall on the site. Values are stored as stretched 8-bit numbers, not calibrated temperature. A pixel with value 0 (the THEMIS team's ignore value) is transparent.
 - `thermal.png`: each pixel of the site grid takes the value of the nearest THEMIS pixel (no interpolation), coloured by the scale in `thermal.json`.
