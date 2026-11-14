@@ -1,29 +1,29 @@
-name: 📋 Задача
-description: Техническая задача, исследование, настройка, ML-эксперимент
+name: 📋 Task
+description: A technical task, research, setup, or an ML experiment
 title: "[Task]: "
 labels: ["type:task"]
 body:
   - type: dropdown
     id: area
     attributes:
-      label: Область
-      options: [Frontend, Backend, ML, Infra, Docs, Pitch / Презентация]
+      label: Area
+      options: [Frontend, Backend, ML, Infra, Docs, Pitch / Presentation]
     validations:
       required: true
   - type: textarea
     id: description
     attributes:
-      label: Описание
+      label: Description
     validations:
       required: true
   - type: textarea
     id: done
     attributes:
-      label: Результат (что считается выполненным)
+      label: Result (what counts as done)
       value: |
         - [ ]
   - type: input
     id: estimate
     attributes:
-      label: Оценка времени
-      placeholder: "например, 2h"
+      label: Time estimate
+      placeholder: "for example, 2h"

@@ -1,26 +1,26 @@
-name: ✨ Фича
-description: Новая функциональность или улучшение
+name: ✨ Feature
+description: New functionality or an improvement
 title: "[Feature]: "
 labels: ["type:feature"]
 body:
   - type: dropdown
     id: area
     attributes:
-      label: Область
+      label: Area
       options: [Frontend, Backend, ML, Infra]
     validations:
       required: true
   - type: textarea
     id: goal
     attributes:
-      label: Что нужно сделать и зачем
-      placeholder: Как пользователь, я хочу ..., чтобы ...
+      label: What needs to be done and why
+      placeholder: As a user, I want ..., so that ...
     validations:
       required: true
   - type: textarea
     id: acceptance
     attributes:
-      label: Критерии готовности
+      label: Definition of done
       value: |
         - [ ]
         - [ ]
@@ -29,11 +29,11 @@ body:
   - type: dropdown
     id: priority
     attributes:
-      label: Приоритет
-      options: ["P0 - блокирует демо", "P1 - нужно для MVP", "P2 - nice to have"]
+      label: Priority
+      options: ["P0 - blocks the demo", "P1 - needed for the MVP", "P2 - nice to have"]
     validations:
       required: true
   - type: textarea
     id: notes
     attributes:
-      label: Заметки / ссылки / макеты
+      label: Notes / links / mockups
