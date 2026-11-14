@@ -189,7 +189,12 @@ def test_offline_workflow_writes_evidence_and_preserves_region_work(tmp_path, ha
                         "type": "Feature",
                         "properties": {"role": "target"},
                         "geometry": {"type": "Point", "coordinates": [137.40005, -4.8]},
-                    }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {"role": "habitat"},
+                        "geometry": {"type": "Point", "coordinates": [137.4, -4.8]},
+                    },
                 ],
             }
         )
@@ -205,7 +210,7 @@ def test_offline_workflow_writes_evidence_and_preserves_region_work(tmp_path, ha
     assert not Path(evidence).is_absolute()
     assert (handoff.parent / evidence).resolve() == (output / "r0_result.json").resolve()
     proposal = config["aoi_proposal"]
-    assert proposal["planning_points_count"] == 1
+    assert proposal["planning_points_count"] == 2
     assert (output / "planning_points.geojson").read_bytes() == planning_file.read_bytes()
     assert proposal["crs_proj"].find("+no_defs=True") == -1
     crs = CRS.from_user_input(proposal["crs_proj"])
@@ -225,6 +230,43 @@ def test_offline_workflow_writes_evidence_and_preserves_region_work(tmp_path, ha
     assert end[0] - start[0] == pytest.approx(distance, abs=0.001)
     assert json.loads((output / "r0_result.json").read_text())["decision"] == "campaign-covered"
     assert (output / "r0_overlay.png").stat().st_size > 0
+
+    review = tmp_path / "review.json"
+    review.write_text(
+        json.dumps(
+            {
+                "schema": "ares.r0-planning-approval/v1",
+                "reviewer": "synthetic-test-reviewer",
+                "reviewed_on": "2026-11-14",
+                "evidence": ["synthetic QA; test only"],
+                "extent_sha256": proposal["extent_sha256"],
+                "planning_points_sha256": proposal["planning_points_sha256"],
+                "checks": {
+                    "r6_targets_finalized": True,
+                    "d9_habitat_finalized": True,
+                    "terrain_qa_passed": True,
+                },
+            }
+        )
+    )
+    approved = r0_coverage.run(
+        raw,
+        output,
+        handoff,
+        manifest=manifest,
+        planning_points=planning_file,
+        planning_approval=review,
+    )
+    assert approved["aoi_proposal"]["planning_ready"] is True
+    assert (output / "planning_approval.json").read_bytes() == review.read_bytes()
+
+    # A normal successful rerun must remove artifacts from the previous planning run.
+    normal = r0_coverage.run(raw, output, handoff, manifest=manifest)
+    assert normal["aoi_proposal"]["planning_points_count"] == 0
+    assert not (output / "planning_points.geojson").exists()
+    assert not (output / "planning_approval.json").exists()
+    assert normal["aoi_proposal"]["planning_ready"] is False
+    assert planning_file.exists()  # The caller's source file is preserved.
 
     # No covering candidate: publish the failed report but preserve the accepted handoff/config.
     with rasterio.open(raw / "B.IMG", "r+") as dst:
