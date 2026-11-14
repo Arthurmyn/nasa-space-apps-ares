@@ -8,6 +8,7 @@ import "./styles/shell.css";
 import "./styles/panels.css";
 import "./styles/map.css";
 import "./styles/profile.css";
+import "./styles/card.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
