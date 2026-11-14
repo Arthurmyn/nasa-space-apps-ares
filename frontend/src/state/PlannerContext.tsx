@@ -13,6 +13,9 @@ import { api } from "../api/client.ts";
 import { describeError } from "../api/errors.ts";
 import { ApiError } from "../api/types.ts";
 import { stopLabel } from "../lib/format.ts";
+import { decodePlan, encodePlan } from "../lib/planUrl.ts";
+import { clampToBbox, insideBbox } from "../lib/siteGeo.ts";
+import { useSite } from "./SiteContext.tsx";
 import type { LayerId, LayerInfo } from "../api/types.ts";
 import { DEFAULT_ACTIVE_LAYERS } from "../config/layers.ts";
 import { NOTICE_MS, ROUTE_DEBOUNCE_MS } from "../config/route.ts";
@@ -119,6 +122,27 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
   const stateRef = useRef(state);
   stateRef.current = state;
   const inflight = useRef<AbortController | null>(null);
+  const { site } = useSite();
+  const bbox = site.bbox;
+
+  // Restore a plan from the URL hash once, so a shared link opens on the same points.
+  useEffect(() => {
+    const plan = decodePlan(window.location.hash);
+    const inside = ([lon, lat]: readonly [number, number]) => insideBbox(bbox, lon, lat);
+    const start = plan.start && inside(plan.start) ? { lon: plan.start[0], lat: plan.start[1] } : null;
+    const stops = plan.stops.filter(inside).map(([lon, lat]) => ({ lon, lat }));
+    if (start || stops.length > 0) dispatch({ type: "plan/load", start, stops });
+  }, [bbox]);
+
+  // Keep the hash in step with the points. replaceState: editing a plan is not page navigation.
+  useEffect(() => {
+    const hash = encodePlan({
+      start: state.start ? [state.start.lon, state.start.lat] : null,
+      stops: state.stops.map((p) => [p.lon, p.lat] as const),
+    });
+    const next = hash ? `#${hash}` : window.location.pathname + window.location.search;
+    if (window.location.hash !== (hash ? `#${hash}` : "")) window.history.replaceState(null, "", next);
+  }, [state.start, state.stops]);
 
   const fetchRoute = useCallback(async () => {
     const snapshot = stateRef.current;
@@ -182,16 +206,22 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       view: routeView(state),
       stale: isStale(state),
       fetching: state.status === "loading",
-      addPoint: (lon, lat) => dispatch({ type: "point/add", lon, lat }),
+      addPoint: (lon, lat) =>
+        insideBbox(bbox, lon, lat)
+          ? dispatch({ type: "point/add", lon, lat })
+          : dispatch({ type: "notice/set", message: "That point is outside the terrain grid. Click inside the shaded area." }),
       setPresetStops: (stops) => dispatch({ type: "stops/preset", stops }),
-      movePoint: (id, lon, lat) => dispatch({ type: "point/move", id, lon, lat }),
+      movePoint: (id, lon, lat) => {
+        const [x, y] = clampToBbox(bbox, lon, lat);
+        dispatch({ type: "point/move", id, lon: x, lat: y });
+      },
       removePoint: (id) => dispatch({ type: "point/remove", id }),
       select: (id) => dispatch({ type: "select", id }),
       setCompare: (value) => dispatch({ type: "compare/set", value }),
       recalculate: () => void fetchRoute(),
       reset: () => dispatch({ type: "reset" }),
     }),
-    [state, fetchRoute],
+    [state, fetchRoute, bbox],
   );
 
   const layers = useLayersModel();
