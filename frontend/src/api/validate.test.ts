@@ -60,16 +60,25 @@ describe("parseRouteResponse", () => {
       { vertex_dist_m: [0, 100], heading_segments: [1] },
       { vertex_dist_m: [0, 100], heading_segments: [0.5] },
       { vertex_dist_m: [-1, 100], heading_segments: [0] },
-    ]) assert.throws(() => parseRouteResponse({ ...valid(), navigation: bad }), ApiError);
+    ]) assert.equal(parseRouteResponse({ ...valid(), navigation: bad }).navigation, null);
   });
 
-  it("rejects chained references, reversed distances and zero-length heading references", () => {
+  it("keeps the route when only the navigation metadata is malformed", () => {
+    const r = parseRouteResponse({ ...valid(), navigation: { vertex_dist_m: [0, 99.99], heading_segments: [0] } });
+    assert.equal(r.navigation, null);
+    assert.equal(r.distance_m, 100);
+    assert.equal(r.polyline.length, 2);
+    // The rest of the route contract stays strict.
+    assert.throws(() => parseRouteResponse({ ...valid(), distance_m: "100", navigation: null }), ApiError);
+  });
+
+  it("drops chained references, reversed distances and zero-length heading references", () => {
     const polyline = [[0, 0], [0.0005, 0], [0.001, 0]];
     for (const navigation of [
       { vertex_dist_m: [0, 50, 100], heading_segments: [1, 0] },
       { vertex_dist_m: [0, 101, 100], heading_segments: [0, 1] },
       { vertex_dist_m: [0, 0, 100], heading_segments: [0, 0] },
-    ]) assert.throws(() => parseRouteResponse({ ...valid(), polyline, navigation }), ApiError);
+    ]) assert.equal(parseRouteResponse({ ...valid(), polyline, navigation }).navigation, null);
   });
   it("accepts a well-formed response and normalises slope to absolute", () => {
     const r = parseRouteResponse(valid());

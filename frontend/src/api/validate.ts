@@ -173,6 +173,17 @@ function navigation(v: unknown, polyline: readonly LonLat[], distance: number): 
   return { vertex_dist_m: distances, heading_segments: refs };
 }
 
+/** Navigation is HUD-only metadata: a malformed block is dropped and the route stays usable. */
+function optionalNavigation(v: unknown, polyline: readonly LonLat[], distance: number): RouteNavigation | null {
+  try {
+    return navigation(v, polyline, distance);
+  } catch (e) {
+    if (!(e instanceof ApiError)) throw e;
+    console.warn(`Ignoring route navigation metadata. ${e.message}`);
+    return null;
+  }
+}
+
 export function parseRouteResponse(raw: unknown): RouteResponse {
   const o = obj(raw, "response");
   const polyline = arr(o.polyline, "polyline").map((p, i) => lonLat(p, `polyline[${i}]`));
@@ -200,7 +211,7 @@ export function parseRouteResponse(raw: unknown): RouteResponse {
     profile,
     assumptions: arr(o.assumptions, "assumptions").map((a, i) => assumption(a, `assumptions[${i}]`)),
     alternative: alternative(o.alternative, "alternative"),
-    navigation: navigation(o.navigation, polyline, distance),
+    navigation: optionalNavigation(o.navigation, polyline, distance),
     supports_alternatives: o.supports_alternatives === true,
   };
 }
