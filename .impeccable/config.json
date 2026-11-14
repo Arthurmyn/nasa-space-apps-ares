@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "flat-type-hierarchy",
+        "value": "*",
+        "files": [
+          "landing/index.html"
+        ],
+        "createdAt": "2026-11-14T10:41:42.058Z",
+        "reason": "assistant triage: type sizes live in landing/src/styles.css (h1 2.5-5.75rem, h2 1.75-2.75rem, body 1.06rem, steps above 1.25x); the HTML file has no CSS so the check cannot see them. Not confirmed by the user."
+      }
+    ]
+  }
+}
