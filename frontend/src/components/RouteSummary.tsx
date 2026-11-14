@@ -3,6 +3,7 @@ import type { RouteResponse } from "../api/types.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
 import { formatDistance, formatDuration, formatSigned, formatSlope } from "../lib/format.ts";
 import { usePlanner } from "../state/PlannerContext.tsx";
+import { useSite } from "../state/SiteContext.tsx";
 import { Icon } from "./Icon.tsx";
 import { SafetyBadge } from "./SafetyBadge.tsx";
 
@@ -69,8 +70,21 @@ function CompareTable({ route }: { route: RouteResponse }) {
   );
 }
 
+const UNVERIFIED = /^TO VERIFY\b:?\s*/i;
+
+function SourceCell({ text }: { text: string }) {
+  // The data team marks sources that are not checked yet with "TO VERIFY"; say so on screen.
+  if (!UNVERIFIED.test(text)) return <>{text}</>;
+  return (
+    <>
+      <span className="tag tag--warn">Unverified</span> {text.replace(UNVERIFIED, "")}
+    </>
+  );
+}
+
 function HowComputed({ route }: { route: RouteResponse }) {
   const [open, setOpen] = useState(false);
+  const { site } = useSite();
   const regionId = useId();
   return (
     <div className="drawer">
@@ -102,12 +116,25 @@ function HowComputed({ route }: { route: RouteResponse }) {
                 <tr key={a.name}>
                   <th scope="row">{a.name}</th>
                   <td className="mono">{a.value}</td>
-                  <td>{a.source}</td>
+                  <td>
+                    <SourceCell text={a.source} />
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
+        {site.sources.length > 0 && (
+          <>
+            <h3 className="drawer__subtitle">Data sources</h3>
+            <ul className="source-list">
+              {site.sources.map((src) => (
+                <li key={src}>{src}</li>
+              ))}
+            </ul>
+          </>
+        )}
+        {site.isTestData && <p className="muted drawer__foot">This grid is generated test data, not measured terrain.</p>}
         <p className="muted drawer__foot">
           Slope colours use app thresholds of {SLOPE_LIMITS.cautionDeg}° and {SLOPE_LIMITS.maxDeg}°.
         </p>
