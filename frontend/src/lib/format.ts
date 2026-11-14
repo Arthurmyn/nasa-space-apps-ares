@@ -30,6 +30,13 @@ export function formatElevation(metres: number): string {
   return Number.isFinite(metres) ? `${Math.round(metres)}${NBSP}m` : "–";
 }
 
+/** "+12 m" or "−12 m"; a value that rounds to zero has no sign ("0 m"), never "−0 m". */
+export function formatSignedElevation(metres: number, sign: "+" | "−"): string {
+  if (!Number.isFinite(metres)) return "–";
+  const rounded = Math.round(Math.abs(metres));
+  return rounded === 0 ? `0${NBSP}m` : `${sign}${rounded}${NBSP}m`;
+}
+
 export function formatLat(lat: number, digits = 4): string {
   const hemisphere = lat < 0 ? "S" : "N";
   return `${Math.abs(lat).toFixed(digits)}°${NBSP}${hemisphere}`;
