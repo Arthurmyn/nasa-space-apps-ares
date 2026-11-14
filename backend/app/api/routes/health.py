@@ -1,11 +1,8 @@
-from fastapi import APIRouter
-
-from app.schemas.predict import HealthResponse
-from app.services.ml import model_service
+from fastapi import APIRouter, Request
 
 router = APIRouter(tags=["health"])
 
 
-@router.get("/health", response_model=HealthResponse)
-def health() -> HealthResponse:
-    return HealthResponse(status="ok", model_loaded=model_service.loaded)
+@router.get("/health")
+def health(request: Request):
+    return {"status": "ok", "data_loaded": request.app.state.grid is not None}
