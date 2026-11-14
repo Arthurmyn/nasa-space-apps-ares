@@ -106,3 +106,37 @@ describe("buildRouteRequest", () => {
     assert.equal(withCompare?.compare, true);
   });
 });
+
+describe("plannerReducer stops/preset", () => {
+  const preset = (n: number): PlannerAction => ({
+    type: "stops/preset",
+    stops: Array.from({ length: n }, (_, i) => ({ lon: i, lat: i, name: `Target ${i + 1}` })),
+  });
+
+  it("places the targets as named stops and keeps the start", () => {
+    const s = run([add(1), preset(3)]);
+    assert.equal(s.start?.id, "start");
+    assert.deepEqual(s.stops.map((p) => p.name), ["Target 1", "Target 2", "Target 3"]);
+    assert.equal(s.notice, null);
+  });
+
+  it("replaces earlier stops instead of appending", () => {
+    const s = run([add(1), add(2), add(3), preset(2)]);
+    assert.equal(s.stops.length, 2);
+    assert.deepEqual(s.stops.map((p) => p.id), ["stop-3", "stop-4"]);
+  });
+
+  it("uses at most MAX_STOPS targets and says so", () => {
+    const s = run([preset(8)]);
+    assert.equal(s.stops.length, 5);
+    assert.match(s.notice ?? "", /first 5 of 8/);
+  });
+
+  it("without a start there is no route request yet; clicking a start makes one", () => {
+    const placed = run([preset(2)]);
+    assert.equal(buildRouteRequest(placed), null);
+    const req = buildRouteRequest(run([add(9)], placed));
+    assert.equal(req?.stops.length, 2);
+    assert.equal(req?.stops[0]?.name, "Target 1");
+  });
+});
