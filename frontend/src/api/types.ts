@@ -1,0 +1,143 @@
+// Frontend proposal for the route-planning contract. docs/api.md defines no route
+// endpoints yet, so these shapes are a PROPOSAL; see "Frontend proposal" in docs/api.md.
+// When the backend Pydantic schemas land, mirror them here and update that section.
+
+/** [longitude, latitude] in degrees, same order as GeoJSON. East-positive, range -180..180. */
+export type LonLat = readonly [lon: number, lat: number];
+
+export type SafetyLevel = "ok" | "caution" | "avoid";
+
+export type LayerId = "slope" | "optical" | "thermal" | "geology" | "radiation";
+
+export const LAYER_IDS: readonly LayerId[] = ["slope", "optical", "thermal", "geology", "radiation"];
+
+export interface GeoJsonPolygon {
+  type: "Polygon";
+  /** First ring is the outer boundary; closed (first point equals last point). */
+  coordinates: LonLat[][];
+}
+
+// ---- GET /layers -----------------------------------------------------------
+
+export interface LayerInfo {
+  id: LayerId;
+  /** False when the API has no data for this layer at this site. */
+  available: boolean;
+  /** Plain-language reason shown when `available` is false. */
+  reason: string | null;
+  /** Dataset name and provider, shown in the layer legend. */
+  source: string | null;
+}
+
+export interface LayersResponse {
+  layers: LayerInfo[];
+}
+
+// ---- POST /route -----------------------------------------------------------
+
+export interface PointInput {
+  /** Client-generated stable id ("start", "stop-1", ...). The backend echoes it on the stop. */
+  id: string;
+  lon: number;
+  lat: number;
+  /** Optional user-given name; the backend echoes it back on the stop. */
+  name?: string;
+}
+
+export interface RouteRequest {
+  start: PointInput;
+  /** Ordered science stops, 1 to MAX_STOPS. */
+  stops: PointInput[];
+  constraints: { max_slope_deg: number };
+  /** Ask for one alternative route in `alternative`. */
+  compare?: boolean;
+}
+
+export interface StopImage {
+  url: string;
+  alt: string;
+  /** Credit line, for example the instrument and team. */
+  credit: string;
+}
+
+export interface RouteStop {
+  /** Echo of the request point id. The map label (A, B, ...) is derived from order on the client. */
+  id: string;
+  /** Display name. Null when the request gave none; the UI then shows "Stop A". */
+  name: string | null;
+  lon: number;
+  lat: number;
+  /** Distance along the route at which this stop is reached, metres. */
+  dist_m: number;
+  /** Short science note. Null when the backend has none. */
+  note: string | null;
+  image: StopImage | null;
+}
+
+export type HazardKind = "rough_terrain" | "sand_trap" | "steep_slope" | "other";
+
+export interface HazardZone {
+  id: string;
+  kind: HazardKind;
+  /** Short label drawn on the map, for example "Rough terrain". */
+  label: string;
+  polygon: GeoJsonPolygon;
+}
+
+export interface ProfilePoint {
+  /** Distance along the route from the start, metres. Strictly increasing. */
+  dist_m: number;
+  elev_m: number;
+  /** Absolute local slope at this sample, degrees (0 or more). */
+  slope_deg: number;
+}
+
+export interface Assumption {
+  name: string;
+  value: string;
+  /** Dataset, model or document the value comes from. */
+  source: string;
+}
+
+export interface RouteAlternative {
+  distance_m: number;
+  max_slope_deg: number;
+  est_time_s: number;
+  polyline: LonLat[];
+}
+
+export interface RouteResponse {
+  /** ISO 8601 UTC timestamp of when the backend computed this route. */
+  computed_at: string;
+  distance_m: number;
+  max_slope_deg: number;
+  est_time_s: number;
+  safety: SafetyLevel;
+  /** One plain-language sentence explaining the safety status. */
+  safety_reason: string;
+  /** Route geometry from start through every stop. */
+  polyline: LonLat[];
+  /** Echo of the request stops, in order, enriched with distance, note and image. */
+  stops: RouteStop[];
+  hazards: HazardZone[];
+  profile: ProfilePoint[];
+  assumptions: Assumption[];
+  /** Present only when the request set `compare: true` and the backend found one. */
+  alternative: RouteAlternative | null;
+}
+
+// ---- Client-side error model ----------------------------------------------
+
+export type ApiErrorKind = "network" | "timeout" | "http" | "invalid" | "aborted";
+
+export class ApiError extends Error {
+  readonly kind: ApiErrorKind;
+  readonly status: number | null;
+
+  constructor(kind: ApiErrorKind, message: string, status: number | null = null) {
+    super(message);
+    this.name = "ApiError";
+    this.kind = kind;
+    this.status = status;
+  }
+}
