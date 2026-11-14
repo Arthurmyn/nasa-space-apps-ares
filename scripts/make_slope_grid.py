@@ -113,10 +113,13 @@ def fake_elevation(grid):
     cell = grid.meta["cell_m"]
     x = grid.transform.c + (cols+0.5)*cell
     y = grid.transform.f - (rows+0.5)*cell
+    # Smoothly taper the ravine to zero towards the north, leaving a gentle bypass.
+    north_fraction = np.clip((y + 100)/400, 0, 1)
+    ravine_depth = 28 * (1 - north_fraction**2 * (3 - 2*north_fraction))
     z = (-2500 + 0.025*x + 0.015*y
          + 45*np.exp(-((x+140)/90)**2-((y-100)/110)**2)
          + 65*np.exp(-((x-150)/100)**2-((y+130)/95)**2)
-         - 28*np.exp(-((x-35*np.sin(y/110))/22)**2))
+         - ravine_depth*np.exp(-((x-35*np.sin(y/110))/22)**2))
     z[~grid.inside] = np.nan
     return z.astype("float32")
 
