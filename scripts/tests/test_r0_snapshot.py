@@ -1,11 +1,13 @@
 import hashlib
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
 from scripts.r0_snapshot import reproduce_snapshot
-from scripts.r0_sources import MANIFEST
+from scripts.r0_waypoints import MANIFEST
 
 
 def test_snapshot_recipe_reproduces_pinned_bytes(tmp_path):
@@ -44,4 +46,23 @@ def test_snapshot_provenance_has_date_filter_and_recipe():
     assert provenance["source_bytes"] == 665124
     assert len(provenance["source_sha256"]) == 64
     assert "scripts.r0_snapshot" in provenance["reproduce_command"]
+    assert "--download" in provenance["reproduce_command"]
     assert Path(MANIFEST.parent / entry["snapshot"]).is_file()
+
+
+def test_snapshot_cli_works_without_any_site_packages():
+    entry = json.loads(MANIFEST.read_text())["inputs"][0]
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-S",
+            "-m",
+            "scripts.r0_snapshot",
+            "--source",
+            str(MANIFEST.parent / entry["snapshot"]),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert json.loads(completed.stdout)["snapshot_matches_pin"] is True

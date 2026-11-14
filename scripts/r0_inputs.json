@@ -22,7 +22,7 @@
           "order": "stable ascending sol"
         },
         "serialization": "UTF-8; json.dumps defaults, allow_nan=False; one trailing LF; preserve full selected feature properties and geometry",
-        "reproduce_command": "python -m scripts.r0_snapshot --source data/r0/raw/MSL_waypoints.json --output data/r0/raw/r0_waypoints_recreated.geojson",
+        "reproduce_command": "python -m scripts.r0_snapshot --download --output data/r0/raw/r0_waypoints_recreated.geojson",
         "verify_live_command": "python -m scripts.r0_snapshot --download"
       }
     },

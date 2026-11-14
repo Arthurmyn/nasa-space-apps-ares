@@ -1,6 +1,6 @@
 """Recreate and verify the pinned R0 waypoint snapshot against a NASA catalogue.
 
-Offline: python -m scripts.r0_snapshot --source data/r0/raw/MSL_waypoints.json
+Offline after fetching: --source data/r0/raw/MSL_waypoints_verify.json
 Live:    python -m scripts.r0_snapshot --download
 Use --output to save the reproduced snapshot. Pins are never silently updated.
 """
@@ -8,14 +8,13 @@ Use --output to save the reproduced snapshot. Pins are never silently updated.
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
 from pathlib import Path
+from urllib.request import Request, urlopen
 
-import requests
-
-from scripts.r0_coverage import COORDINATES, select_waypoints
-from scripts.r0_sources import MANIFEST
+from scripts.r0_waypoints import COORDINATES, MANIFEST, select_waypoints
 
 
 def reproduce_snapshot(source: bytes, entry: dict) -> bytes:
@@ -53,14 +52,20 @@ def main() -> None:
         if item["role"] == "waypoints"
     )
     if args.download:
-        with requests.get(entry["url"], timeout=(15, 90)) as response:
-            response.raise_for_status()
-            source = response.content
-        args.source.parent.mkdir(parents=True, exist_ok=True)
-        args.source.write_bytes(source)
+        request = Request(entry["url"], headers={"Accept-Encoding": "identity"})
+        with urlopen(request, timeout=90) as response:
+            source = response.read()
+            encoding = response.headers.get("Content-Encoding", "identity").lower()
+        if encoding == "gzip":
+            source = gzip.decompress(source)
+        elif encoding != "identity":
+            raise ValueError(f"Unsupported catalogue content encoding: {encoding}")
     else:
         source = args.source.read_bytes()
     snapshot = reproduce_snapshot(source, entry)
+    if args.download:
+        args.source.parent.mkdir(parents=True, exist_ok=True)
+        args.source.write_bytes(source)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_bytes(snapshot)
