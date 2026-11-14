@@ -10,12 +10,23 @@ import rasterio
 from PIL import Image
 from pyproj import Transformer
 from rasterio.transform import from_origin
+from scipy.ndimage import label
 
-from scripts.make_slope_grid import build_grid, compute_slope, encode_files, generate, read_dtm
+from scripts.make_slope_grid import build_grid, compute_slope, encode_files, fake_elevation, generate, read_dtm
 
 
 ROOT = Path(__file__).resolve().parents[2]
 HANDOFF = ROOT / "docs/research/r0/gale_bx_handoff.json"
+
+
+@pytest.mark.parametrize("cell", [1.0, 2.0])
+def test_fake_terrain_connects_west_and_east_at_fifteen_degrees(cell):
+    grid = build_grid(json.loads(HANDOFF.read_text()), cell)
+    slope = compute_slope(fake_elevation(grid), cell)
+    components, _ = label((slope != 255) & (slope * 0.5 <= 15), np.ones((3, 3)))
+    west = set(components[:, 0]) - {0}
+    east = set(components[:, -1]) - {0}
+    assert west & east, "The ravine must have a crossing or a gentle route around it"
 
 
 def test_fake_cli_and_contract_coordinates(tmp_path):
