@@ -10,6 +10,12 @@ body,
   height: 100%;
 }
 
+/* Closed drawers sit beyond the screen edge; the page must not scroll sideways to them. */
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   margin: 0;
   background: var(--bg);

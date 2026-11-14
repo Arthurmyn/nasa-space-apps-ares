@@ -224,3 +224,7 @@
   gap: var(--space-3);
   color: var(--text-muted);
 }
+
+.shell__body[data-profile="empty"] {
+  --profile-h: 72px;
+}
