@@ -16,12 +16,13 @@ backend/data/gale-bx/
   slope.bin        уклоны, Uint8, row-major
   stops.json       цели для списка выбора (п. 5)
   assumptions.json допущения и источники (п. 6)
+  sources.json     справочник источников целей: { "source_id": "описание и ссылка" }
 frontend/public/data/gale-bx/
   meta.json        копия (скрипт копирует сам)
   hillshade.png    серая подложка рельефа, RGBA, размер width x height
   slope.png        цветной слой уклонов, RGBA с прозрачностью, размер width x height
 ```
-Размер: все файлы вместе до 3 МБ. Если больше, скрипт берёт ячейку 2 м (`--cell 2`).
+Размер: все файлы вместе до 3 000 000 байт. Из них 100 000 байт зарезервировано под сопутствующие JSON: сама сетка (meta.json ×2, elevation.bin, slope.bin, hillshade.png, slope.png) — не более 2 900 000 байт. При превышении любого лимита скрипт берёт ячейку 2 м (`--cell 2`); если лимит всё ещё превышен, завершается с ошибкой до записи.
 Фронт на Vercel обслуживает `frontend/public/data/...` по адресу `/app/data/gale-bx/...`.
 Бэкенд читает `backend/data/` (в пределах своей папки, иначе Vercel его не увидит).
 
@@ -79,6 +80,7 @@ frontend/public/data/gale-bx/
 ```
 `image` либо null, либо `{ "url": "...", "alt": "...", "credit": "..." }` (как `StopImage` в `frontend/src/api/types.ts`).
 Координаты целей внутри `bbox`. Группа = то, что человек выбирает в списке («Boxwork» и т. д.).
+`source_id` разрешается через `backend/data/gale-bx/sources.json` (объект: ID → строка с описанием и ссылкой). Генератор добавляет в `meta.sources` только источники текущих целей как строки `"ID: описание"`; при замене целей меняются данные, а не код генератора. Без `stops.json` справочник не требуется. Формы `stops.json` и `meta.json` сохраняются.
 
 ## 6. assumptions.json
 ```json
