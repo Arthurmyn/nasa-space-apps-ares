@@ -17,3 +17,19 @@ test("radiation is not an estimate map and says it is one value", () => {
   assert.equal(radiation?.isEstimate, false);
   assert.match(radiation?.description ?? "", /whole site/);
 });
+
+test("every site with a data folder has its layer images listed, and unknown sites have none", async () => {
+  const { gridImagesForSite } = await import("./tiles.ts");
+  const { readdirSync } = await import("node:fs");
+  const sites = readdirSync(new URL("../../public/data/", import.meta.url), { withFileTypes: true }).filter((d) => d.isDirectory());
+  assert.ok(sites.length >= 2, "the repository ships at least two sites");
+  for (const site of sites) {
+    const images = gridImagesForSite(site.name);
+    for (const layer of ["optical", "slope"] as const) {
+      const file = images[layer]?.file;
+      assert.ok(file, `${site.name} has no ${layer} image configured`);
+      assert.ok(readdirSync(new URL(`../../public/data/${site.name}/`, import.meta.url)).includes(file), `${site.name}/${file} is missing`);
+    }
+  }
+  assert.deepEqual(gridImagesForSite("unknown-site"), {});
+});

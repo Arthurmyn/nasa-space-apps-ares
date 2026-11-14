@@ -38,7 +38,7 @@ From `backend/data/gale-bx/meta.json` and `sources.json`:
 
 ## Limitations
 
-- One site only, and it is preliminary (`"preliminary": true` in `meta.json`). The terrain grid and the science stops need review by the science team.
+- Two sites, both preliminary (`"preliminary": true` in `meta.json`). The Gale boxwork site has the Curiosity waypoints as stops; the second site (HiRISE DTM `DTEEC_001488_1750_001752_1750_U02`, no rover positions inside it) has terrain only: no stops and no description, because no verified source for that area was found. The grids and the stops need review by the science team.
 - The HUD position comes from a slider. There is no live position feed.
 - Layers without data show "No data for this site".
 - The NASA slope values are lunar and Artemis values. No official human-on-Mars slope standard was found; the 15 degree limit and the 10 degree caution threshold are ARES planning values.

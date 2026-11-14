@@ -617,3 +617,138 @@ def test_shipped_stop_images_are_local_credited_and_small():
         from PIL import Image
 
         assert Image.open(path).size[0] == 800
+
+
+DATA_ROOT = Path(__file__).parents[1] / "data"
+
+
+def two_passable_points(grid, count=2):
+    """Cells of one connected passable region (slope below 10 degrees) of a real grid, far apart."""
+    mask = (grid.valid & (grid.slope <= 10)).ravel().tolist()
+    width, height = grid.width, grid.height
+    seen = bytearray(width * height)
+    best: list[int] = []
+    for seed in range(width * height):
+        if not mask[seed] or seen[seed]:
+            continue
+        seen[seed] = 1
+        stack, members = [seed], []
+        while stack:
+            index = stack.pop()
+            members.append(index)
+            row, col = divmod(index, width)
+            for nr, nc in ((row - 1, col), (row + 1, col), (row, col - 1), (row, col + 1)):
+                nxt = nr * width + nc
+                if 0 <= nr < height and 0 <= nc < width and mask[nxt] and not seen[nxt]:
+                    seen[nxt] = 1
+                    stack.append(nxt)
+        if len(members) > len(best):
+            best = sorted(members)
+    chosen = [best[int(q * (len(best) - 1))] for q in np.linspace(0.2, 0.8, count)]
+    points = []
+    for n, index in enumerate(chosen):
+        x, y = grid.center_xy(index)
+        lon, lat = grid.lonlat(x, y)
+        points.append({"id": "start" if n == 0 else f"stop-{n}", "lon": lon, "lat": lat})
+    return points
+
+
+def test_all_site_folders_are_loaded_and_the_default_comes_first():
+    with TestClient(create_app(DATA_ROOT)) as client:
+        sites = client.get("/api/v1/sites").json()["sites"]
+        ids = [s["id"] for s in sites]
+        assert ids[0] == "gale-bx" and "gale-001488" in ids and len(ids) == len(set(ids))
+        assert set(client.app.state.grids) == set(ids)
+        assert client.app.state.grid is client.app.state.grids["gale-bx"]
+
+
+def test_layers_use_the_default_site_unless_site_id_is_given():
+    with TestClient(create_app(DATA_ROOT)) as client:
+        default = {x["id"]: x for x in client.get("/api/v1/layers").json()["layers"]}
+        explicit = {
+            x["id"]: x for x in client.get("/api/v1/layers?site_id=gale-bx").json()["layers"]
+        }
+        other = {
+            x["id"]: x for x in client.get("/api/v1/layers?site_id=gale-001488").json()["layers"]
+        }
+    assert default == explicit
+    assert other["slope"]["available"] and "DTEEC_001488" in other["slope"]["source"]
+    assert "DTEEC_009149" in default["slope"]["source"]
+
+
+def test_unknown_site_is_a_404_for_layers_and_route():
+    with TestClient(create_app(DATA_ROOT)) as client:
+        assert client.get("/api/v1/layers?site_id=nope").status_code == 404
+        body = {
+            "site_id": "nope",
+            "start": {"id": "start", "lon": 137.3, "lat": -4.9},
+            "stops": [{"id": "stop-1", "lon": 137.3, "lat": -4.9}],
+            "constraints": {"max_slope_deg": 15},
+        }
+        response = client.post("/api/v1/route", json=body)
+        assert response.status_code == 404 and "nope" in response.json()["detail"]
+
+
+@pytest.mark.parametrize("site_id", ["gale-bx", "gale-001488"])
+def test_route_is_planned_on_the_requested_site(site_id):
+    with TestClient(create_app(DATA_ROOT)) as client:
+        grid = client.app.state.grids[site_id]
+        start, stop = two_passable_points(grid)
+        body = {
+            "site_id": site_id,
+            "start": start,
+            "stops": [stop],
+            "constraints": {"max_slope_deg": 15},
+        }
+        response = client.post("/api/v1/route", json=body)
+        assert response.status_code == 200, response.text
+        box = grid.meta["bbox"]
+        for lon, lat in response.json()["polyline"]:
+            assert (
+                box["lon_min"] <= lon <= box["lon_max"] and box["lat_min"] <= lat <= box["lat_max"]
+            )
+
+
+def test_points_of_one_site_are_outside_the_grid_of_another():
+    with TestClient(create_app(DATA_ROOT)) as client:
+        start, stop = two_passable_points(client.app.state.grids["gale-001488"])
+        body = {
+            "start": start,
+            "stops": [stop],
+            "constraints": {"max_slope_deg": 15},
+        }  # no site_id: gale-bx
+        response = client.post("/api/v1/route", json=body)
+        assert (
+            response.status_code == 422 and "outside the terrain grid" in response.json()["detail"]
+        )
+
+
+def test_site_folder_with_a_wrong_site_id_is_skipped(tmp_path):
+    import shutil
+
+    shutil.copytree(DATA_ROOT / "gale-bx", tmp_path / "gale-bx")
+    shutil.copytree(DATA_ROOT / "gale-001488", tmp_path / "renamed")  # meta.json says gale-001488
+    with TestClient(create_app(tmp_path)) as client:
+        assert [s["id"] for s in client.get("/api/v1/sites").json()["sites"]] == ["gale-bx"]
+
+
+def test_a_broken_site_is_left_out_and_never_replaced_by_another(tmp_path):
+    import shutil
+
+    shutil.copytree(DATA_ROOT / "gale-bx", tmp_path / "gale-bx")
+    shutil.copytree(DATA_ROOT / "gale-001488", tmp_path / "gale-001488")
+    (tmp_path / "gale-001488" / "slope.bin").write_bytes(b"short")
+    with TestClient(create_app(tmp_path)) as client:
+        assert [s["id"] for s in client.get("/api/v1/sites").json()["sites"]] == ["gale-bx"]
+        assert client.get("/api/v1/layers?site_id=gale-001488").status_code == 404
+
+
+def test_shipped_second_site_grid_is_consistent_and_small():
+    root = DATA_ROOT / "gale-001488"
+    meta = json.loads((root / "meta.json").read_text())
+    assert meta["site_id"] == "gale-001488" and meta["is_test_data"] is False
+    assert meta["dtm_product_id"] == "DTEEC_001488_1750_001752_1750_U02"
+    public = root.parents[2] / "frontend/public/data/gale-001488"
+    assert (public / "meta.json").read_text() == (root / "meta.json").read_text()
+    total = sum(p.stat().st_size for d in (root, public) for p in d.rglob("*") if p.is_file())
+    assert total <= 3_000_000

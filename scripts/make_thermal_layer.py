@@ -200,8 +200,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("cube", type=Path, help="gale_crater_themis_dayir_isis.cub from USGS Astropedia")
     parser.add_argument("--output-root", type=Path, default=ROOT)
+    parser.add_argument("--site", default=SITE, help="site folder under backend/data (default gale-bx)")
     args = parser.parse_args()
-    info = build(args.cube, args.output_root)
+    info = build(args.cube, args.output_root, args.site)
     print(
         f"thermal.png {info['output']['width']}x{info['output']['height']}, "
         f"pixel {info['native_pixel_m']} m, {info['site_thermal_pixels']} THEMIS pixels, "

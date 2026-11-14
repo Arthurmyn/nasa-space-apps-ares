@@ -34,9 +34,10 @@ function StopChip({ entry, selected }: { entry: StopEntry; selected: boolean }) 
 /** Picks a named group of science targets (for example "Boxwork") and places them as stops. */
 function GroupPicker() {
   const p = usePlanner();
-  const { sites } = useSite();
+  const { site, sites } = useSite();
   const selectId = useId();
-  const entries = sites.entries;
+  // Only the targets of the open site: another site's targets lie outside this map.
+  const entries = sites.entries.filter((e) => e.id === site.id);
   const groups = entries.flatMap((site) => site.groups.map((group) => ({ site, group, key: `${site.id}:${group.id}` })));
 
   if (sites.status === "loading") return <p className="muted">Loading target groups</p>;
