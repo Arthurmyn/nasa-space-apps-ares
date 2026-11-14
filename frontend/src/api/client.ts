@@ -12,8 +12,8 @@ import {
   type ThermalInfo,
 } from "./types.ts";
 
-// Dev: the backend on :8000. Production build: same origin, where Vercel routes /api/* to the
-// backend service. VITE_API_URL overrides both (an empty string also means same origin).
+// Dev: the backend on :8000. Production build: same origin, where Caddy routes /api/* to the
+// backend (see deploy/Caddyfile). VITE_API_URL overrides both (an empty string also means same origin).
 const BASE = (import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "" : "http://localhost:8000")) + "/api/v1";
 
 /**

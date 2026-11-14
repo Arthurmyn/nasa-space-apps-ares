@@ -9,6 +9,9 @@ through `.github/workflows/deploy.yml`.
 | `/app/` | planner (`frontend/`) |
 | `/api/*` | backend (`backend/`, FastAPI in Docker) |
 
+The site used to be on Vercel. The root `vercel.json` now only turns off Vercel deploys from Git;
+delete it once the Vercel projects are disconnected from the repository.
+
 ## How a deploy works
 
 1. GitHub Actions connects as `deploy` with a key that may only run `ssh-deploy <commit sha>`.

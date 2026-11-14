@@ -25,7 +25,7 @@ The site comes from `public/data/<site>/meta.json` (served at `/app/data/<site>/
 | `npm test` | Unit tests for pure functions, using Node's built-in test runner. Needs Node 22.18 or newer (it runs the `.ts` tests directly); tested on Node 24 |
 | `npm run build` | Type check, then production build |
 
-The planner is served under `/app/` (Vite `base`) and `npm run build` writes to `dist/app`. The site root redirects to `/app/`; see the root `vercel.json`.
+The planner is served under `/app/` (Vite `base`) and `npm run build` writes to `dist/app`. The landing page is at the site root; see [`deploy/`](../deploy/).
 
 ## Using the app
 

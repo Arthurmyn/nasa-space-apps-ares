@@ -34,8 +34,8 @@ Made by `scripts/make_thermal_layer.py` from the USGS Astropedia cube "Gale Crat
 - Radiation is not a layer but one number for the whole site: `GET /layers` returns `radiation` as `available: false` with the reason "Single value for the whole site, see route summary". The number (0.67 mSv/day) and reference [5] are in `assumptions.json` (`Radiation dose rate`) and in `frontend/src/config/radiation.ts`.
 - Geology: no published GIS boundaries of geologic units were found for the site, so the `geology` layer stays "No data for this site". Target notes contain only verified waypoint data (sol and coordinates).
 
-On Vercel the frontend serves `frontend/public/data/...` at `/app/data/gale-bx/...`.
-The backend reads `backend/data/` (inside its own folder, otherwise Vercel will not see it).
+In production the frontend serves `frontend/public/data/...` at `/app/data/gale-bx/...`.
+The backend reads `backend/data/` (inside its own folder: the backend Docker image copies only `backend/`).
 
 ## 3. meta.json
 ```json
