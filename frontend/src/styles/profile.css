@@ -100,7 +100,7 @@
 }
 
 .profile__stop-dot {
-  fill: var(--rust);
+  fill: var(--accent);
 }
 
 .profile__stop-label {
