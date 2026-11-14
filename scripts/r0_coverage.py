@@ -7,36 +7,28 @@ GeoJSON coordinates in this workflow are Mars planetocentric degrees, NOT WGS84.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
+import os
 from datetime import datetime, timezone
+from itertools import cycle
 from pathlib import Path
 
 import matplotlib
 import numpy as np
 import rasterio
-import requests
 from pyproj import CRS, Transformer
 from rasterio.features import shapes
 from shapely.affinity import affine_transform
 from shapely.geometry import Point, mapping, shape
 from shapely.ops import transform, unary_union
 
+from scripts.r0_handoff import make_handoff
+from scripts.r0_sources import MANIFEST, load_inputs
+
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt  # noqa: E402
 
 WAYPOINT_URL = "https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json"
-PDS = "https://www.uahirise.org/PDS/DTM/PSP"
-PRODUCTS = {
-    "DTEEC_001488_1750_001752_1750_U02": (
-        f"{PDS}/ORB_001400_001499/PSP_001488_1750_PSP_001752_1750/"
-        "DTEEC_001488_1750_001752_1750_U02.IMG"
-    ),
-    "DTEEC_009149_1750_009294_1750_U01": (
-        f"{PDS}/ORB_009100_009199/PSP_009149_1750_PSP_009294_1750/"
-        "DTEEC_009149_1750_009294_1750_U01.IMG"
-    ),
-}
 COORDINATES = "Mars planetocentric latitude; east longitude; degrees; NOT EPSG:4326"
 
 
@@ -44,10 +36,13 @@ def select_waypoints(collection: dict) -> list[dict]:
     """Keep all available drive positions in the inclusive campaign interval."""
     selected = []
     for feature in collection["features"]:
-        sol = feature.get("properties", {}).get("sol")
-        if not isinstance(sol, int):
-            raise ValueError("Every waypoint must have an integer sol")
+        try:
+            sol = float(feature.get("properties", {}).get("sol"))
+        except (TypeError, ValueError):
+            continue
         if 4534 <= sol <= 4805:
+            if not sol.is_integer():
+                raise ValueError("Campaign waypoint must have an integer sol")
             geometry = feature.get("geometry", {})
             coords = geometry.get("coordinates", [])
             if (
@@ -58,7 +53,7 @@ def select_waypoints(collection: dict) -> list[dict]:
                 or not -90 <= coords[1] <= 90
             ):
                 raise ValueError(f"Invalid Mars waypoint at sol {sol}")
-            selected.append(feature)
+            selected.append(feature | {"properties": feature["properties"] | {"sol": int(sol)}})
     if not selected:
         raise ValueError("No waypoints in sols 4534–4805")
     return sorted(selected, key=lambda f: f["properties"]["sol"])
@@ -98,7 +93,7 @@ def footprint(path: Path) -> tuple:
         )
         metadata = {
             "crs_wkt": crs.to_wkt(),
-            "crs_proj": src.crs.to_proj4(),
+            "crs_proj": src.crs.to_proj4().replace("+no_defs=True", "+no_defs"),
             "geographic_crs_wkt": crs.geodetic_crs.to_wkt(),
             "radius_m": crs.ellipsoid.semi_major_metre,
             "pixel_size_m": list(src.res),
@@ -112,16 +107,10 @@ def footprint(path: Path) -> tuple:
 
 
 def coverage(geometry, waypoints: list[dict]) -> dict:
-    inside = [
-        f["properties"]["sol"]
-        for f in waypoints
-        if geometry.covers(Point(f["geometry"]["coordinates"][:2]))
-    ]
-    outside = [
-        f["properties"]["sol"]
-        for f in waypoints
-        if not geometry.covers(Point(f["geometry"]["coordinates"][:2]))
-    ]
+    inside, outside = [], []
+    for feature in waypoints:
+        covered = geometry.covers(Point(feature["geometry"]["coordinates"][:2]))
+        (inside if covered else outside).append(feature["properties"]["sol"])
     return {
         "n_points": len(waypoints),
         "n_inside": len(inside),
@@ -160,42 +149,23 @@ def rover_crs_check(waypoints: list[dict]) -> dict:
     }
 
 
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def download(url: str, path: Path) -> None:
-    """Publish only complete downloads; a failed transfer never becomes a cache hit."""
-    if path.exists():
-        return
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".part")
-    with requests.get(url, stream=True, timeout=(15, 90)) as response:
-        response.raise_for_status()
-        if response.status_code != 200:
-            raise ValueError(f"Expected full download, got HTTP {response.status_code}: {url}")
-        with temporary.open("wb") as stream:
-            for block in response.iter_content(1024 * 1024):
-                stream.write(block)
-        expected = response.headers.get("Content-Length")
-        if expected and temporary.stat().st_size != int(expected):
-            raise ValueError(f"Incomplete download: {url}")
-    temporary.replace(path)
-
-
 def write_json(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     indent = None if path.suffix == ".geojson" else 2
-    path.write_text(json.dumps(data, indent=indent, allow_nan=False) + "\n", encoding="utf-8")
+    path.write_bytes((json.dumps(data, indent=indent, allow_nan=False) + "\n").encode("utf-8"))
 
 
-def plot_overlay(geometries: dict, waypoints: list[dict], center: list | None, path: Path):
+def plot_overlay(
+    geometries: dict,
+    waypoints: list[dict],
+    center: list | None,
+    path: Path,
+    aoi: dict | None = None,
+):
     fig, ax = plt.subplots(figsize=(10, 9))
-    for (product, geometry), color in zip(geometries.items(), ["#345c9c", "#bd6b2a"], strict=True):
+    colors = cycle(plt.get_cmap("tab10").colors)
+    for product, geometry in geometries.items():
+        color = next(colors)
         polygons = [geometry] if geometry.geom_type == "Polygon" else geometry.geoms
         first = True
         for polygon in polygons:
@@ -210,6 +180,13 @@ def plot_overlay(geometries: dict, waypoints: list[dict], center: list | None, p
     fig.colorbar(dots, ax=ax, label="Curiosity sol (available drive positions)", shrink=0.65)
     if center:
         ax.scatter(*center, marker="*", s=170, c="black", label="AOI center (R0 handoff)")
+    if aoi:
+        polygon = shape(aoi)
+        polygons = [polygon] if polygon.geom_type == "Polygon" else polygon.geoms
+        for part in polygons:
+            ax.plot(
+                *part.exterior.xy, color="green", linestyle="--", linewidth=1, label="Proposed AOI"
+            )
     ax.set(
         xlabel="East longitude (degrees)",
         ylabel="Planetocentric latitude (degrees)",
@@ -223,24 +200,30 @@ def plot_overlay(geometries: dict, waypoints: list[dict], center: list | None, p
     plt.close(fig)
 
 
-def run(raw: Path, output: Path, region: Path, fetch: bool = False) -> dict:
-    sources = {
-        "MSL_waypoints.json": WAYPOINT_URL,
-        **{f"{key}.IMG": value for key, value in PRODUCTS.items()},
-    }
-    for name, url in sources.items():
-        if fetch:
-            print(f"Source: {name}", flush=True)
-            download(url, raw / name)
-        if not (raw / name).is_file():
-            raise FileNotFoundError(f"Missing {raw / name}; run with --download")
-    waypoints = select_waypoints(json.loads((raw / "MSL_waypoints.json").read_text()))
+def run(
+    raw: Path,
+    output: Path,
+    handoff_path: Path | None = None,
+    fetch: bool = False,
+    *,
+    manifest: Path = MANIFEST,
+    verify_inputs: bool = False,
+) -> dict:
+    handoff_path = handoff_path or output / "gale_bx_handoff.json"
+    evidence = Path(
+        os.path.relpath((output / "r0_result.json").resolve(), handoff_path.parent.resolve())
+    ).as_posix()
+    inputs, source_records = load_inputs(raw, manifest, fetch=fetch, force=verify_inputs)
+    waypoints = select_waypoints(json.loads(inputs.pop("waypoints").read_text(encoding="utf-8")))
     rover_coordinates = rover_crs_check(waypoints)
     output.mkdir(parents=True, exist_ok=True)
-    results, geometries = [], {}
-    for product, url in PRODUCTS.items():
+    results, geometries, native_geometries = [], {}, {}
+    source_urls = {item["file"]: item["url"] for item in source_records}
+    for product, path in inputs.items():
+        url = source_urls[path.name]
         print(f"Polygonizing {product}", flush=True)
-        native, metadata = footprint(raw / f"{product}.IMG")
+        native, metadata = footprint(path)
+        native_geometries[product] = native
         crs = CRS.from_wkt(metadata["crs_wkt"])
         to_geo = Transformer.from_crs(crs, crs.geodetic_crs, always_xy=True)
         geographic = transform(to_geo.transform, native)
@@ -267,10 +250,12 @@ def run(raw: Path, output: Path, region: Path, fetch: bool = False) -> dict:
             },
         )
     selected = select_candidate(results)
-    center = None
+    center, handoff, aoi = None, None, None
     if selected:
-        # Choose an observed campaign position, guaranteed inside valid data.
-        center = waypoints[len(waypoints) // 2]["geometry"]["coordinates"][:2]
+        chosen = next(r for r in results if r["product_id"] == selected)
+        handoff = make_handoff(native_geometries[selected], chosen, waypoints, evidence)
+        center = handoff["aoi_proposal"]["centre_lonlat_E"]
+        aoi = handoff["aoi_proposal"]["aoi_geojson"]
     checked_at = datetime.now(timezone.utc).isoformat()  # noqa: UP017 (Python 3.10 supported)
     result = {
         "issue": 3,
@@ -286,16 +271,9 @@ def run(raw: Path, output: Path, region: Path, fetch: bool = False) -> dict:
         "decision": "campaign-covered" if selected else "unresolved",
         "selected_dtm": selected,
         "center_lon_lat": center,
+        "aoi_proposal": handoff["aoi_proposal"] if handoff else None,
         "candidates": results,
-        "inputs": [
-            {
-                "file": name,
-                "url": url,
-                "sha256": sha256(raw / name),
-                "bytes": (raw / name).stat().st_size,
-            }
-            for name, url in sources.items()
-        ],
+        "inputs": source_records,
         "limitations": [
             "Available drive positions only; no interpolation for unlisted sols.",
             "Coverage is not slope, artifact, co-registration or habitat suitability QA.",
@@ -312,35 +290,9 @@ def run(raw: Path, output: Path, region: Path, fetch: bool = False) -> dict:
             "features": waypoints,
         },
     )
-    # Seed issue #6's config while preserving any subsequent habitat/layer work.
-    config = (
-        json.loads(region.read_text(encoding="utf-8"))
-        if region.exists()
-        else {
-            "id": "GALE-BX",
-            "name": "Gale boxwork campaign",
-            "aoi_geojson": None,
-            "habitat": None,
-            "layers": [],
-            "targets": [],
-            "params": {},
-        }
-    )
-    chosen = next((r for r in results if r["product_id"] == selected), None)
-    config.update(
-        {
-            "centre_lonlat_E": center,
-            "crs_proj": chosen["crs_proj"] if chosen else None,
-            "dtm_product_id": selected,
-            "r0": {
-                "status": result["decision"],
-                "coordinates": COORDINATES,
-                "coverage_evidence": (output / "r0_result.json").as_posix(),
-            },
-        }
-    )
-    write_json(region, config)
-    plot_overlay(geometries, waypoints, center, output / "r0_overlay.png")
+    if handoff:
+        write_json(handoff_path, handoff)
+    plot_overlay(geometries, waypoints, center, output / "r0_overlay.png", aoi)
     return result
 
 
@@ -349,9 +301,14 @@ def main() -> None:
     parser.add_argument("--download", action="store_true", help="Fetch ~752 MB of NASA/PDS inputs")
     parser.add_argument("--raw", type=Path, default=Path("data/r0/raw"))
     parser.add_argument("--output", type=Path, default=Path("docs/research/r0"))
-    parser.add_argument("--region", type=Path, default=Path("backend/data/gale_bx.json"))
+    parser.add_argument(
+        "--handoff", type=Path, help="R0 handoff path; default: OUTPUT/gale_bx_handoff.json"
+    )
+    parser.add_argument("--verify-inputs", action="store_true", help="Rehash all cached rasters")
     args = parser.parse_args()
-    result = run(args.raw, args.output, args.region, args.download)
+    result = run(
+        args.raw, args.output, args.handoff, args.download, verify_inputs=args.verify_inputs
+    )
     print(json.dumps({k: result[k] for k in ("decision", "selected_dtm", "center_lon_lat")}))
     if result["selected_dtm"] is None:
         raise SystemExit(2)

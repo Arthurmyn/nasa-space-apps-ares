@@ -1,6 +1,6 @@
 {
   "issue": 3,
-  "checked_at": "2026-11-14T11:01:51.126590+00:00",
+  "checked_at": "2026-11-14T11:17:33.969599+00:00",
   "requested_sol_range": [
     4534,
     4805
@@ -21,15 +21,57 @@
   "decision": "campaign-covered",
   "selected_dtm": "DTEEC_009149_1750_009294_1750_U01",
   "center_lon_lat": [
-    137.3795125,
-    -4.80541391
+    137.3827764,
+    -4.803166844999999
   ],
+  "aoi_proposal": {
+    "status": "proposed; requires R1/Q6 terrain and habitat QA",
+    "aoi_geojson": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            137.3774296395142,
+            -4.795930569514188
+          ],
+          [
+            137.3881231604858,
+            -4.795930569514188
+          ],
+          [
+            137.3881231604858,
+            -4.8104031204858115
+          ],
+          [
+            137.3774296395142,
+            -4.8104031204858115
+          ],
+          [
+            137.3774296395142,
+            -4.795930569514188
+          ]
+        ]
+      ]
+    },
+    "centre_lonlat_E": [
+      137.3827764,
+      -4.803166844999999
+    ],
+    "crs_proj": "+proj=eqc +lat_ts=-4.803166845000 +lat_0=-4.803166845000 +lon_0=137.382776400000 +R=3396190 +units=m +no_defs",
+    "buffer": {
+      "value": 100,
+      "unit": "m",
+      "source_tag": "R0-AOI-proposal-v1",
+      "label": "assumption"
+    },
+    "center_method": "area centroid of campaign envelope + buffer clipped to valid DTM"
+  },
   "candidates": [
     {
       "product_id": "DTEEC_001488_1750_001752_1750_U02",
       "source_url": "https://www.uahirise.org/PDS/DTM/PSP/ORB_001400_001499/PSP_001488_1750_PSP_001752_1750/DTEEC_001488_1750_001752_1750_U02.IMG",
       "crs_wkt": "PROJCRS[\"EQUIRECTANGULAR MARS\",BASEGEOGCRS[\"GCS_MARS\",DATUM[\"D_MARS\",ELLIPSOID[\"MARS_localRadius\",3396190,0,LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]]],PRIMEM[\"Reference_Meridian\",0,ANGLEUNIT[\"degree\",0.0174532925199433,ID[\"EPSG\",9122]]]],CONVERSION[\"unnamed\",METHOD[\"Equidistant Cylindrical (Spherical)\",ID[\"EPSG\",1029]],PARAMETER[\"Latitude of 1st standard parallel\",0,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8823]],PARAMETER[\"Longitude of natural origin\",137.3,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8802]],PARAMETER[\"False easting\",0,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8806]],PARAMETER[\"False northing\",0,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8807]]],CS[Cartesian,2],AXIS[\"easting\",east,ORDER[1],LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]],AXIS[\"northing\",north,ORDER[2],LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]]]",
-      "crs_proj": "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=137.3 +x_0=0 +y_0=0 +R=3396190 +units=m +no_defs=True",
+      "crs_proj": "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=137.3 +x_0=0 +y_0=0 +R=3396190 +units=m +no_defs",
       "geographic_crs_wkt": "GEOGCRS[\"GCS_MARS\",DATUM[\"D_MARS\",ELLIPSOID[\"MARS_localRadius\",3396190,0,LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]]],PRIMEM[\"Reference_Meridian\",0,ANGLEUNIT[\"degree\",0.0174532925199433,ID[\"EPSG\",9122]]],CS[ellipsoidal,2],AXIS[\"longitude\",east,ORDER[1],ANGLEUNIT[\"degree\",0.0174532925199433,ID[\"EPSG\",9122]]],AXIS[\"latitude\",north,ORDER[2],ANGLEUNIT[\"degree\",0.0174532925199433,ID[\"EPSG\",9122]]]]",
       "radius_m": 3396190.0,
       "pixel_size_m": [
@@ -116,7 +158,7 @@
       "product_id": "DTEEC_009149_1750_009294_1750_U01",
       "source_url": "https://www.uahirise.org/PDS/DTM/PSP/ORB_009100_009199/PSP_009149_1750_PSP_009294_1750/DTEEC_009149_1750_009294_1750_U01.IMG",
       "crs_wkt": "PROJCRS[\"EQUIRECTANGULAR MARS\",BASEGEOGCRS[\"GCS_MARS\",DATUM[\"D_MARS\",ELLIPSOID[\"MARS_localRadius\",3396190,0,LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]]],PRIMEM[\"Reference_Meridian\",0,ANGLEUNIT[\"degree\",0.0174532925199433,ID[\"EPSG\",9122]]]],CONVERSION[\"unnamed\",METHOD[\"Equidistant Cylindrical (Spherical)\",ID[\"EPSG\",1029]],PARAMETER[\"Latitude of 1st standard parallel\",0,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8823]],PARAMETER[\"Longitude of natural origin\",137.41,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8802]],PARAMETER[\"False easting\",0,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8806]],PARAMETER[\"False northing\",0,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8807]]],CS[Cartesian,2],AXIS[\"easting\",east,ORDER[1],LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]],AXIS[\"northing\",north,ORDER[2],LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]]]",
-      "crs_proj": "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=137.41 +x_0=0 +y_0=0 +R=3396190 +units=m +no_defs=True",
+      "crs_proj": "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=137.41 +x_0=0 +y_0=0 +R=3396190 +units=m +no_defs",
       "geographic_crs_wkt": "GEOGCRS[\"GCS_MARS\",DATUM[\"D_MARS\",ELLIPSOID[\"MARS_localRadius\",3396190,0,LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]]],PRIMEM[\"Reference_Meridian\",0,ANGLEUNIT[\"degree\",0.0174532925199433,ID[\"EPSG\",9122]]],CS[ellipsoidal,2],AXIS[\"longitude\",east,ORDER[1],ANGLEUNIT[\"degree\",0.0174532925199433,ID[\"EPSG\",9122]]],AXIS[\"latitude\",north,ORDER[2],ANGLEUNIT[\"degree\",0.0174532925199433,ID[\"EPSG\",9122]]]]",
       "radius_m": 3396190.0,
       "pixel_size_m": [
@@ -139,22 +181,23 @@
   ],
   "inputs": [
     {
-      "file": "MSL_waypoints.json",
+      "file": "r0_waypoints.geojson",
       "url": "https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json",
-      "sha256": "5a32324f4b8ba22ebdfac50a503e195f47ccdc876ad4c15b19e29dc7cef15a09",
-      "bytes": 665124
+      "bytes": 31051,
+      "sha256": "ea8133b7e91f7fb35e34b566e27122969c593156f3d6fe5b5915be12fba292fe",
+      "snapshot_relative_to_manifest": "data/r0_waypoints.geojson"
     },
     {
       "file": "DTEEC_001488_1750_001752_1750_U02.IMG",
       "url": "https://www.uahirise.org/PDS/DTM/PSP/ORB_001400_001499/PSP_001488_1750_PSP_001752_1750/DTEEC_001488_1750_001752_1750_U02.IMG",
-      "sha256": "9359ca71b31e2689d9e2f38dd56fa83b051a09e360f8566730092a0f4cbe80bb",
-      "bytes": 360402944
+      "bytes": 360402944,
+      "sha256": "9359ca71b31e2689d9e2f38dd56fa83b051a09e360f8566730092a0f4cbe80bb"
     },
     {
       "file": "DTEEC_009149_1750_009294_1750_U01.IMG",
       "url": "https://www.uahirise.org/PDS/DTM/PSP/ORB_009100_009199/PSP_009149_1750_PSP_009294_1750/DTEEC_009149_1750_009294_1750_U01.IMG",
-      "sha256": "74881a6f7af9f3dcacbee72cf148020467bba5fac5dec4b5349a614397455e32",
-      "bytes": 390551132
+      "bytes": 390551132,
+      "sha256": "74881a6f7af9f3dcacbee72cf148020467bba5fac5dec4b5349a614397455e32"
     }
   ],
   "limitations": [
