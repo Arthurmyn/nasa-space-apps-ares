@@ -11,7 +11,7 @@ export interface LayerMeta {
 
 export const LAYER_META: readonly LayerMeta[] = [
   { id: "slope", label: "Slope", description: "Terrain steepness in degrees", isEstimate: false },
-  { id: "optical", label: "Optical", description: "Orbital image of the surface", isEstimate: false },
+  { id: "optical", label: "Optical", description: "Terrain shading from the HiRISE DTM over Viking imagery", isEstimate: false },
   { id: "thermal", label: "Thermal", description: "Surface temperature", isEstimate: false },
   { id: "geology", label: "Geology", description: "Mapped rock and terrain units", isEstimate: false },
   { id: "radiation", label: "Radiation", description: "Modelled dose rate at the surface", isEstimate: true },

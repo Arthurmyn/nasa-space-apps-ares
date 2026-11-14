@@ -7,7 +7,7 @@ import { StopsPanel } from "./components/StopsPanel.tsx";
 import { TopBar, type Drawer, type Mode } from "./components/TopBar.tsx";
 import { CardView } from "./modes/CardView.tsx";
 import { HudView } from "./modes/HudView.tsx";
-import { PlannerProvider } from "./state/PlannerContext.tsx";
+import { PlannerProvider, usePlanner } from "./state/PlannerContext.tsx";
 import { SiteProvider } from "./state/SiteContext.tsx";
 
 // The map pulls in MapLibre (large), so it loads after the first paint.
@@ -24,8 +24,11 @@ function MapFallback() {
 }
 
 function PlanView({ drawer, onDrawer }: { drawer: Drawer; onDrawer: (d: Drawer) => void }) {
+  const { state } = usePlanner();
+  // Without a route the profile only holds a hint, so it takes a thin strip instead of a quarter of the screen.
+  const profile = state.route || state.status === "loading" ? "full" : "empty";
   return (
-    <div className="shell__body" data-drawer={drawer ?? undefined}>
+    <div className="shell__body" data-drawer={drawer ?? undefined} data-profile={profile}>
       <aside id="layers-drawer" className="shell__left" aria-label="Layers">
         <LayersPanel />
       </aside>
