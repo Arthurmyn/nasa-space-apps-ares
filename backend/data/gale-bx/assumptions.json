@@ -1,0 +1,22 @@
+{
+  "slope_limit_deg": 15,
+  "slope_caution_deg": 10,
+  "speed_kmh": 2,
+  "items": [
+    {
+      "name": "Max slope",
+      "value": "15 deg",
+      "source": "TO VERIFY: document supporting the 15 deg route slope limit"
+    },
+    {
+      "name": "Caution slope",
+      "value": "10 deg",
+      "source": "TO VERIFY: document supporting the 10 deg caution threshold"
+    },
+    {
+      "name": "Walking speed",
+      "value": "2 km/h",
+      "source": "TO VERIFY: document supporting the assumed walking speed"
+    }
+  ]
+}
