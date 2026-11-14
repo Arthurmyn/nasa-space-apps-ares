@@ -60,3 +60,21 @@ export const TILE_SOURCES: Record<LayerId, TileSourceConfig> = {
   geology: unconfigured(0.65),
   radiation: unconfigured(0.65),
 };
+
+/**
+ * Layers drawn from a PNG that the grid script writes next to meta.json (docs/DATA_CONTRACT.md,
+ * section 2). The PNG covers the site bbox, north up. "optical" is the hillshade, drawn over the
+ * Mars Trek basemap with some transparency so the basemap still shows through.
+ */
+export interface GridImageConfig {
+  file: string;
+  opacity: number;
+}
+
+export const GRID_IMAGES: Partial<Record<LayerId, GridImageConfig>> = {
+  optical: { file: "hillshade.png", opacity: 0.6 },
+  slope: { file: "slope.png", opacity: 0.8 },
+};
+
+/** True when the layer has some image source, either tiles or a grid PNG. */
+export const layerHasImagery = (id: LayerId): boolean => TILE_SOURCES[id].url !== null || GRID_IMAGES[id] !== undefined;

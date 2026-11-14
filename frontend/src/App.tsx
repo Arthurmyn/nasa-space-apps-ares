@@ -8,6 +8,7 @@ import { TopBar, type Drawer, type Mode } from "./components/TopBar.tsx";
 import { CardView } from "./modes/CardView.tsx";
 import { HudView } from "./modes/HudView.tsx";
 import { PlannerProvider } from "./state/PlannerContext.tsx";
+import { SiteProvider } from "./state/SiteContext.tsx";
 
 // The map pulls in MapLibre (large), so it loads after the first paint.
 const MapView = lazy(() => import("./map/MapView.tsx"));
@@ -62,6 +63,7 @@ export default function App() {
   }, [drawer]);
 
   return (
+    <SiteProvider>
     <PlannerProvider>
       <div className="shell">
         <TopBar mode={mode} modes={MODES} onMode={setMode} drawer={drawer} onDrawer={setDrawer} />
@@ -70,5 +72,6 @@ export default function App() {
         {mode === "card" && <CardView onBackToPlan={() => setMode("plan")} />}
       </div>
     </PlannerProvider>
+    </SiteProvider>
   );
 }

@@ -1,7 +1,7 @@
 import { dataSource } from "../api/client.ts";
-import { SITE, SITE_IS_PLACEHOLDER } from "../config/site.ts";
 import { formatUtcTime } from "../lib/format.ts";
 import { usePlanner } from "../state/PlannerContext.tsx";
+import { useSite } from "../state/SiteContext.tsx";
 import { Icon } from "./Icon.tsx";
 
 export type Mode = "plan" | "hud" | "card";
@@ -31,8 +31,18 @@ function DataBadge() {
   );
 }
 
+function TestDataBadge() {
+  return (
+    <span className="badge badge--caution" title="The terrain grid is generated for testing, not measured Mars data">
+      <Icon name="alert" />
+      <span>Test data</span>
+    </span>
+  );
+}
+
 export function TopBar({ mode, modes, onMode, drawer, onDrawer }: TopBarProps) {
   const { state } = usePlanner();
+  const { site } = useSite();
   const computed = state.route ? formatUtcTime(state.route.computed_at) : null;
   const toggle = (d: Exclude<Drawer, null>) => onDrawer(drawer === d ? null : d);
 
@@ -52,9 +62,7 @@ export function TopBar({ mode, modes, onMode, drawer, onDrawer }: TopBarProps) {
           </button>
         )}
         <h1 className="topbar__brand">ARES</h1>
-        <span className="topbar__site" title={SITE_IS_PLACEHOLDER ? "Placeholder: set the site in src/config/site.ts" : undefined}>
-          {SITE.name}
-        </span>
+        <span className="topbar__site">{site.name}</span>
       </div>
 
       <nav className="topbar__modes" aria-label="Mode">
@@ -66,6 +74,7 @@ export function TopBar({ mode, modes, onMode, drawer, onDrawer }: TopBarProps) {
       </nav>
 
       <div className="topbar__right">
+        {site.isTestData && <TestDataBadge />}
         <DataBadge />
         <span className="topbar__time mono">{computed ? `Computed ${computed}` : "No route computed"}</span>
         {mode === "plan" && (

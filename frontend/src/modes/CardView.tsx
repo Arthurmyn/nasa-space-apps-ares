@@ -3,17 +3,18 @@ import { dataSource } from "../api/client.ts";
 import { RouteSketch } from "../components/RouteSketch.tsx";
 import { SafetyBadge } from "../components/SafetyBadge.tsx";
 import { Icon } from "../components/Icon.tsx";
-import { SITE } from "../config/site.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
 import { formatCoordinates, formatDistance, formatDuration, formatElevation, formatSlope, formatUtcTime, stopLabel } from "../lib/format.ts";
 import { routeLegs } from "../lib/legs.ts";
 import { SLOPE_CLASS_LABEL } from "../lib/slope.ts";
 import { usePlanner } from "../state/PlannerContext.tsx";
+import { useSite } from "../state/SiteContext.tsx";
 import { LEVEL_ICON } from "../components/SafetyBadge.tsx";
 
 /** One-page printable route card, A5 landscape. Everything on it comes from the route response. */
 export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
   const { state, stale } = usePlanner();
+  const { site } = useSite();
   const route = state.route;
 
   const legs = useMemo(() => {
@@ -61,10 +62,11 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
         <header className="card__head">
           <div>
             <h2 className="card__title">ARES route card</h2>
-            <p className="card__sub">{SITE.name}</p>
+            <p className="card__sub">{site.name}</p>
           </div>
           <p className="card__meta mono">
             {dataSource === "mock" ? "Sample data, not real terrain" : "Live API"}
+            {site.isTestData && " · Test data"}
             {computed && ` · Computed ${computed}`}
             {stale && " · Out of date"}
           </p>
