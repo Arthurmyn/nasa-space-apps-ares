@@ -18,7 +18,14 @@ it("falls back to shipped site imagery when the API has no metadata", () => {
   const info = availableLayers(siteFor("gale-bx"), {});
   assert.equal(info.slope?.available, true);
   assert.equal(info.optical?.available, true);
-  assert.equal(info.thermal, undefined);
+});
+
+it("shows thermal inertia as a published-value card, not the THEMIS daytime IR entry of the API", () => {
+  const ir = { id: "thermal" as const, available: true, reason: null, source: "Gale Crater THEMIS Daytime IR ISIS" };
+  const info = availableLayers(siteFor("gale-bx"), { thermal: ir });
+  assert.equal(info.thermal?.available, true);
+  assert.match(info.thermal?.source ?? "", /Fraeman et al\. 2016/);
+  assert.equal(availableLayers(siteFor("missing-site"), {}).thermal, undefined);
 });
 
 it("does not assume terrain images exist for another site", () => {
@@ -29,7 +36,7 @@ it("does not assume terrain images exist for another site", () => {
 it("only declares raster files that are bundled for the specified site", () => {
   for (const [site, images] of Object.entries(SITE_GRID_IMAGES)) {
     for (const image of Object.values(images)) {
-      assert.ok(existsSync(new URL(`../../public/data/${site}/${image.file}`, import.meta.url)));
+      assert.ok(existsSync(new URL(`../../public/${image.dir ?? "data"}/${site}/${image.file}`, import.meta.url)));
     }
   }
 });

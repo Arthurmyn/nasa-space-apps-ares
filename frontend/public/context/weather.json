@@ -1,0 +1,44 @@
+{
+  "schema": "ares.weather/v1",
+  "label": "Model climatology for today's season (Mars Climate Database v6.2). Not a forecast, not a measurement.",
+  "status": "MODEL",
+  "credit": "Mars Climate Database v6.2, climatology average solar scenario, LMD/OU/IAA/ESA/CNES",
+  "source_url": "https://www-mars.lmd.jussieu.fr/mcd_python/",
+  "query": {
+    "ls_deg": 22.3,
+    "lat": -4.8,
+    "lon_e": 137.38,
+    "alt_m_above_surface": 10,
+    "retrieved_utc": "2026-11-14T21:05"
+  },
+  "values": {
+    "air_temperature_10m_K": {
+      "min": 189.2,
+      "min_h": 5.0,
+      "max": 238.5,
+      "max_h": 15.0
+    },
+    "surface_temperature_K": {
+      "min": 182.7,
+      "min_h": 5.0,
+      "max": 271.7,
+      "max_h": 13.0
+    },
+    "surface_pressure_Pa": {
+      "min": 780.0,
+      "min_h": 17.0,
+      "max": 832.9,
+      "max_h": 7.0
+    },
+    "we_wind_ms": {
+      "min": -20.2,
+      "min_h": 21.0,
+      "max": 3.2,
+      "max_h": 13.0
+    }
+  },
+  "notes": [
+    "Hours are local true solar time at the site.",
+    "W-E wind is one component only; total speed needs the S-N component."
+  ]
+}

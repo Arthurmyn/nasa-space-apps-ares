@@ -20,7 +20,7 @@ ARES plans a Marswalk route at Gale crater (boxwork, Mount Sharp):
 - **Routing.** The backend runs A* over the slope grid (8 neighbours). A cell steeper than the slope limit cannot be crossed. The route goes from a start through up to 5 stops.
 - **Limits with sources.** The slope limits, walking speed and maximum distance from the start are listed with their sources in `backend/data/gale-bx/assumptions.json`. They cite NASA and JPL documents [1] to [5], also listed in `frontend/src/config/references.ts`.
 - **Three modes** in the web app:
-  - **Plan:** map with the layers that have data (slope, hillshade over Mars imagery, thermal), stops, route summary with the estimated radiation dose of the walk, elevation profile, a short "Why this site" note and a "How this is computed" panel. Layers without data are marked "No data for this site".
+  - **Plan:** map with the layers that have data (slope, hillshade over Mars imagery, thermal), stops, route summary with the estimated radiation dose of the walk, elevation profile and a "How this is computed" panel. Layers without data are marked "No data for this site".
   - **HUD:** a heads-up view with compass, next stop and slope. The position moves with a slider (simulated).
   - **Card:** a printable one-page A4 route card with the map, stops, slope by leg, safety margins, the estimated radiation dose and the sources.
 
@@ -28,12 +28,11 @@ ARES plans a Marswalk route at Gale crater (boxwork, Mount Sharp):
 
 From `backend/data/gale-bx/meta.json` and `sources.json`:
 
-- **Terrain:** HiRISE DTM `DTEEC_009149_1750_009294_1750_U01`, NASA/JPL/University of Arizona. The grid cell is 2 m and slopes are smoothed over a 5 m window.
+- **Terrain:** HiRISE DTM `DTEEC_009149_1750_009294_1750_U01`, NASA/JPL/University of Arizona. The grid cell is 3 m and each slope is measured over a 6 m window (a central difference between neighbouring cells; see `docs/DATA_CONTRACT.md`, section 4).
 - **Imagery:** Viking MDIM 2.1 colour mosaic through NASA/JPL Mars Trek, used as the map basemap.
 - **Science stops:** Curiosity (MSL) waypoints, NASA/JPL, `https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json` (snapshot in `docs/research/r0/`).
 - **Thermal:** USGS Astrogeology "Gale Crater THEMIS Daytime IR ISIS", NASA/JPL-Caltech/Arizona State University (Mars Odyssey THEMIS). A single 2007 observation, 100 m per pixel, drawn as blocks; stretched 8-bit values, not calibrated temperature.
 - **Radiation:** average galactic cosmic ray dose equivalent rate of 0.67 mSv per day at the Gale surface (August 2012 to June 2013), measured by Curiosity RAD: Hassler et al., Science 2013, https://doi.org/10.1126/science.1244797. The dose of a walk is this rate times the walking time; galactic cosmic rays only, not a forecast.
-- **Site context:** the "Why this site" text comes from NASA/JPL, "NASA's Curiosity Rover Sees Martian 'Spiderwebs' Up Close" (23 February 2026), reference [6].
 - **Slope and walking limits:** documents [1] to [5]; see `ASSETS.md` for links, licenses and where each source is used.
 
 ## Limitations

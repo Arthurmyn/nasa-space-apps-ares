@@ -23,11 +23,13 @@ frontend/public/data/gale-bx/
   meta.json        copy (the script copies it itself)
   elevation.bin    copy of the backend file (the script copies it itself); the HUD draws the 3D terrain from it
   hillshade.png    grey terrain background, RGBA, size width x height
-  slope.png        coloured slope layer, RGBA with transparency, size width x height
+  slope.png        coloured slope layer, RGBA with transparency, size width x height;
+                   classes <=10 / 10-15 / 15-20 / >20 deg (lunar analogs, 10 deg is a display break only)
+  slope.bin        copy of backend slope.bin; the browser refuses a stop on a gap or over the limit
   thermal.png      THEMIS thermal layer, RGBA, size width x height, bbox from meta.json (section 2b)
   thermal.json     thermal layer description: source, pixel size, value range, colours
 ```
-Size: all files together up to 3,000,000 bytes. Of these, 100,000 bytes are reserved for the companion JSON files: the grid itself (meta.json ×2, elevation.bin ×2, slope.bin, hillshade.png, slope.png) must take no more than 2,900,000 bytes. If either limit is exceeded, the script uses a 2 m cell (`--cell 2`); if a limit is still exceeded, it exits with an error before writing.
+Size: all files together up to 3,000,000 bytes. Of these, 100,000 bytes are reserved for the companion JSON files: the grid itself (meta.json ×2, elevation.bin, slope.bin ×2, hillshade.png, slope.png) must take no more than 2,900,000 bytes. The frontend copy of `elevation.bin` for the HUD is identical to the backend file and is not counted in either limit (like the optical image). If either limit is exceeded, the script tries a 2 m cell (`--cell 2`), then a 3 m cell (`--cell 3`); if a limit is still exceeded, it exits with an error before writing. The full team AOI (137.3762-137.3984 E, -4.8113 to -4.7802) fits only at 3 m.
 ### 2b. Thermal layer (THEMIS)
 Made by `scripts/make_thermal_layer.py` from the USGS Astropedia cube "Gale Crater THEMIS Daytime IR ISIS" (link and credit in `ASSETS.md` and in `thermal.json`). It is a **single observation** by Mars Odyssey THEMIS (product `I24545011RDR`, band 9, 12.57 µm), with a native pixel of 100 m; about 70 pixels fall on the site. Values are stored as stretched 8-bit numbers, not calibrated temperature. A pixel with value 0 (the THEMIS team's ignore value) is transparent.
 - `thermal.png`: each pixel of the site grid takes the value of the nearest THEMIS pixel (no interpolation), coloured by the scale in `thermal.json`.
@@ -59,7 +61,7 @@ The backend reads `backend/data/` (inside its own folder: the backend Docker ima
   "elevation_nodata": "NaN",
   "slope_unit_deg": 0.5,
   "slope_nodata": 255,
-  "slope_window_m": 5,
+  "slope_window_m": 6.0,
   "sources": ["HiRISE DTM DTEEC_009149_1750_009294_1750_U01, NASA/JPL/University of Arizona"]
 }
 ```
@@ -72,7 +74,7 @@ The projection is local and equidistant: `x = R * radians(lon - lon0) * cos(radi
 - Index in the file: `i = row * width + col`
 - Size: `elevation.bin` = width*height*4 bytes, `slope.bin` = width*height bytes.
 - Slope in degrees = `slope.bin[i] * slope_unit_deg`. The value 255 = no data.
-- Slope is computed over a window of about `slope_window_m` metres (it smooths the noise of the 1 m DTM).
+- Slope is computed over a window of `slope_window_m` metres. `scripts/make_slope_grid.py` first smooths the elevation with a box filter whose width is the odd number of cells nearest 5 m (5 cells at 1 m, 3 at 2 m, 1 at 3 m, which means no smoothing), then takes a central difference between the neighbouring cells. `slope_window_m` = (box width in cells + 1) x `cell_m`, the span between the centres of the outermost DTM cells used: 6 m at 1 m, 8 m at 2 m, 6 m at 3 m.
 - PNG corners: the same `bbox` in degrees (north-west, north-east, south-east, south-west).
 
 ## 5. stops.json (targets for the selection list)
@@ -93,7 +95,7 @@ The projection is local and equidistant: `x = R * radians(lon - lon0) * cos(radi
 ```
 `image` is either null or `{ "url": "...", "alt": "...", "credit": "..." }` (like `StopImage` in `frontend/src/api/types.ts`). `url` is an http(s) URL or a path on the same site, for example `/app/stops/sol4534-navcam-left.jpg` (files in `frontend/public/stops/`; every image needs its entry in `ASSETS.md`). The frontend drops any other scheme.
 Target coordinates are inside the `bbox`. A group is what a person picks in the list ("Boxwork" and so on).
-`context` (optional, top level of `stops.json`): a short "Why this site" text of 2-4 sentences with its sources, `{ "title", "text", "sources": [ { "title", "url", "credit" } ] }`. Only facts from the pages listed in `sources`; we do not attach science claims to individual targets, and the targets stay plain waypoints. Every source must be in the list in `frontend/src/config/references.ts` (the card prints it as [6]). The API returns `context` inside `GET /sites`, and the UI shows it under the list of stops and on the card.
+`context` (optional, top level of `stops.json`): a short "Why this site" text of 2-4 sentences with its sources, `{ "title", "text", "sources": [ { "title", "url", "credit" } ] }`. Only facts from the pages listed in `sources`; we do not attach science claims to individual targets, and the targets stay plain waypoints. Every source must be in the list in `frontend/src/config/references.ts` (the card prints its number from there). No shipped site has a `context` now. The API returns `context` inside `GET /sites`, and the UI shows it under the list of stops and on the card.
 `source_id` is resolved through `backend/data/gale-bx/sources.json` (an object: ID → a string with a description and a link). The generator adds to `meta.sources` only the sources of the current targets, as `"ID: description"` strings; when targets are replaced, the data changes, not the generator code. Without `stops.json` the registry is not needed. The shapes of `stops.json` and `meta.json` stay the same.
 
 ## 6. assumptions.json

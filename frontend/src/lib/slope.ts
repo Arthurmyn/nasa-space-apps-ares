@@ -22,14 +22,14 @@ export function classifySlope(slopeDeg: number, limits: SlopeLimits): SlopeClass
 
 /** Labels for a single slope reading. */
 export const SLOPE_CLASS_LABEL: Record<SlopeClass, string> = {
-  ok: "Within limits",
+  ok: "Gentle",
   caution: "Steep",
   avoid: "Over limit",
 };
 
 /** Labels for the overall route safety status. */
 export const SAFETY_LABEL: Record<SafetyLevel, string> = {
-  ok: "Route within limits",
+  ok: "Gentle route, under 10°",
   caution: "Proceed with caution",
   avoid: "Avoid this route",
 };

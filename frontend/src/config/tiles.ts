@@ -63,11 +63,13 @@ export const TILE_SOURCES: Record<LayerId, TileSourceConfig> = {
 
 /**
  * Layers drawn from a PNG that the grid script writes next to meta.json (docs/DATA_CONTRACT.md,
- * section 2). The PNG covers the site bbox, north up. "optical" is the hillshade, drawn over the
- * Mars Trek basemap with some transparency so the basemap still shows through.
+ * section 2). The PNG covers the site bbox, north up. "optical" is the HiRISE orthoimage of the
+ * DTM stereo pair (scripts/make_optical_layer.py), placed on the same bbox over the Mars Trek basemap.
  */
 export interface GridImageConfig {
   file: string;
+  /** "imagery": public/imagery/<site>/ (large images outside the grid budget); default public/data/<site>/. */
+  dir?: "data" | "imagery";
   opacity: number;
   /** "nearest" keeps coarse source pixels as blocks instead of smoothing them into fake detail. */
   resampling?: "nearest" | "linear";
@@ -82,7 +84,12 @@ const GRID_LAYER_IMAGES: Partial<Record<LayerId, GridImageConfig>> = {
 };
 
 export const SITE_GRID_IMAGES: Record<string, Partial<Record<LayerId, GridImageConfig>>> = {
-  "gale-bx": GRID_LAYER_IMAGES,
+  "gale-bx": {
+    optical: { file: "optical.jpg", dir: "imagery", opacity: 1 },
+    slope: { file: "slope.png", opacity: 0.8 },
+    // No thermal image: the only raster at hand is THEMIS daytime IR brightness, which is not
+    // thermal inertia. The thermal layer shows the published value as a card instead.
+  },
   "gale-001488": GRID_LAYER_IMAGES,
 };
 

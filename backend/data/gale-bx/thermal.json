@@ -19,24 +19,24 @@
     "cube_sha256": "8c256fe8e85ebec53c33fb9ea258efd7548b519439a468e54750caf617bdcd91"
   },
   "native_pixel_m": 100.0,
-  "site_thermal_pixels": 70,
+  "site_thermal_pixels": 285,
   "output": {
-    "width": 316,
-    "height": 430,
-    "cell_m": 2.0
+    "width": 438,
+    "height": 616,
+    "cell_m": 3.0
   },
   "bbox": {
-    "lon_min": 137.3774265012654,
-    "lon_max": 137.38812629873462,
-    "lat_min": -4.810421205088988,
-    "lat_max": -4.7959124849110095
+    "lon_min": 137.3761770719427,
+    "lon_max": 137.39842292805733,
+    "lat_min": -4.811338438888899,
+    "lat_max": -4.780161561111101
   },
   "resampling": "nearest: each output pixel copies the THEMIS pixel containing its centre",
   "value": {
     "kind": "relative brightness, stretched 8-bit values (DN) of band 9 radiance",
     "not_calibrated_temperature": true,
     "site_dn_min": 88,
-    "site_dn_max": 187,
+    "site_dn_max": 233,
     "nodata_dn": 0,
     "label_core_name": "CALIBRATED_SPECTRAL_RADIANCE"
   },
@@ -65,7 +65,7 @@
       ]
     ],
     "low_is": "DN 88",
-    "high_is": "DN 187"
+    "high_is": "DN 233"
   },
   "notes": [
     "One THEMIS observation, not a mosaic of many dates: a snapshot, not a time series.",
