@@ -6,21 +6,10 @@ Base URL: `http://localhost:8000/api/v1` · Интерактивная дока:
 
 ## `GET /health`
 ```json
-{ "status": "ok", "model_loaded": true }
+{ "status": "ok", "data_loaded": true }
 ```
 
-## `POST /predict`
-Запрос:
-```json
-{ "features": { "x1": 1.0, "x2": 0.5 } }
-```
-Ответ `200`:
-```json
-{ "prediction": 1, "confidence": 0.87 }
-```
-Ошибки: `422` - невалидный ввод, `503` - модель не загружена.
-
-> ⚠️ Формат `features` - заглушка. Заменить, когда определимся с задачей.
+`data_loaded` показывает, загружена ли сетка при старте. Без файлов health остаётся доступным, а `/layers`, `/sites`, `/route` возвращают `503` с понятным `detail`. ML-заглушка `/predict` удалена.
 
 ---
 
@@ -33,9 +22,9 @@ Base URL: `http://localhost:8000/api/v1` · Интерактивная дока:
 
 ## Frontend proposal: route planning (ARES UI)
 
-> **Status: proposal from the frontend, not implemented in the backend yet.** Nothing above defines route endpoints, so the UI was built against the shapes below (written in English; the sections above are Russian). The TypeScript mirror is [`frontend/src/api/types.ts`](../frontend/src/api/types.ts); responses are validated at runtime in [`validate.ts`](../frontend/src/api/validate.ts). If the backend wants different names or shapes, change both and this section in one PR (see "Как менять контракт").
+> **Status: implemented in the backend.** The response shapes below match [`frontend/src/api/types.ts`](../frontend/src/api/types.ts) and the runtime validators in [`validate.ts`](../frontend/src/api/validate.ts).
 >
-> Until the backend exists, run the UI with `VITE_USE_MOCK=true`. It then shows a **Sample data** badge and uses synthetic data from `frontend/src/api/mock.ts`.
+> `VITE_USE_MOCK=true` enables frontend-only mock responses. The backend reads the committed real terrain from `backend/data/gale-bx/`; the frontend metadata and rasters match that grid.
 
 Conventions: coordinates are `[lon, lat]` in degrees on Mars, longitude east-positive in -180..180 (GeoJSON order). Distances in metres, slopes in degrees, times in seconds. All numbers on screen come from these responses; the UI has no hardcoded metrics.
 
@@ -59,7 +48,12 @@ Which data layers exist for the site. A layer that is missing or has `available:
 | `layers[].reason` | string \| null | Shown when not available. Default text: "No data for this site" |
 | `layers[].source` | string \| null | Dataset and provider, shown in the layer legend |
 
-Layer imagery itself is not served by the API. Tiles come from `frontend/src/config/tiles.ts` (empty for now).
+Layer imagery itself is not served by the API. Grid images are in `frontend/public/data/gale-bx/` per `DATA_CONTRACT.md`; tile sources are configured separately in `frontend/src/config/tiles.ts`.
+
+### `GET /sites`
+
+Returns `{ "sites": [{ "id", "name", "groups": [...], "stops": [...] }] }`.
+The site identity comes from `meta.json`; groups and catalog stops (including note, image and source_id) come from `stops.json`, as specified in `DATA_CONTRACT.md`.
 
 ### `POST /route`
 
@@ -80,8 +74,8 @@ Request:
 | Field | Type | Notes |
 |-------|------|-------|
 | `start`, `stops[]` | `{ id, lon, lat, name? }` | 1 to 5 stops, in visiting order. `id` is client-generated and stable ("start", "stop-1", ...); echo it back. |
-| `constraints.max_slope_deg` | number | Hard slope limit for the route |
-| `compare` | boolean, optional | When true, also return one `alternative` route |
+| `constraints.max_slope_deg` | number | Positive hard slope limit, capped at `assumptions.json`'s `slope_limit_deg` |
+| `compare` | boolean, optional | Accepted; this implementation returns `alternative: null` |
 
 Response `200` (example values only):
 
@@ -135,6 +129,11 @@ Response `200` (example values only):
 | `alternative` | object \| null | Only when `compare: true`. Null if no alternative exists |
 
 Notes for the backend:
+- The grid and companion JSON files are loaded once at startup from `backend/data/gale-bx/`. Restart the process after replacing data. Missing, invalid, or truncated files produce `503`; there is no automatic terrain substitution.
+- Routes use eight-neighbour A*, with cost `step_length * (1 + (destination_slope / effective_limit)^2)`. No-data cells and cells over the effective limit are blocked. Diagonal movement cannot cut through blocked corners.
+- Stops are visited in request order. Requested ids, coordinates and names are echoed; note/image are attached only when the requested position matches a catalog stop (within `1e-8` degrees), so moving a point does not keep stale science information.
+- Profile samples come from the same traversed cells as the polyline, approximately every 20 m plus the endpoints. The maximum slope considers every traversed cell. Time uses `distance_m / (speed_kmh / 3.6)`. Assumptions contain `assumptions.json.items` plus an effective route slope limit, showing both the requested and site limits and their minimum. Safety uses the data's caution threshold; `safety_reason` also states the effective route limit. A successful route cannot be `avoid`: cells above the effective limit are blocked, so an impossible route returns 422. `hazards` is currently empty and `alternative` is null, including when `compare: true`.
+- A point outside the grid, in no-data, above the limit, or a disconnected leg returns `422` with a plain-language `detail` naming the point or leg. Input validation also returns `422`.
 - The UI colours slope classes itself using two thresholds from `frontend/src/config/route.ts` (`cautionDeg`, `maxDeg`). **They are placeholders until the team confirms them.** If the backend should own the thresholds, add them to the response (for example `slope_limits: { caution_deg, max_deg }`) and the UI will read them from there.
 - `profile` and `polyline` describe the same route; the UI maps a profile distance to the same fraction of the polyline length.
 - Errors: `422` for invalid input (for example no stops, or more than five), `5xx` otherwise. The UI shows a plain-language message and never prints the response body.
