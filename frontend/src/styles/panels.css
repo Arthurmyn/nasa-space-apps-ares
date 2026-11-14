@@ -228,13 +228,13 @@
 }
 
 .switch[aria-checked="true"]::before {
-  border-color: var(--rust);
-  background: rgb(217 88 43 / 0.18);
+  border-color: var(--accent);
+  background: rgb(155 140 255 / 0.18);
 }
 
 .switch[aria-checked="true"] .switch__thumb {
   transform: translateX(18px);
-  background: var(--rust);
+  background: var(--accent);
 }
 
 .switch:disabled {
@@ -400,7 +400,7 @@
   width: 14px;
   height: 14px;
   border: 2px solid var(--line-strong);
-  border-top-color: var(--rust);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -515,8 +515,8 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  border: 2px solid var(--rust);
-  background: var(--rust);
+  border: 2px solid var(--accent);
+  background: var(--accent);
   color: var(--text-on-accent);
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
@@ -525,7 +525,7 @@
 
 .pin--start {
   background: var(--bg);
-  color: var(--rust);
+  color: var(--accent);
 }
 
 /* ---- Stop card ---- */

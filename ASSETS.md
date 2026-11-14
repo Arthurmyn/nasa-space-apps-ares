@@ -6,12 +6,9 @@ Every font, icon set, library, image, tile source and data layer used by the app
 
 | Font | Weights | Source | License | Used for |
 |------|---------|--------|---------|----------|
-| Space Grotesk | 400, 500, 600, 700 (Latin subset, woff2) | https://github.com/floriankarsten/space-grotesk, files taken from the `@fontsource/space-grotesk@5.3.0` npm package | SIL Open Font License 1.1 (`frontend/public/fonts/OFL-Space-Grotesk.txt`) | Headings, labels, body text (`--font-sans`) |
-| IBM Plex Mono | 400, 500, 600 (Latin subset, woff2) | https://github.com/IBM/plex, files taken from the `@fontsource/ibm-plex-mono@5.3.0` npm package | SIL Open Font License 1.1 (`frontend/public/fonts/OFL-IBM-Plex-Mono.txt`) | Numbers, coordinates, distances (`--font-mono`) |
+| Inter (variable, `opsz` axis) | 100 to 900 (Latin subset, one woff2 file) | https://github.com/rsms/inter, file taken from the `@fontsource-variable/inter@5.3.0` npm package | SIL Open Font License 1.1 (`frontend/public/fonts/OFL-Inter.txt`, `landing/public/fonts/OFL-Inter.txt`) | Everything, in both the landing page and the planner (`--font-sans`, also used for numbers with tabular figures) |
 
-| Inter (variable, `opsz` axis) | 100 to 900 (Latin subset, woff2) | https://github.com/rsms/inter, file taken from the `@fontsource-variable/inter@5.3.0` npm package | SIL Open Font License 1.1 (`landing/public/fonts/OFL-Inter.txt`) | Landing page (`landing/`) |
-
-Planner fonts live in `frontend/public/fonts/`, the landing font in `landing/public/fonts/`. The fontsource packages were used only to download the files; they are not project dependencies. Fallback stacks are in `frontend/src/styles/tokens.css`.
+The same file lives in `frontend/public/fonts/` and `landing/public/fonts/`. The fontsource package was used only to download it; it is not a project dependency. Fallback stack is in `frontend/src/styles/tokens.css`. Space Grotesk and IBM Plex Mono were used by earlier versions of the planner and are no longer shipped.
 
 ## Libraries
 
@@ -53,6 +50,14 @@ Both files are **AI-generated** stylised illustrations of a ringed planet and sa
 | `landing/public/media/sky.mp4` (1664 x 1248, 9 s loop, no audio) | Looping hero background | Same host, `.../4b73c700-3112-4c07-bd48-0af2893dff7c.mp4` | As above | Hosted copy dated 26 Sep 2026 | **Unknown** | Hero background video |
 
 Processing: the video was re-encoded (H.264, CRF 23, audio removed); the picture itself is unchanged. They are served from the site itself instead of being hotlinked.
+
+### Landing page (`landing/`): demo video
+
+| File | What | Source | License | Where used |
+|------|------|--------|---------|------------|
+| `landing/public/media/demo.mp4` (1440 x 900, about 63 s, no audio) and `demo-poster.jpg` | Screen recording of the planner in its sample-data build, with a cursor overlay | Recorded by the team's tooling from this repository (headless Chrome, Playwright), re-encoded to H.264. No third-party content | Same as the repository (MIT) | "See the planner work" section, opened by the "Get a demo" button |
+
+It shows the "Sample data" badge because the planner ran on synthetic data. Re-record it when the planner uses real terrain data.
 
 **Disclosure.** At the team's request (14 Nov 2026) the on-image "AI-generated" label and the corner badge were removed. The disclosure is now a sentence in the landing footer: "The background artwork on this page (video and still) is AI-generated." If the competition requires a mark on the media itself, add the label back before submission (the earlier version burned it into the poster and every video frame with Pillow and ffmpeg `drawtext`; see git history of this file, commit `c5c7e3f`).
 
