@@ -21,6 +21,8 @@ class Constraints(Model):
 
 
 class RouteRequest(Model):
+    # Which site's terrain to plan on. Omitted means the default site (gale-bx).
+    site_id: str | None = Field(default=None, max_length=64)
     start: PointInput
     stops: list[PointInput] = Field(min_length=1, max_length=5)
     constraints: Constraints

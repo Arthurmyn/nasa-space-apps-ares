@@ -94,7 +94,7 @@ The app itself ships no scientific data. Layers (slope, optical, thermal, geolog
 
 ### Site grid (Gale boxwork)
 
-Files in `frontend/public/data/gale-bx/` and `backend/data/gale-bx/`, made by `scripts/make_slope_grid.py` (format: `docs/DATA_CONTRACT.md`).
+Files in `frontend/public/data/gale-bx/` and `backend/data/gale-bx/`, made by `scripts/make_slope_grid.py` (format: `docs/DATA_CONTRACT.md`). A second site is listed below.
 
 | Item | Source | License | Where used |
 |------|--------|---------|------------|
@@ -121,6 +121,21 @@ Cited as [1] to [5] in the assumptions (and [6], the site context page, on the c
 7. Design reference, no data used: NASA/JPL, Curiosity's Proposed Path up Mount Sharp (PIA23179), 15 May 2019, credit NASA/JPL-Caltech/ESA/University of Arizona/JHUAPL/MSSS/USGS Astrogeology Science Center: https://science.nasa.gov/resource/curiositys-proposed-path-up-mount-sharp/ (page read on 15 November 2026: title, date and credit as quoted). It shows how NASA presents a route on Mount Sharp; the route styling of the planner follows that idea and nothing from the image is copied or shown. Listed in `frontend/src/config/references.ts` (flagged `design`), shown under "How this is computed" and not printed on the route card.
 
 The values attributed to [1] to [4] (a 20 deg EVA walking capability, a 2 km distance limit, Apollo walking speeds, the 23 deg slope at Gale) were supplied by the team and not re-checked against the documents. There is no official human-on-Mars slope standard; the 15 deg and 10 deg limits are ARES planning values.
+
+### Second site (`gale-001488`)
+
+Files in `frontend/public/data/gale-001488/` and `backend/data/gale-001488/`, same format as `gale-bx` (`docs/DATA_CONTRACT.md`). It is a second HiRISE DTM of the Gale crater area; it is **not** where Curiosity drove: none of the 1,389 positions in the NASA MMGIS waypoint list lies inside its valid footprint (checked on 15 November 2026).
+
+| Item | Source | License | Where used |
+|------|--------|---------|------------|
+| Terrain grid, `hillshade.png`, `slope.png`, `elevation.bin`, `slope.bin` | HiRISE DTM `DTEEC_001488_1750_001752_1750_U02`, NASA/JPL/University of Arizona. Download: `https://www.uahirise.org/PDS/DTM/PSP/ORB_001400_001499/PSP_001488_1750_PSP_001752_1750/DTEEC_001488_1750_001752_1750_U02.IMG` (360,402,944 bytes, sha256 `9359ca71b31e2689d9e2f38dd56fa83b051a09e360f8566730092a0f4cbe80bb`, equal to the pin in `scripts/r0_inputs.json`; downloaded 15 Nov 2026). The grid is derived from it: cell 2 m, slope window 5 m, 317 x 431 cells, bbox 137.3007 to 137.3115 E and 4.8924 to 4.9069 S | HiRISE Image Usage Policy, quoted in the Gale grid row above (credit NASA/JPL/University of Arizona) | Slope and Optical layers, route planning on this site |
+| Valid footprint of the DTM | `docs/research/r0/DTEEC_001488_1750_001752_1750_U02_footprint.geojson`, made by `scripts/r0_coverage.py` from the DTM above | Derived from the DTM | Placing the AOI |
+| AOI of the site | `docs/research/r0/gale_001488_handoff.json`, made by `scripts/make_site_handoff.py`: a 632 x 860 m rectangle (the size of the `gale-bx` grid) centred on the point of the largest valid-footprint polygon that is farthest from its edges, checked to lie fully inside the footprint | Own work | Input of `scripts/make_slope_grid.py` |
+| Thermal layer, `thermal.png`, `thermal.json` | The same USGS Astropedia THEMIS cube as for `gale-bx` (row above), converted by `scripts/make_thermal_layer.py --site gale-001488`: the site covers about 70 THEMIS pixels of 100 m, stretched values 110 to 214 | THEMIS Citation Policy, quoted above | Thermal layer |
+
+Planning assumptions (`assumptions.json`) are a copy of the `gale-bx` ones: the same slope limits, walking speed and radiation rate, with the same references [1] to [5]. The radiation figure was measured by Curiosity at the Gale surface; this site is in the same crater region, but no measurement was made at this exact place.
+
+**Targets and description.** This site has no science targets and no "Why this site" text: no verified source describing this exact area was found, so nothing was written. The stop list is empty and the interface shows neither a group picker nor a context note. The name only states what the data is: "Gale crater: HiRISE DTM 001488 area".
 
 ## Stop images
 

@@ -11,6 +11,7 @@ import io
 import json
 import math
 from pathlib import Path
+import re
 
 import numpy as np
 from PIL import Image
@@ -38,6 +39,14 @@ class Grid:
     crs: CRS
     transform: rasterio.Affine
     inside: np.ndarray
+
+
+def site_id_of(handoff):
+    """Folder name of the site under backend/data and frontend/public/data. gale-bx unless the handoff says."""
+    sid = handoff.get("site_id", "gale-bx")
+    if not isinstance(sid, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", sid):
+        raise ValueError("handoff site_id must be lower-case letters, digits and hyphens")
+    return sid
 
 
 def build_grid(handoff, cell):
@@ -68,8 +77,8 @@ def build_grid(handoff, cell):
     lon_scale = RADIUS * math.cos(math.radians(lat0))
     meta = {
         "schema": "ares.grid/v1",
-        "site_id": "gale-bx",
-        "name": "Gale crater: boxwork (Mount Sharp)",
+        "site_id": site_id_of(handoff),
+        "name": handoff.get("site_name", "Gale crater: boxwork (Mount Sharp)"),
         "preliminary": True,
         "dtm_product_id": handoff["dtm_product_id"],
         "is_test_data": False,
@@ -169,12 +178,13 @@ def encode_files(grid, z, caution_deg=10, limit_deg=15):
     colors[(degrees > caution_deg) & (degrees <= limit_deg) & valid] = (245, 180, 65, 155)
     colors[(degrees > limit_deg) & valid] = (220, 65, 60, 175)
     meta = (json.dumps(grid.meta, ensure_ascii=False, indent=2, allow_nan=False)+"\n").encode("utf-8")
-    return {"backend/data/gale-bx/meta.json": meta,
-            "backend/data/gale-bx/elevation.bin": z.astype("<f4").tobytes(order="C"),
-            "backend/data/gale-bx/slope.bin": slope.tobytes(order="C"),
-            "frontend/public/data/gale-bx/meta.json": meta,
-            "frontend/public/data/gale-bx/hillshade.png": png_bytes(hillshade),
-            "frontend/public/data/gale-bx/slope.png": png_bytes(colors)}
+    sid = grid.meta["site_id"]
+    return {f"backend/data/{sid}/meta.json": meta,
+            f"backend/data/{sid}/elevation.bin": z.astype("<f4").tobytes(order="C"),
+            f"backend/data/{sid}/slope.bin": slope.tobytes(order="C"),
+            f"frontend/public/data/{sid}/meta.json": meta,
+            f"frontend/public/data/{sid}/hillshade.png": png_bytes(hillshade),
+            f"frontend/public/data/{sid}/slope.png": png_bytes(colors)}
 
 
 def read_stop_sources(data_dir):
@@ -198,8 +208,9 @@ def read_stop_sources(data_dir):
 
 def generate(handoff, output_root, cell=1.0, dtm=None, fake=False):
     output_root = Path(output_root)
-    stop_sources = [] if fake else read_stop_sources(output_root / "backend/data/gale-bx")
-    assumptions_path = output_root / "backend/data/gale-bx/assumptions.json"
+    sid = site_id_of(handoff)
+    stop_sources = [] if fake else read_stop_sources(output_root / f"backend/data/{sid}")
+    assumptions_path = output_root / f"backend/data/{sid}/assumptions.json"
     if assumptions_path.exists():
         assumptions = json.loads(assumptions_path.read_text(encoding="utf-8"))
         caution_deg = assumptions.get("slope_caution_deg")
@@ -225,7 +236,7 @@ def generate(handoff, output_root, cell=1.0, dtm=None, fake=False):
         # Include companion files such as stops.json and assumptions.json, if present.
         grid_bytes = sum(map(len, files.values()))
         total = grid_bytes
-        for directory in ["backend/data/gale-bx", "frontend/public/data/gale-bx"]:
+        for directory in [f"backend/data/{sid}", f"frontend/public/data/{sid}"]:
             for path in (output_root / directory).rglob("*"):
                 if path.is_file() and path.relative_to(output_root).as_posix() not in files:
                     total += path.stat().st_size

@@ -1,0 +1,75 @@
+{
+  "schema": "ares.thermal/v1",
+  "layer": "thermal",
+  "file": "thermal.png",
+  "site_id": "gale-001488",
+  "source": {
+    "title": "Gale Crater THEMIS Daytime IR ISIS",
+    "page_url": "https://astrogeology.usgs.gov/search/map/gale_crater_themis_daytime_ir_isis",
+    "download_url": "https://astrogeology.usgs.gov/ckan/dataset/0e7eae1a-a29c-4ea6-8eee-8ebce2deb079/resource/374f1c54-b81e-47ce-8b6f-f4b7daa40163/download/gale_crater_themis_dayir_isis.cub",
+    "team_page_url": "https://themis.mars.asu.edu/landingsites",
+    "credit": "NASA/JPL-Caltech/Arizona State University (Mars Odyssey THEMIS); USGS Astrogeology Science Center",
+    "license": "THEMIS Citation Policy, https://themis.asu.edu/terms: credit NASA/JPL-Caltech/Arizona State University; no license text on the USGS page",
+    "product_id": "I24545011RDR",
+    "dataset_id": "ODY-M-THM-3-IRRDR-V1.0",
+    "instrument": "THEMIS_IR",
+    "band": 9,
+    "wavelength_um": 12.57,
+    "observation_start_utc": "2007-06-27T08:41:52.022Z",
+    "cube_sha256": "8c256fe8e85ebec53c33fb9ea258efd7548b519439a468e54750caf617bdcd91"
+  },
+  "native_pixel_m": 100.0,
+  "site_thermal_pixels": 70,
+  "output": {
+    "width": 317,
+    "height": 431,
+    "cell_m": 2.0
+  },
+  "bbox": {
+    "lon_min": 137.3007328315885,
+    "lon_max": 137.3114680235793,
+    "lat_min": -4.906914665153852,
+    "lat_max": -4.892372203766158
+  },
+  "resampling": "nearest: each output pixel copies the THEMIS pixel containing its centre",
+  "value": {
+    "kind": "relative brightness, stretched 8-bit values (DN) of band 9 radiance",
+    "not_calibrated_temperature": true,
+    "site_dn_min": 110,
+    "site_dn_max": 214,
+    "nodata_dn": 0,
+    "label_core_name": "CALIBRATED_SPECTRAL_RADIANCE"
+  },
+  "colormap": {
+    "name": "inferno, 5 stops, linear between stops",
+    "stops": [
+      [
+        0.0,
+        "#000004"
+      ],
+      [
+        0.25,
+        "#57106e"
+      ],
+      [
+        0.5,
+        "#bc3754"
+      ],
+      [
+        0.75,
+        "#f98e09"
+      ],
+      [
+        1.0,
+        "#fcffa4"
+      ]
+    ],
+    "low_is": "DN 110",
+    "high_is": "DN 214"
+  },
+  "notes": [
+    "One THEMIS observation, not a mosaic of many dates: a snapshot, not a time series.",
+    "Native pixel is about 100 m; the site is only a few pixels wide.",
+    "Values are stretched 8-bit numbers, not calibrated temperature or thermal inertia."
+  ]
+}
