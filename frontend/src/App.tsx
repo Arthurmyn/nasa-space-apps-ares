@@ -6,12 +6,13 @@ import { StopCard } from "./components/StopCard.tsx";
 import { StopsPanel } from "./components/StopsPanel.tsx";
 import { TopBar, type Drawer, type Mode } from "./components/TopBar.tsx";
 import { CardView } from "./modes/CardView.tsx";
+import { HudView } from "./modes/HudView.tsx";
 import { PlannerProvider } from "./state/PlannerContext.tsx";
 
 // The map pulls in MapLibre (large), so it loads after the first paint.
 const MapView = lazy(() => import("./map/MapView.tsx"));
 
-const MODES: readonly Mode[] = ["plan", "card"];
+const MODES: readonly Mode[] = ["plan", "hud", "card"];
 
 function MapFallback() {
   return (
@@ -65,6 +66,7 @@ export default function App() {
       <div className="shell">
         <TopBar mode={mode} modes={MODES} onMode={setMode} drawer={drawer} onDrawer={setDrawer} />
         {mode === "plan" && <PlanView drawer={drawer} onDrawer={setDrawer} />}
+        {mode === "hud" && <HudView onBackToPlan={() => setMode("plan")} />}
         {mode === "card" && <CardView onBackToPlan={() => setMode("plan")} />}
       </div>
     </PlannerProvider>

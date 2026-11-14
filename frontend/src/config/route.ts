@@ -21,3 +21,6 @@ export const SLOPE_LIMITS = {
   /** Hard limit sent to the API as `constraints.max_slope_deg`; above it a segment is "avoid". */
   maxDeg: 15,
 } as const;
+
+/** HUD look-ahead ring radius, metres. Display scale only; it does not affect any route logic. */
+export const HUD_RANGE_M = 400;
