@@ -27,6 +27,10 @@ The site comes from `public/data/<site>/meta.json` (served at `/app/data/<site>/
 
 The planner is served under `/app/` (Vite `base`) and `npm run build` writes to `dist/app`. The landing page is at the site root; see [`deploy/`](../deploy/).
 
+## HUD tab
+
+The HUD shows a 3D terrain of the open site (three.js, from `public/data/<site>/elevation.bin`, `hillshade.png` and `slope.png`, vertical exaggeration x2, contour lines in the shader) with the planned route, plus heading, distance, slope, the next waypoint, the nearest hazard and a progress bar. The position along the route is simulated: drag the slider, use the step buttons or the arrow keys (Shift for 25 m steps); there is no live position feed. Without WebGL 2, or if the terrain files cannot be loaded, the 2D HUD (`src/modes/HudView2D.tsx`) is shown instead. Colours come from the `--hud-*` tokens in `src/styles/tokens.css`. The three.js code is a separate chunk that loads only when the HUD is opened.
+
 ## Using the app
 
 - **Plan** mode: click the map to set a start, then up to 5 stops. Drag a stop to move it; the route recomputes after a short pause and the old route fades to a ghost until the new one arrives.
