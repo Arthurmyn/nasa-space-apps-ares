@@ -146,6 +146,11 @@ export interface SiteMeta {
   bbox: GridBbox;
   /** Dataset credits, shown under "How this is computed". */
   sources: string[];
+  /** Terrain model behind the grid, for the printed card. Null when meta.json does not say. */
+  dtm_product_id: string | null;
+  /** Grid cell size and slope smoothing window, metres. */
+  cell_m: number | null;
+  slope_window_m: number | null;
 }
 
 export interface SiteStop {
