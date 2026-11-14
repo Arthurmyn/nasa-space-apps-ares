@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapLibreMap } from "maplibre-gl";
 import { Icon, type IconName } from "../components/Icon.tsx";
 import { boundsOf, type Bounds } from "../lib/geo.ts";
+import { boundsOfBbox } from "../lib/siteGeo.ts";
 import { formatCoordinates } from "../lib/format.ts";
 import { useApp } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
@@ -17,6 +18,9 @@ import { useHazardLabels, useHoverMarker, usePinMarkers } from "./useMarkers.ts"
 import { useMapInteractions } from "./useMapInteractions.ts";
 import { useRasterLayers } from "./useRasterLayers.ts";
 import { useRouteOverlay } from "./useRouteOverlay.ts";
+
+/** Margin around the site when the map first opens. */
+const INITIAL_PADDING_PX = 40;
 
 const KEYBOARD_HINT =
   "Map. Click to add points. Arrow keys move the selected stop, or pan when nothing is selected. Plus and minus zoom. Escape clears the selection.";
@@ -66,8 +70,9 @@ export default function MapView() {
       instance = new MapLibreMap({
         container: host,
         style: baseStyle(theme),
-        center: [site.lon, site.lat],
-        zoom: site.zoom,
+        // Open on the whole grid, with a margin so it does not touch the panels or controls.
+        bounds: boundsOfBbox(site.bbox),
+        fitBoundsOptions: { padding: INITIAL_PADDING_PX },
         minZoom: 4,
         maxZoom: 20,
         renderWorldCopies: false,

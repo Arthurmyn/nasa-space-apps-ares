@@ -17,6 +17,15 @@ export const LAYER_META: readonly LayerMeta[] = [
   { id: "radiation", label: "Radiation", description: "Modelled dose rate at the surface", isEstimate: true },
 ];
 
+/**
+ * Short source line shown in the layers panel. The API sends every dataset behind the site,
+ * including internal file paths; the full list stays under "How this is computed" and in ASSETS.md.
+ */
+export const LAYER_SOURCE_LABEL: Partial<Record<LayerId, string>> = {
+  optical: "HiRISE DTM (NASA/JPL/University of Arizona) + Mars Trek (NASA/JPL)",
+  slope: "HiRISE DTM (NASA/JPL/University of Arizona)",
+};
+
 /** Layers switched on when the app starts. */
 export const DEFAULT_ACTIVE_LAYERS: readonly LayerId[] = ["slope", "optical"];
 

@@ -1,5 +1,5 @@
 import type { LayerId, LayerInfo } from "../api/types.ts";
-import { LAYER_META, NO_DATA_REASON, type LayerMeta } from "../config/layers.ts";
+import { LAYER_META, LAYER_SOURCE_LABEL, NO_DATA_REASON, type LayerMeta } from "../config/layers.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
 import { layerHasImagery } from "../config/tiles.ts";
 import { SLOPE_CLASS_LABEL } from "../lib/slope.ts";
@@ -61,7 +61,7 @@ function LayerLegend({ meta, source }: { meta: LayerMeta; source: string | null 
     <div className="layer-row__legend">
       {meta.id === "slope" && <SlopeLegend />}
       {meta.isEstimate && <p className="legend__note">Estimate. Modelled, not measured.</p>}
-      {source && <SourceNote source={source} />}
+      {(LAYER_SOURCE_LABEL[meta.id] ?? source) && <SourceNote source={LAYER_SOURCE_LABEL[meta.id] ?? source ?? ""} />}
       {!layerHasImagery(meta.id) && (
         <p className="legend__note legend__note--warn">
           <Icon name="info" size={12} /> No imagery for this layer yet
