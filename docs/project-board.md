@@ -1,40 +1,40 @@
-# Доска задач (GitHub Projects)
+# Task board (GitHub Projects)
 
-## Колонки (поле Status)
+## Columns (the Status field)
 
-| Колонка | Когда карточка здесь |
-|---------|---------------------|
-| **Backlog** | Идея/задача записана, не взята в работу |
-| **To Do** | Взята в текущий спринт/этап хакатона |
-| **In Progress** | Есть исполнитель и ветка |
-| **Review** | Открыт PR |
-| **Done** | PR смержен в `main` |
+| Column | When a card is here |
+|--------|---------------------|
+| **Backlog** | The idea or task is written down, not taken on |
+| **To Do** | Taken into the current sprint or hackathon stage |
+| **In Progress** | Has an owner and a branch |
+| **Review** | A PR is open |
+| **Done** | The PR is merged into `main` |
 
-Автоматизации (включить в *Project → ⋯ → Workflows*):
+Automations (turn on in *Project → ⋯ → Workflows*):
 - *Item added to project* → Status = Backlog
 - *Pull request merged* / *Item closed* → Status = Done
-- *Auto-add to project*: фильтр `is:issue,pr repo:Arthurmyn/nasa-space-apps-ares`
+- *Auto-add to project*: filter `is:issue,pr repo:Arthurmyn/nasa-space-apps-ares`
 
-## Лейблы
+## Labels
 
-| Группа | Лейблы |
-|--------|--------|
-| Область | `area:frontend`, `area:backend`, `area:ml`, `area:infra`, `area:docs` |
-| Тип | `type:feature`, `type:bug`, `type:task` |
-| Приоритет | `priority:P0`, `priority:P1`, `priority:P2` |
-| Прочее | `blocked`, `good first issue` |
+| Group | Labels |
+|-------|--------|
+| Area | `area:frontend`, `area:backend`, `area:ml`, `area:infra`, `area:docs` |
+| Type | `type:feature`, `type:bug`, `type:task` |
+| Priority | `priority:P0`, `priority:P1`, `priority:P2` |
+| Other | `blocked`, `good first issue` |
 
-Создаются скриптом [`scripts/setup-github.sh`](../scripts/setup-github.sh).
+They are created by the script [`scripts/setup-github.sh`](../scripts/setup-github.sh).
 
-## Этапы хакатона (Milestones)
+## Hackathon stages (Milestones)
 
-| Milestone | Цель |
+| Milestone | Goal |
 |-----------|------|
-| `M0: Foundation` | Репо, структура, сборка, контракт API, baseline-модель |
-| `M1: MVP` | Сквозной сценарий фронт → бэк → модель работает |
-| `M2: Polish` | UI, качество модели, обработка ошибок |
-| `M3: Demo` | Деплой, презентация, видео, README для жюри |
+| `M0: Foundation` | Repo, structure, build, API contract, baseline model |
+| `M1: MVP` | The end-to-end scenario frontend → backend → model works |
+| `M2: Polish` | UI, model quality, error handling |
+| `M3: Demo` | Deployment, presentation, video, README for the judges |
 
-## Ритм
-- Стендап каждые ~4 часа: что сделал / что делаю / что блокирует.
-- P0-задачи без исполнителя дольше 30 минут - сигнал тимлиду.
+## Rhythm
+- Stand-up every ~4 hours: what I did / what I am doing / what blocks me.
+- A P0 task without an owner for more than 30 minutes is a signal to the team lead.
