@@ -4,7 +4,7 @@
 
 ```powershell
 python -m pip install -r scripts/requirements-grid.txt
-python scripts/make_fake_grid.py
+python scripts/make_fake_grid.py --output-root "$env:TEMP/ares-fake-grid"
 python -m pytest scripts/tests -q
 ```
 
@@ -12,7 +12,9 @@ python -m pytest scripts/tests -q
 мелеющий к северу. Западный и восточный края соединены по ячейкам с уклоном
 не выше 15° (8 соседей). В метаданных
 `is_test_data: true`, источник явно обозначен как синтетический. Закоммиченные
-файлы в `backend/data/gale-bx/` и `frontend/public/data/gale-bx/` — тестовые.
+файлы в `backend/data/gale-bx/` и `frontend/public/data/gale-bx/` — настоящая
+сетка HiRISE DTM `DTEEC_009149_1750_009294_1750_U01`, `is_test_data: false`.
+Тесты генерируют синтетическую сетку только в `tmp_path`.
 
 Генерация по настоящему DTM (заменяет эти файлы):
 
@@ -30,8 +32,9 @@ curl.exe --fail --location --retry 3 --output data/r0/raw/DTEEC_009149_1750_0092
 
 Оба генератора принимают `--cell` (по умолчанию 1 м), `--handoff` (по умолчанию
 `docs/research/r0/gale_bx_handoff.json`) и `--output-root` (по умолчанию корень
-репозитория). Последний параметр позволяет проверять реальные данные отдельно,
-не заменяя тестовые файлы. Поддерживаются GeoTIFF и PDS IMG с указанной CRS.
+репозитория). Последний параметр позволяет проверять синтетические или реальные
+данные отдельно, не заменяя закоммиченные файлы. Поддерживаются GeoTIFF и PDS IMG
+с указанной CRS.
 
 Сетка охватывает AOI с округлением наружу до целых ячеек. `bbox` соответствует
 внешним границам готовой сетки, поэтому может быть чуть шире AOI. Координаты
