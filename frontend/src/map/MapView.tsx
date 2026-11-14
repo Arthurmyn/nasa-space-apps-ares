@@ -128,6 +128,7 @@ export default function MapView() {
     onAdd: planner.addPoint,
     onMove: planner.movePoint,
     onSelect: planner.select,
+    onRemove: planner.removePoint,
     onCursor: (at) => {
       if (readoutRef.current) readoutRef.current.textContent = at ? formatCoordinates(at[1], at[0], 5) : "–";
     },
