@@ -35,3 +35,6 @@ mlruns/
 wandb/
 
 .claude/
+
+# Original planetary rasters and download cache (R0)
+data/r0/raw/
