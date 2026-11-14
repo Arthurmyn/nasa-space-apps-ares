@@ -1,0 +1,42 @@
+name: 🐛 Баг
+description: Что-то работает не так
+title: "[Bug]: "
+labels: ["type:bug"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Область
+      options: [Frontend, Backend, ML, Infra]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Шаги воспроизведения
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидалось
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Фактически (ошибка, лог, скрин)
+      render: shell
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Приоритет
+      options: ["P0 — блокирует демо", "P1 — нужно для MVP", "P2 — nice to have"]
+    validations:
+      required: true
