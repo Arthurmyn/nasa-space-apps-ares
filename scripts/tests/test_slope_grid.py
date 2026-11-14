@@ -170,6 +170,80 @@ def test_reserve_triggers_fallback_even_when_grid_fits_total_limit(tmp_path, cap
     assert sum(p.stat().st_size for p in tmp_path.rglob("*") if p.is_file()) <= size - 50_000
 
 
+@pytest.mark.parametrize("thresholds", [None, (4, 8)])
+def test_slope_png_uses_assumption_thresholds_or_defaults(tmp_path, thresholds):
+    backend = tmp_path / "backend/data/gale-bx"
+    backend.mkdir(parents=True)
+    caution, limit = thresholds or (10, 15)
+    if thresholds:
+        (backend / "assumptions.json").write_text(json.dumps({
+            "slope_caution_deg": caution, "slope_limit_deg": limit,
+            "speed_kmh": 2, "items": [],
+        }))
+    meta = generate(json.loads(HANDOFF.read_text()), tmp_path, cell=2, fake=True)
+    slope = np.fromfile(backend / "slope.bin", dtype="u1").reshape(meta["height"], meta["width"])
+    with Image.open(tmp_path / "frontend/public/data/gale-bx/slope.png") as im:
+        colors = np.asarray(im)
+    for mask, color in [
+        (slope <= caution / 0.5, (75, 180, 110, 125)),
+        ((slope > caution / 0.5) & (slope <= limit / 0.5), (245, 180, 65, 155)),
+        ((slope > limit / 0.5) & (slope != 255), (220, 65, 60, 175)),
+    ]:
+        assert mask.any()
+        assert np.all(colors[mask] == color)
+
+
+def test_committed_real_grid_stops_and_assumptions_match_contract():
+    backend = ROOT / "backend/data/gale-bx"
+    meta = json.loads((backend / "meta.json").read_text())
+    assert meta["is_test_data"] is False and meta["preliminary"] is True
+    assert (backend / "meta.json").read_bytes() == (ROOT / "frontend/public/data/gale-bx/meta.json").read_bytes()
+    assert (backend / "elevation.bin").stat().st_size == meta["width"] * meta["height"] * 4
+    assumptions = json.loads((backend / "assumptions.json").read_text())
+    assert set(assumptions) == {"slope_limit_deg", "slope_caution_deg", "speed_kmh", "items"}
+    assert [assumptions[k] for k in ["slope_limit_deg", "slope_caution_deg", "speed_kmh"]] == [15, 10, 2]
+    assert len(assumptions["items"]) >= 2
+    # Assumption and nullable StopImage shapes mirror frontend/src/api/types.ts.
+    for item in assumptions["items"]:
+        assert set(item) == {"name", "value", "source"}
+        assert all(isinstance(value, str) and value for value in item.values())
+        assert item["source"].startswith("TO VERIFY:")
+    stops = json.loads((backend / "stops.json").read_text())
+    assert set(stops) == {"groups", "stops"}
+    assert 3 <= len(stops["stops"]) <= 6
+    ids = [stop["id"] for stop in stops["stops"]]
+    assert len(set(ids)) == len(ids)
+    assert stops["groups"] == [{"id": "boxwork", "name": "Boxwork", "stop_ids": ids}]
+    rover = json.loads((ROOT / "docs/research/r0/rover_sols4534-4805.geojson").read_text())
+    slope = np.fromfile(backend / "slope.bin", dtype="u1").reshape(meta["height"], meta["width"])
+    components, _ = label((slope != 255) & (slope * meta["slope_unit_deg"] <= 15), np.ones((3, 3)))
+    selected_components = []
+    for stop in stops["stops"]:
+        assert set(stop) == {"id", "name", "lon", "lat", "note", "image", "source_id"}
+        assert all(isinstance(stop[k], str) and stop[k] for k in ["id", "name", "note", "source_id"])
+        assert stop["image"] is None
+        assert any(source.startswith(stop["source_id"] + ":") for source in meta["sources"])
+        matching = [f for f in rover["features"] if f["geometry"]["coordinates"][:2] == [stop["lon"], stop["lat"]]]
+        assert len(matching) == 1
+        assert str(matching[0]["properties"]["sol"]) in stop["note"]
+        assert "rover_sols4534-4805.geojson" in stop["note"]
+        bbox = meta["bbox"]
+        assert bbox["lon_min"] <= stop["lon"] < bbox["lon_max"]
+        assert bbox["lat_min"] < stop["lat"] <= bbox["lat_max"]
+        x = meta["mars_radius_m"] * math.radians(stop["lon"]-meta["center"]["lon"]) * math.cos(math.radians(meta["center"]["lat"]))
+        y = meta["mars_radius_m"] * math.radians(stop["lat"]-meta["center"]["lat"])
+        row = math.floor((meta["y_max_m"]-y)/meta["cell_m"])
+        col = math.floor((x-meta["x_min_m"])/meta["cell_m"])
+        assert slope[row, col] != 255 and slope[row, col]*meta["slope_unit_deg"] <= 15
+        selected_components.append(components[row, col])
+    for first, second in zip(selected_components, selected_components[1:]):
+        assert first == second and first != 0
+    generated = [backend / name for name in ["meta.json", "elevation.bin", "slope.bin"]]
+    generated += [ROOT / "frontend/public/data/gale-bx" / name for name in ["meta.json", "hillshade.png", "slope.png"]]
+    assert sum(p.stat().st_size for p in generated) <= 3_000_000 - 100_000
+    assert sum(p.stat().st_size for p in generated + [backend / "stops.json", backend / "assumptions.json"]) <= 3_000_000
+
+
 @pytest.mark.parametrize("cell", [0, -1, float("nan"), float("inf")])
 def test_invalid_cell_rejected(cell):
     with pytest.raises(ValueError, match="cell"):

@@ -88,7 +88,12 @@ def build_grid(handoff, cell):
         "slope_unit_deg": 0.5,
         "slope_nodata": 255,
         "slope_window_m": WINDOW_M,
-        "sources": [f"HiRISE DTM {handoff['dtm_product_id']}, NASA/JPL/University of Arizona"],
+        "sources": [
+            f"HiRISE DTM {handoff['dtm_product_id']}, NASA/JPL/University of Arizona",
+            "src-msl-traverse: NASA/JPL Curiosity MSL waypoints; "
+            "https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json; "
+            "snapshot: docs/research/r0/rover_sols4534-4805.geojson",
+        ],
     }
     return Grid(meta, crs, affine, inside)
 
@@ -154,7 +159,7 @@ def png_bytes(array):
     return stream.getvalue()
 
 
-def encode_files(grid, z):
+def encode_files(grid, z, caution_deg=10, limit_deg=15):
     dx, dy, valid = smoothed_gradient(z, grid.meta["cell_m"])
     slope = slope_from_gradient(dx, dy, valid)
     # Light from the northwest at 45 degrees; array y increases southwards.
@@ -162,9 +167,10 @@ def encode_files(grid, z):
     shade = np.rint(np.clip(light, 0, 1)*255).astype("uint8")
     hillshade = np.stack([shade, shade, shade, valid.astype("uint8")*255], axis=-1)
     colors = np.zeros((*z.shape, 4), dtype="uint8")
-    colors[slope <= 20] = (75, 180, 110, 125)
-    colors[(slope > 20) & (slope <= 30)] = (245, 180, 65, 155)
-    colors[(slope > 30) & (slope != 255)] = (220, 65, 60, 175)
+    degrees = slope.astype("float64") * grid.meta["slope_unit_deg"]
+    colors[(degrees <= caution_deg) & valid] = (75, 180, 110, 125)
+    colors[(degrees > caution_deg) & (degrees <= limit_deg) & valid] = (245, 180, 65, 155)
+    colors[(degrees > limit_deg) & valid] = (220, 65, 60, 175)
     meta = (json.dumps(grid.meta, ensure_ascii=False, indent=2, allow_nan=False)+"\n").encode("utf-8")
     return {"backend/data/gale-bx/meta.json": meta,
             "backend/data/gale-bx/elevation.bin": z.astype("<f4").tobytes(order="C"),
@@ -176,6 +182,17 @@ def encode_files(grid, z):
 
 def generate(handoff, output_root, cell=1.0, dtm=None, fake=False):
     output_root = Path(output_root)
+    assumptions_path = output_root / "backend/data/gale-bx/assumptions.json"
+    if assumptions_path.exists():
+        assumptions = json.loads(assumptions_path.read_text(encoding="utf-8"))
+        caution_deg = assumptions.get("slope_caution_deg")
+        limit_deg = assumptions.get("slope_limit_deg")
+        if (any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v)
+                for v in [caution_deg, limit_deg])
+                or not 0 <= caution_deg <= limit_deg <= 90):
+            raise ValueError("assumptions.json requires finite 0 <= slope_caution_deg <= slope_limit_deg <= 90")
+    else:
+        caution_deg, limit_deg = 10, 15
     while True:
         grid = build_grid(handoff, cell)
         if fake:
@@ -186,7 +203,7 @@ def generate(handoff, output_root, cell=1.0, dtm=None, fake=False):
             if dtm is None:
                 raise ValueError("DTM path is required")
             z = read_dtm(dtm, grid)
-        files = encode_files(grid, z)
+        files = encode_files(grid, z, caution_deg=caution_deg, limit_deg=limit_deg)
         # Include companion files such as stops.json and assumptions.json, if present.
         grid_bytes = sum(map(len, files.values()))
         total = grid_bytes
