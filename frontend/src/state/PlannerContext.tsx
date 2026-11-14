@@ -13,7 +13,7 @@ import { api } from "../api/client.ts";
 import { describeError } from "../api/errors.ts";
 import type { LayerId, LayerInfo } from "../api/types.ts";
 import { DEFAULT_ACTIVE_LAYERS } from "../config/layers.ts";
-import { ROUTE_DEBOUNCE_MS } from "../config/route.ts";
+import { NOTICE_MS, ROUTE_DEBOUNCE_MS } from "../config/route.ts";
 import {
   buildRouteRequest,
   initialPlannerState,
@@ -49,7 +49,6 @@ export interface PlannerModel {
   setCompare: (value: boolean) => void;
   recalculate: () => void;
   reset: () => void;
-  clearNotice: () => void;
 }
 
 interface AppModel {
@@ -155,6 +154,14 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
     if (state.compare && s.route && !s.route.alternative && !isStale(s)) void fetchRoute();
   }, [state.compare, fetchRoute]);
 
+  // Notices ("Maximum of 5 stops reached") fade after a few seconds.
+  const notice = state.notice;
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => dispatch({ type: "notice/clear" }), NOTICE_MS);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
   useEffect(() => () => inflight.current?.abort(), []);
 
   const planner = useMemo<PlannerModel>(
@@ -170,7 +177,6 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       setCompare: (value) => dispatch({ type: "compare/set", value }),
       recalculate: () => void fetchRoute(),
       reset: () => dispatch({ type: "reset" }),
-      clearNotice: () => dispatch({ type: "notice/clear" }),
     }),
     [state, fetchRoute],
   );

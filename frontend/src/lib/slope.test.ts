@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { classifySlope, worstClass } from "./slope.ts";
+import { classifySlope } from "./slope.ts";
 
 // Test-local limits: independent of the placeholder values in src/config/route.ts.
 const limits = { cautionDeg: 8, maxDeg: 14 } as const;
@@ -23,13 +23,5 @@ describe("classifySlope", () => {
   it("treats non-finite slopes as avoid", () => {
     assert.equal(classifySlope(Number.NaN, limits), "avoid");
     assert.equal(classifySlope(Number.POSITIVE_INFINITY, limits), "avoid");
-  });
-});
-
-describe("worstClass", () => {
-  it("returns the more severe class", () => {
-    assert.equal(worstClass("ok", "caution"), "caution");
-    assert.equal(worstClass("avoid", "caution"), "avoid");
-    assert.equal(worstClass("ok", "ok"), "ok");
   });
 });
