@@ -17,6 +17,8 @@ startup with `np.fromfile`; requests use the cached arrays and catalog.
 | Extracted function on WSL Ubuntu, Python 3.12.16, using its `_vendor` dependencies | `/layers` 200, `/sites` 200, `/route` 200; out-of-grid point 422 |
 | Five long route legs from the packaged function | 1.214 s; 5875.12 m total; maximum slope 7° |
 | Actual packaged responses through frontend `parseRouteResponse` and `parseLayersResponse` | Both accepted |
+| Git-triggered Vercel cloud previews for commit `c779b7f` | Both projects Ready / SUCCESS |
+| Public preview API requests | HTTP 302 to `vercel.com/sso-api` (Vercel deployment protection); API responses require authenticated access |
 
 The backend tests cover a hill detour, a longer but cheaper route around walkable
 steep terrain, disconnected and no-data barriers, diagonal corner blocking,
@@ -59,9 +61,17 @@ node --experimental-strip-types --input-type=module -e "import fs from 'node:fs'
 ```
 
 `vercel build --yes` itself stopped with `login_required`: this machine has no
-valid Vercel login. The successful check above invokes Vercel's official builder
-directly and executes the resulting Linux package. A cloud preview deployment
-and end-to-end public routing have not been verified.
+valid Vercel login. The successful local check above invokes Vercel's official
+builder directly and executes the resulting Linux package.
+
+After pushing `c779b7f` and opening PR #36, the Git integration also completed
+both cloud builds successfully:
+[ares-mars](https://vercel.com/dzartur34-9322s-projects/ares-mars/4G8TR77idMxHMroQyjs6oFgeNnKa),
+[nasa-space-apps-ares-ah7m](https://vercel.com/dzartur34-9322s-projects/nasa-space-apps-ares-ah7m/E8UmkHAANhTCz9ZjCCr4HqhXkzLr).
+GET requests to `/api/v1/health`, `/layers`, `/sites` on both previews returned
+302 to Vercel SSO. Cloud builds are verified; cloud API execution and public
+routing beyond the authentication gate remain unverified. Deployment protection
+was not changed.
 
 The service uses `root: backend`, `framework: fastapi`, entrypoint `app.main:app`
 and an explicit `functions["app/main.py"].includeFiles: "data/gale-bx/**"`.
