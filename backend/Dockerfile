@@ -1,4 +1,4 @@
-# Контекст сборки — корень репо (см. docker-compose.yml), чтобы был доступен пакет ml/
+# Контекст сборки - корень репо (см. docker-compose.yml), чтобы был доступен пакет ml/
 FROM python:3.11-slim
 
 WORKDIR /app
