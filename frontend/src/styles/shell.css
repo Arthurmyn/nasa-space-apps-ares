@@ -228,3 +228,77 @@
 .shell__body[data-profile="empty"] {
   --profile-h: 72px;
 }
+
+/* ---- Folding the side panels (desktop only; narrow screens use drawers) ---- */
+.shell__map {
+  position: relative;
+}
+
+.panel-toggle {
+  position: absolute;
+  top: 50%;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 56px;
+  padding: 0;
+  transform: translateY(-50%);
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.panel-toggle--left {
+  left: 0;
+  border-left: 0;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.panel-toggle--right {
+  right: 0;
+  border-right: 0;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.panel-toggle:hover {
+  color: var(--text);
+  background: var(--panel-raised);
+}
+
+.panel-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.panel-toggle__icon--left {
+  transform: rotate(90deg);
+}
+
+.panel-toggle__icon--right {
+  transform: rotate(-90deg);
+}
+
+@media (max-width: 899px) {
+  .panel-toggle {
+    display: none;
+  }
+}
+
+@media (min-width: 900px) {
+  .shell__body[data-left="collapsed"] {
+    --col-left: 0px;
+  }
+
+  .shell__body[data-right="collapsed"] {
+    --col-right: 0px;
+  }
+
+  .shell__body[data-left="collapsed"] .shell__left,
+  .shell__body[data-right="collapsed"] .shell__right {
+    visibility: hidden;
+    overflow: hidden;
+    border-width: 0;
+  }
+}
