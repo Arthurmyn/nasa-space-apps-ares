@@ -60,7 +60,7 @@ The backend reads `backend/data/` (inside its own folder: the backend Docker ima
   "elevation_nodata": "NaN",
   "slope_unit_deg": 0.5,
   "slope_nodata": 255,
-  "slope_window_m": 5,
+  "slope_window_m": 6.0,
   "sources": ["HiRISE DTM DTEEC_009149_1750_009294_1750_U01, NASA/JPL/University of Arizona"]
 }
 ```
@@ -73,7 +73,7 @@ The projection is local and equidistant: `x = R * radians(lon - lon0) * cos(radi
 - Index in the file: `i = row * width + col`
 - Size: `elevation.bin` = width*height*4 bytes, `slope.bin` = width*height bytes.
 - Slope in degrees = `slope.bin[i] * slope_unit_deg`. The value 255 = no data.
-- Slope is computed over a window of about `slope_window_m` metres (it smooths the noise of the 1 m DTM).
+- Slope is computed over a window of `slope_window_m` metres. `scripts/make_slope_grid.py` first smooths the elevation with a box filter whose width is the odd number of cells nearest 5 m (5 cells at 1 m, 3 at 2 m, 1 at 3 m, which means no smoothing), then takes a central difference between the neighbouring cells. `slope_window_m` = (box width in cells + 1) x `cell_m`, the span between the centres of the outermost DTM cells used: 6 m at 1 m, 8 m at 2 m, 6 m at 3 m.
 - PNG corners: the same `bbox` in degrees (north-west, north-east, south-east, south-west).
 
 ## 5. stops.json (targets for the selection list)
