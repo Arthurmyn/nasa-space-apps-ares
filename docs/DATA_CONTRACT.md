@@ -1,41 +1,41 @@
-# ARES: контракт данных v1 (Gale boxwork)
+# ARES: data contract v1 (Gale boxwork)
 
-Этот файл общий для данных, бэкенда и фронта. Менять только вместе (один PR, все трое смотрят).
-Положить в `docs/DATA_CONTRACT.md`.
+This file is shared by data, backend and frontend. Change it only together (one PR, all three review it).
+It lives at `docs/DATA_CONTRACT.md`.
 
-## 1. Принцип
-- Одна сетка высот и уклонов на участок, север сверху, квадратные ячейки в метрах.
-- Сетку делает один скрипт `scripts/make_slope_grid.py`. Бэкенд только читает готовые файлы.
-- Реальные данные и тестовые (фейковые) имеют **тот же формат**. Подмена = замена файлов, код не меняется.
+## 1. Principle
+- One grid of elevation and slope per site, north up, square cells in metres.
+- One script, `scripts/make_slope_grid.py`, builds the grid. The backend only reads the finished files.
+- Real data and test (fake) data have the **same format**. Swapping means replacing files; the code does not change.
 
-## 2. Где лежат файлы
+## 2. Where the files are
 ```
 backend/data/gale-bx/
-  meta.json        описание сетки (см. п. 3)
-  elevation.bin    высоты, Float32, little-endian, row-major, метры
-  slope.bin        уклоны, Uint8, row-major
-  stops.json       цели для списка выбора (п. 5)
-  assumptions.json допущения и источники (п. 6)
-  sources.json     справочник источников целей: { "source_id": "описание и ссылка" }
-  thermal.json     копия описания теплового слоя (п. 2b); если файла нет, слой недоступен
+  meta.json        grid description (see section 3)
+  elevation.bin    elevations, Float32, little-endian, row-major, metres
+  slope.bin        slopes, Uint8, row-major
+  stops.json       targets for the selection list (section 5)
+  assumptions.json assumptions and sources (section 6)
+  sources.json     registry of target sources: { "source_id": "description and link" }
+  thermal.json     copy of the thermal layer description (section 2b); without it the layer is unavailable
 frontend/public/data/gale-bx/
-  meta.json        копия (скрипт копирует сам)
-  hillshade.png    серая подложка рельефа, RGBA, размер width x height
-  slope.png        цветной слой уклонов, RGBA с прозрачностью, размер width x height
-  thermal.png      тепловой слой THEMIS, RGBA, размер width x height, bbox из meta.json (п. 2b)
-  thermal.json     описание теплового слоя: источник, размер пикселя, диапазон значений, цвета
+  meta.json        copy (the script copies it itself)
+  hillshade.png    grey terrain background, RGBA, size width x height
+  slope.png        coloured slope layer, RGBA with transparency, size width x height
+  thermal.png      THEMIS thermal layer, RGBA, size width x height, bbox from meta.json (section 2b)
+  thermal.json     thermal layer description: source, pixel size, value range, colours
 ```
-Размер: все файлы вместе до 3 000 000 байт. Из них 100 000 байт зарезервировано под сопутствующие JSON: сама сетка (meta.json ×2, elevation.bin, slope.bin, hillshade.png, slope.png) — не более 2 900 000 байт. При превышении любого лимита скрипт берёт ячейку 2 м (`--cell 2`); если лимит всё ещё превышен, завершается с ошибкой до записи.
-### 2b. Тепловой слой (THEMIS)
-Делает `scripts/make_thermal_layer.py` из куба USGS Astropedia «Gale Crater THEMIS Daytime IR ISIS» (ссылка и кредит в `ASSETS.md` и в `thermal.json`). Это **один снимок** Mars Odyssey THEMIS (продукт `I24545011RDR`, канал 9, 12,57 мкм), собственный пиксель 100 м, на участок приходится около 70 пикселей. Значения хранятся как растянутые 8-битные числа, это не калиброванная температура. Пиксель со значением 0 (ignore value команды THEMIS) прозрачен.
-- `thermal.png`: каждый пиксель сетки участка берёт значение ближайшего пикселя THEMIS (без интерполяции), цвета по шкале из `thermal.json`.
-- `thermal.json` (`schema: "ares.thermal/v1"`): `source` (название, URL, кредит, лицензия, product_id, время съёмки, sha256 куба), `native_pixel_m`, `value.site_dn_min/max`, `colormap.stops`, `bbox` (равен bbox из `meta.json`), `notes`. Копия лежит в `backend/data/` и во `frontend/public/data/`.
-- Бэкенд считает слой `thermal` доступным, только если `thermal.json` есть, схема верна, а `site_id` и `bbox` совпадают с `meta.json`. Иначе слой остаётся «No data for this site».
-- Радиация не слой, а одно число на весь участок: `GET /layers` отдаёт `radiation` как `available: false` с причиной «Single value for the whole site, see route summary». Число (0,67 мЗв/сут) и ссылка [5] лежат в `assumptions.json` (`Radiation dose rate`) и в `frontend/src/config/radiation.ts`.
-- Геология: опубликованных GIS-границ геологических единиц для участка найдено не было, слой `geology` остаётся «No data for this site». Заметки целей содержат только проверенные данные путевой точки (сол и координаты).
+Size: all files together up to 3,000,000 bytes. Of these, 100,000 bytes are reserved for the companion JSON files: the grid itself (meta.json ×2, elevation.bin, slope.bin, hillshade.png, slope.png) must take no more than 2,900,000 bytes. If either limit is exceeded, the script uses a 2 m cell (`--cell 2`); if a limit is still exceeded, it exits with an error before writing.
+### 2b. Thermal layer (THEMIS)
+Made by `scripts/make_thermal_layer.py` from the USGS Astropedia cube "Gale Crater THEMIS Daytime IR ISIS" (link and credit in `ASSETS.md` and in `thermal.json`). It is a **single observation** by Mars Odyssey THEMIS (product `I24545011RDR`, band 9, 12.57 µm), with a native pixel of 100 m; about 70 pixels fall on the site. Values are stored as stretched 8-bit numbers, not calibrated temperature. A pixel with value 0 (the THEMIS team's ignore value) is transparent.
+- `thermal.png`: each pixel of the site grid takes the value of the nearest THEMIS pixel (no interpolation), coloured by the scale in `thermal.json`.
+- `thermal.json` (`schema: "ares.thermal/v1"`): `source` (title, URL, credit, license, product_id, observation time, sha256 of the cube), `native_pixel_m`, `value.site_dn_min/max`, `colormap.stops`, `bbox` (equal to the bbox in `meta.json`), `notes`. A copy lives in `backend/data/` and in `frontend/public/data/`.
+- The backend treats the `thermal` layer as available only if `thermal.json` exists, its schema is correct, and `site_id` and `bbox` match `meta.json`. Otherwise the layer stays "No data for this site".
+- Radiation is not a layer but one number for the whole site: `GET /layers` returns `radiation` as `available: false` with the reason "Single value for the whole site, see route summary". The number (0.67 mSv/day) and reference [5] are in `assumptions.json` (`Radiation dose rate`) and in `frontend/src/config/radiation.ts`.
+- Geology: no published GIS boundaries of geologic units were found for the site, so the `geology` layer stays "No data for this site". Target notes contain only verified waypoint data (sol and coordinates).
 
-Фронт на Vercel обслуживает `frontend/public/data/...` по адресу `/app/data/gale-bx/...`.
-Бэкенд читает `backend/data/` (в пределах своей папки, иначе Vercel его не увидит).
+On Vercel the frontend serves `frontend/public/data/...` at `/app/data/gale-bx/...`.
+The backend reads `backend/data/` (inside its own folder, otherwise Vercel will not see it).
 
 ## 3. meta.json
 ```json
@@ -61,19 +61,19 @@ frontend/public/data/gale-bx/
   "sources": ["HiRISE DTM DTEEC_009149_1750_009294_1750_U01, NASA/JPL/University of Arizona"]
 }
 ```
-Если `is_test_data` равно true, фронт показывает бейдж «Test data».
+If `is_test_data` is true, the frontend shows a "Test data" badge.
 
-## 4. Как читать сетку
-Проекция локальная, равнопромежуточная: `x = R * radians(lon - lon0) * cos(radians(lat0))`, `y = R * radians(lat - lat0)`, где R = `mars_radius_m`, lon0 и lat0 = `center`.
-- Столбец: `col = (x - x_min_m) / cell_m`
-- Строка: `row = (y_max_m - y) / cell_m` (строка 0 = север)
-- Индекс в файле: `i = row * width + col`
-- Размер: `elevation.bin` = width*height*4 байта, `slope.bin` = width*height байт.
-- Уклон в градусах = `slope.bin[i] * slope_unit_deg`. Значение 255 = нет данных.
-- Уклон считается по окну около `slope_window_m` метров (сглаживание шума 1 м DTM).
-- Углы PNG: те же `bbox` в градусах (северо-запад, северо-восток, юго-восток, юго-запад).
+## 4. How to read the grid
+The projection is local and equidistant: `x = R * radians(lon - lon0) * cos(radians(lat0))`, `y = R * radians(lat - lat0)`, where R = `mars_radius_m`, and lon0 and lat0 = `center`.
+- Column: `col = (x - x_min_m) / cell_m`
+- Row: `row = (y_max_m - y) / cell_m` (row 0 = north)
+- Index in the file: `i = row * width + col`
+- Size: `elevation.bin` = width*height*4 bytes, `slope.bin` = width*height bytes.
+- Slope in degrees = `slope.bin[i] * slope_unit_deg`. The value 255 = no data.
+- Slope is computed over a window of about `slope_window_m` metres (it smooths the noise of the 1 m DTM).
+- PNG corners: the same `bbox` in degrees (north-west, north-east, south-east, south-west).
 
-## 5. stops.json (цели для списка выбора)
+## 5. stops.json (targets for the selection list)
 ```json
 {
   "groups": [
@@ -89,10 +89,10 @@ frontend/public/data/gale-bx/
   ]
 }
 ```
-`image` либо null, либо `{ "url": "...", "alt": "...", "credit": "..." }` (как `StopImage` в `frontend/src/api/types.ts`).
-Координаты целей внутри `bbox`. Группа = то, что человек выбирает в списке («Boxwork» и т. д.).
-`context` (необязательно, верхний уровень `stops.json`): короткий текст «Why this site» из 2-4 предложений с источниками, `{ "title", "text", "sources": [ { "title", "url", "credit" } ] }`. Только факты со страниц из `sources`; к отдельным целям научные утверждения не привязываем, цели остаются простыми путевыми точками. Каждый источник должен быть в списке `frontend/src/config/references.ts` (карточка печатает его как [6]). API отдаёт `context` внутри `GET /sites`, UI показывает под списком остановок и в карточке.
-`source_id` разрешается через `backend/data/gale-bx/sources.json` (объект: ID → строка с описанием и ссылкой). Генератор добавляет в `meta.sources` только источники текущих целей как строки `"ID: описание"`; при замене целей меняются данные, а не код генератора. Без `stops.json` справочник не требуется. Формы `stops.json` и `meta.json` сохраняются.
+`image` is either null or `{ "url": "...", "alt": "...", "credit": "..." }` (like `StopImage` in `frontend/src/api/types.ts`).
+Target coordinates are inside the `bbox`. A group is what a person picks in the list ("Boxwork" and so on).
+`context` (optional, top level of `stops.json`): a short "Why this site" text of 2-4 sentences with its sources, `{ "title", "text", "sources": [ { "title", "url", "credit" } ] }`. Only facts from the pages listed in `sources`; we do not attach science claims to individual targets, and the targets stay plain waypoints. Every source must be in the list in `frontend/src/config/references.ts` (the card prints it as [6]). The API returns `context` inside `GET /sites`, and the UI shows it under the list of stops and on the card.
+`source_id` is resolved through `backend/data/gale-bx/sources.json` (an object: ID → a string with a description and a link). The generator adds to `meta.sources` only the sources of the current targets, as `"ID: description"` strings; when targets are replaced, the data changes, not the generator code. Without `stops.json` the registry is not needed. The shapes of `stops.json` and `meta.json` stay the same.
 
 ## 6. assumptions.json
 ```json
@@ -106,18 +106,18 @@ frontend/public/data/gale-bx/
   ]
 }
 ```
-Поле `items` уходит в ответ маршрута как `assumptions` (форма как `Assumption` в `types.ts`).
-Источник пишем явно и ссылаемся на пронумерованный документ `[n]`; список документов лежит в `frontend/src/config/references.ts` (карточка маршрута печатает его). Если источник ещё не проверен, пишем `TO VERIFY`, фронт покажет метку Unverified.
+The `items` field goes into the route response as `assumptions` (the shape of `Assumption` in `types.ts`).
+We state the source explicitly and refer to a numbered document `[n]`; the list of documents is in `frontend/src/config/references.ts` (the route card prints it). If a source is not verified yet, we write `TO VERIFY` and the frontend shows an "Unverified" label.
 
-## 7. API (бэкенд)
-Базовый путь `/api/v1`. Формы ответов уже описаны в `docs/api.md` (раздел Frontend proposal) и `frontend/src/api/types.ts`. Не менять.
-- `GET /api/v1/layers`: слои `slope`, `optical` (hillshade) доступны всегда; `thermal` доступен, если есть валидный `thermal.json` (п. 2b); `radiation` недоступен с причиной «Single value for the whole site, see route summary»; остальные `available: false` с причиной «No data for this site».
-- `GET /api/v1/sites`: `{ "sites": [ { "id", "name", "groups": [...], "stops": [...] } ] }` из `meta.json` и `stops.json` (новый эндпоинт, фронту нужен для списка выбора).
-- `POST /api/v1/route`: A* по `slope.bin`, 8 соседей. Ячейка с уклоном выше `slope_limit_deg` непроходима. Цена шага = длина * (1 + (slope/limit)^2). Остановки по порядку: start, stop-1, stop-2, ...
-  - Если пути нет: HTTP 422 и `{ "detail": "<понятная причина, какой отрезок и почему>" }`.
-  - `profile` берётся вдоль маршрута из `elevation.bin` и `slope.bin`.
+## 7. API (backend)
+The base path is `/api/v1`. The response shapes are already described in `docs/api.md` (the Frontend proposal section) and in `frontend/src/api/types.ts`. Do not change them.
+- `GET /api/v1/layers`: the `slope` and `optical` (hillshade) layers are always available; `thermal` is available if a valid `thermal.json` exists (section 2b); `radiation` is unavailable with the reason "Single value for the whole site, see route summary"; the others are `available: false` with the reason "No data for this site".
+- `GET /api/v1/sites`: `{ "sites": [ { "id", "name", "groups": [...], "stops": [...] } ] }` from `meta.json` and `stops.json` (a new endpoint, the frontend needs it for the selection list).
+- `POST /api/v1/route`: A* over `slope.bin`, 8 neighbours. A cell with a slope above `slope_limit_deg` is impassable. The cost of a step = length * (1 + (slope/limit)^2). Stops in order: start, stop-1, stop-2, ...
+  - If there is no path: HTTP 422 and `{ "detail": "<a clear reason, which leg and why>" }`.
+  - `profile` is taken along the route from `elevation.bin` and `slope.bin`.
   - `est_time_s = distance_m / (speed_kmh / 3.6)`.
-  - `safety`: `ok`, если макс. уклон не выше `slope_caution_deg`; `caution` до `slope_limit_deg`; иначе `avoid`.
+  - `safety`: `ok` if the max slope is not above `slope_caution_deg`; `caution` up to `slope_limit_deg`; otherwise `avoid`.
 
-## 8. Тестовые данные
-`scripts/make_fake_grid.py` создаёт сетку в **том же формате** (наклонная плоскость, два холма и овраг) с `is_test_data: true`. Так бэкенд и фронт идут параллельно, пока нет реального DTM.
+## 8. Test data
+`scripts/make_fake_grid.py` creates a grid in the **same format** (an inclined plane, two hills and a ravine) with `is_test_data: true`. This way the backend and the frontend work in parallel until the real DTM is available.
