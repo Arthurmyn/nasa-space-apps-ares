@@ -110,15 +110,14 @@ With `VITE_USE_MOCK=true` the app uses synthetic sample data from `frontend/src/
 
 ## Referenced documents
 
-Cited as [1] to [5] in the assumptions (and [6], the site context page, on the card) (`backend/data/gale-bx/assumptions.json`) and printed on the route card. They are links to public NASA and JPL pages, not files in this repository. Full list: `frontend/src/config/references.ts`.
+Cited as [1] to [5] in the assumptions (`backend/data/gale-bx/assumptions.json`) and printed on the route card. They are links to public NASA and JPL pages, not files in this repository. Full list: `frontend/src/config/references.ts`.
 
 1. NASA EVA-EXP-0075, Exploration EVA System ConOps for Artemis Phase 1: https://www.nasa.gov/wp-content/uploads/2020/01/topic_1-_eva_lunar_surface_concept_of_operations.pdf
 2. NASA Moon to Mars Architecture 2024, Lunar Mobility Drivers and Needs: https://www.nasa.gov/wp-content/uploads/2024/06/acr24-lunar-mobility-drivers-and-needs.pdf
 3. Apollo 11 Lunar Surface Journal, Lunar gaits: https://www.nasa.gov/wp-content/uploads/static/history/alsj/a11/a11.gaits.html
 4. JPL PIA26017, Curiosity's difficult climb: https://www.jpl.nasa.gov/images/pia26017-a-map-of-curiositys-difficult-climb/
 5. Hassler, D. M. et al., Mars' Surface Radiation Environment Measured with the Mars Science Laboratory's Curiosity Rover, Science 343 (6169), 1244797, online 9 Dec 2013, print 24 Jan 2014: https://doi.org/10.1126/science.1244797 (DOI and bibliographic data checked in Crossref). The value used is Table 1 of the paper (GCR only): dose equivalent 0.64 ± 0.12 mSv per day, absorbed 0.21 ± 0.04 mGy per day, quality factor 3.05 ± 0.26, August 2012 to June 2013 near solar maximum; checked by the team against the paper (ares_layers/facts/site_facts.json). The SwRI release quotes a rounded 0.67 mSv per day.
-6. NASA/JPL, NASA's Curiosity Rover Sees Martian 'Spiderwebs' Up Close, 23 February 2026: https://nasa.gov/missions/mars-science-laboratory/curiosity-rover/nasas-curiosity-rover-sees-martian-spiderwebs-up-close
-7. Design reference, no data used: NASA/JPL, Curiosity's Proposed Path up Mount Sharp (PIA23179), 15 May 2019, credit NASA/JPL-Caltech/ESA/University of Arizona/JHUAPL/MSSS/USGS Astrogeology Science Center: https://science.nasa.gov/resource/curiositys-proposed-path-up-mount-sharp/ (page read on 15 November 2026: title, date and credit as quoted). It shows how NASA presents a route on Mount Sharp; the route styling of the planner follows that idea and nothing from the image is copied or shown. Listed in `frontend/src/config/references.ts` (flagged `design`), shown under "How this is computed" and not printed on the route card.
+6. Design reference, no data used: NASA/JPL, Curiosity's Proposed Path up Mount Sharp (PIA23179), 15 May 2019, credit NASA/JPL-Caltech/ESA/University of Arizona/JHUAPL/MSSS/USGS Astrogeology Science Center: https://science.nasa.gov/resource/curiositys-proposed-path-up-mount-sharp/ (page read on 15 November 2026: title, date and credit as quoted). It shows how NASA presents a route on Mount Sharp; the route styling of the planner follows that idea and nothing from the image is copied or shown. Listed in `frontend/src/config/references.ts` (flagged `design`), shown under "How this is computed" and not printed on the route card.
 
 The values attributed to [1] to [4] (a 20 deg EVA walking capability, a 2 km distance limit, Apollo walking speeds, the 23 deg slope at Gale) were supplied by the team and not re-checked against the documents. There is no official human-on-Mars slope standard; the 15 deg and 10 deg limits are ARES planning values.
 
@@ -160,14 +159,6 @@ Processing: the original 1024 x 1024 greyscale JPEG was cropped to its top 860 r
 | `frontend/public/stops/sol4805-navcam-right.jpg` | `https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/04805/opgs/edr/ncam/NRB_824057254EDR_F1200808NCAM00280M_.JPG` (raw image page: `https://mars.nasa.gov/raw_images/1549538`, image id `NRB_824057254EDR_F1200808NCAM00280M_`) | Navcam Right B | 4805 (2026-02-11) | NASA/JPL-Caltech, Mars Science Laboratory, sol 4805, Navcam Right B | NASA media, free to use with credit | Stop card (`StopCard`), through `GET /sites` and `POST /route`; set in `stops.json` |
 
 License: NASA content "generally [is] not subject to copyright in the United States" and may be used for educational or informational purposes, with credit (NASA Images and Media Usage Guidelines, `https://www.nasa.gov/nasa-brand-center/images-and-media/`, read on 15 November 2026). The credit line is shown under each image in the app. The image of a stop is a frame from the same sol; the rover may have moved during that sol, so it is context for the area, not a view from the exact waypoint. The stops are Curiosity waypoints, not confirmed science targets.
-
-## Site context text
-
-The "Why this site" text (Plan panel and route card, reference [6]) is stored in `backend/data/gale-bx/stops.json` under `context`. It uses only facts stated in one page, read in full:
-
-- NASA/JPL, "NASA's Curiosity Rover Sees Martian 'Spiderwebs' Up Close", 23 February 2026, `https://nasa.gov/missions/mars-science-laboratory/curiosity-rover/nasas-curiosity-rover-sees-martian-spiderwebs-up-close`. Credit NASA/JPL-Caltech. Facts used: boxwork ridges roughly 1 to 2 m (3 to 6 ft) tall with sandy hollows, crisscrossing the surface for miles on Mount Sharp; the formations suggest ancient groundwater flowed on this part of Mars later than scientists expected; they look like giant spiderwebs from space.
-
-The JPL news release `https://www.jpl.nasa.gov/news/nasas-curiosity-mars-rover-starts-unpacking-boxwork-formations/` is not cited and nothing in the app comes from it: a direct download returned HTTP 403, and a delegated fetch returned only a summary, not the page text, so its facts could not be checked here.
 
 ## Constants
 

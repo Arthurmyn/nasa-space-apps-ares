@@ -580,16 +580,11 @@ def test_shipped_thermal_layer_matches_the_site_grid():
     assert layers_of(root / "data/gale-bx")["thermal"]["available"] is True
 
 
-def test_shipped_site_context_is_short_and_cited():
+def test_shipped_site_has_no_context_and_plain_stops():
     path = Path(__file__).parents[1] / "data/gale-bx"
     with TestClient(create_app(path)) as client:
         site = client.get("/api/v1/sites").json()["sites"][0]
-    context = site["context"]
-    sentences = [s for s in context["text"].replace("?", ".").split(". ") if s.strip()]
-    assert 2 <= len(sentences) <= 4
-    assert context["sources"] and all(
-        s["url"].startswith("https://") and s["credit"] for s in context["sources"]
-    )
+    assert site["context"] is None  # the "Why this site" text was removed
     # Stops stay plain waypoints: no science claim is attached to any of them.
     assert all(stop["note"].startswith("Curiosity waypoint at sol ") for stop in site["stops"])
 
