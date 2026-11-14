@@ -171,3 +171,15 @@ describe("plannerReducer plan/load and notice/set", () => {
     assert.equal(run([{ type: "notice/set", message: "Outside the grid" }]).notice, "Outside the grid");
   });
 });
+
+describe("buildRouteRequest and the site", () => {
+  it("names the site so the backend plans on its terrain", () => {
+    const s = run([add(1), add(2)]);
+    assert.equal(buildRouteRequest(s, "gale-001488")?.site_id, "gale-001488");
+  });
+
+  it("leaves site_id out when none is given (the backend default applies)", () => {
+    const s = run([add(1), add(2)]);
+    assert.equal("site_id" in (buildRouteRequest(s) ?? {}), false);
+  });
+});

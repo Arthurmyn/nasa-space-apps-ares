@@ -157,9 +157,10 @@ export function plannerReducer(s: PlannerState, a: PlannerAction): PlannerState 
   }
 }
 
-export function buildRouteRequest(s: PlannerState): RouteRequest | null {
+export function buildRouteRequest(s: PlannerState, siteId?: string): RouteRequest | null {
   if (!s.start || s.stops.length === 0) return null;
   return {
+    ...(siteId ? { site_id: siteId } : {}),
     start: { id: s.start.id, lon: s.start.lon, lat: s.start.lat },
     stops: s.stops.map((p) => ({ id: p.id, lon: p.lon, lat: p.lat, ...(p.name ? { name: p.name } : {}) })),
     constraints: { max_slope_deg: SLOPE_LIMITS.maxDeg },
