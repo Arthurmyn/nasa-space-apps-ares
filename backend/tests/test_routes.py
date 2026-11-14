@@ -104,7 +104,8 @@ def test_route_avoids_hill_and_matches_contract(terrain):
     assert data["max_slope_deg"] == 0
     assert data["est_time_s"] == pytest.approx(data["distance_m"] / (2 / 3.6))
     assert data["safety"] == "ok" and data["safety_reason"]
-    assert data["alternative"] is None and data["hazards"] == []
+    assert data["alternative"] is None
+    assert [h["id"] for h in data["hazards"]] == ["hazard-1"]  # the hill, see test_hazard_zones_*
     for lon, lat in data["polyline"]:
         from app.schemas.route import PointInput
 
@@ -413,3 +414,89 @@ def test_effective_limit_is_explained_without_mutating_cached_assumptions(
             assert "site limit 15 deg" in assumption["source"]
             assert data["assumptions"][:-1] == original_items
         assert [item.model_dump() for item in client.app.state.grid.items] == original_items
+
+
+def inside(polygon, lon, lat):
+    """Even-odd point-in-polygon over the outer ring and any holes (GeoJSON rings)."""
+    hits = 0
+    for ring in polygon["coordinates"]:
+        for (x1, y1), (x2, y2) in zip(ring, ring[1:], strict=False):
+            if (y1 > lat) != (y2 > lat) and lon < (x2 - x1) * (lat - y1) / (y2 - y1) + x1:
+                hits += 1
+    return hits % 2 == 1
+
+
+def test_hazard_zone_covers_the_steep_hill_only(terrain):
+    path, meta, _ = terrain
+    with TestClient(create_app(path)) as client:
+        data = client.post("/api/v1/route", json=request(meta)).json()
+    (zone,) = data["hazards"]
+    assert zone["kind"] == "steep_slope" and zone["label"] == "Slope over 15 deg"
+    ring = zone["polygon"]["coordinates"][0]
+    assert ring[0] == ring[-1] and len(ring) == 5  # a rectangle: four corners and the closing point
+    cell_m = meta["cell_m"]
+    lat_scale = meta["mars_radius_m"] * math.pi / 180
+    lon_scale = lat_scale * math.cos(math.radians(meta["center"]["lat"]))
+    width = (max(x for x, _ in ring) - min(x for x, _ in ring)) * lon_scale
+    height = (max(y for _, y in ring) - min(y for _, y in ring)) * lat_scale
+    assert width == pytest.approx(7 * cell_m, rel=1e-3)  # columns 12..18
+    assert height == pytest.approx(11 * cell_m, rel=1e-3)  # rows 10..20
+    assert not any(inside(zone["polygon"], lon, lat) for lon, lat in data["polyline"])
+
+
+def test_hazard_zones_drop_regions_under_ten_cells(terrain):
+    path, meta, slope = terrain
+    slope[8:10, 2:4] = 40  # four cells: too small to be a zone
+    slope[22:25, 2:5] = 40  # nine cells: still too small
+    slope.tofile(path / "slope.bin")
+    with TestClient(create_app(path)) as client:
+        data = client.post("/api/v1/route", json=request(meta)).json()
+    assert [h["id"] for h in data["hazards"]] == ["hazard-1"]  # only the big hill
+
+
+def test_hazard_zones_keep_at_most_eight_nearest_the_route(terrain):
+    path, meta, slope = terrain
+    for k in range(10):  # ten 12-cell hills along the top and bottom edges, away from the route row
+        row = 0 if k % 2 == 0 else 27
+        col = 1 + (k // 2) * 6
+        slope[row : row + 4, col : col + 3] = 40
+    slope.tofile(path / "slope.bin")
+    with TestClient(create_app(path)) as client:
+        data = client.post("/api/v1/route", json=request(meta)).json()
+    zones = data["hazards"]
+    assert len(zones) == 8
+    assert [h["id"] for h in zones] == [f"hazard-{n}" for n in range(1, 9)]
+    # The big hill by the route is the nearest region: it comes first and is wider than a 3x4 hill.
+    first = zones[0]["polygon"]["coordinates"][0]
+    assert max(x for x, _ in first) - min(x for x, _ in first) > 0.00015
+
+
+def test_hazard_zones_on_the_shipped_real_grid():
+    path = Path(__file__).parents[1] / "data/gale-bx"
+    meta = json.loads((path / "meta.json").read_text())
+    box = meta["bbox"]
+    with TestClient(create_app(path)) as client:
+        site = client.get("/api/v1/sites").json()["sites"][0]
+        targets = {s["id"]: s for s in site["stops"]}
+        ids = site["groups"][0]["stop_ids"]
+        payload = {
+            "start": {k: targets[ids[0]][k] for k in ("id", "lon", "lat", "name")},
+            "stops": [{k: targets[i][k] for k in ("id", "lon", "lat", "name")} for i in ids[1:]],
+            "constraints": {"max_slope_deg": 15},
+        }
+        response = client.post("/api/v1/route", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    hazards = data["hazards"]
+    assert 1 <= len(hazards) <= 8
+    assert len({h["id"] for h in hazards}) == len(hazards)
+    for zone in hazards:
+        assert zone["label"] == "Slope over 15 deg" and zone["kind"] == "steep_slope"
+        for ring in zone["polygon"]["coordinates"]:
+            assert len(ring) >= 4 and ring[0] == ring[-1]
+            for lon, lat in ring:
+                assert box["lon_min"] <= lon <= box["lon_max"]
+                assert box["lat_min"] <= lat <= box["lat_max"]
+        for lon, lat in data["polyline"]:
+            assert not inside(zone["polygon"], lon, lat), zone["id"]
+    assert len(response.content) < 150_000  # simplified outlines keep the response small
