@@ -1,5 +1,5 @@
 // Types mirror backend/app/schemas/. Route types live in ./types.ts (proposal, see docs/api.md).
-import { REQUEST_TIMEOUT_MS } from "../config/route.ts";
+import { requestJson } from "./request.ts";
 import { siteFileUrl } from "./siteFiles.ts";
 import { parseLayersResponse, parseRouteResponse, parseSiteMeta, parseSitesResponse } from "./validate.ts";
 import {
@@ -20,46 +20,6 @@ const BASE = (import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "" : "http
  * variable, so the mock module is never reachable there. The UI shows "Sample data" for "mock".
  */
 export const dataSource: "mock" | "live" = import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === "true" ? "mock" : "live";
-
-/** The user-facing reason of a 422 answer, or null when the body does not have one. */
-async function readDetail(res: Response): Promise<string | null> {
-  try {
-    const body: unknown = await res.json();
-    const detail = typeof body === "object" && body !== null ? (body as { detail?: unknown }).detail : null;
-    return typeof detail === "string" && detail.trim() !== "" ? detail.trim().slice(0, 300) : null;
-  } catch {
-    return null;
-  }
-}
-
-async function request<T>(path: string, init?: RequestInit, signal?: AbortSignal): Promise<T> {
-  const timeout = new AbortController();
-  const timer = window.setTimeout(() => timeout.abort(), REQUEST_TIMEOUT_MS);
-  const onCallerAbort = () => timeout.abort();
-  signal?.addEventListener("abort", onCallerAbort);
-
-  try {
-    const res = await fetch(BASE + path, {
-      headers: { "Content-Type": "application/json" },
-      ...init,
-      signal: timeout.signal,
-    });
-    if (!res.ok) throw new ApiError("http", `HTTP ${res.status}`, res.status, res.status === 422 ? await readDetail(res) : null);
-    try {
-      return (await res.json()) as T;
-    } catch {
-      throw new ApiError("invalid", "Response was not valid JSON");
-    }
-  } catch (e) {
-    if (e instanceof ApiError) throw e;
-    if (signal?.aborted) throw new ApiError("aborted", "Request cancelled");
-    if (timeout.signal.aborted) throw new ApiError("timeout", "Request timed out");
-    throw new ApiError("network", "Network error");
-  } finally {
-    window.clearTimeout(timer);
-    signal?.removeEventListener("abort", onCallerAbort);
-  }
-}
 
 /** Static JSON next to the app, not the API: /app/data/<site>/meta.json. */
 export async function fetchSiteMeta(siteId: string, signal?: AbortSignal): Promise<SiteMeta> {
@@ -84,7 +44,7 @@ export const api = {
       const { mockRoute } = await import("./mock.ts");
       return mockRoute(body, signal);
     }
-    return parseRouteResponse(await request<unknown>("/route", { method: "POST", body: JSON.stringify(body) }, signal));
+    return requestJson(BASE + "/route", { method: "POST", body: JSON.stringify(body) }, signal, parseRouteResponse);
   },
 
   sites: async (signal?: AbortSignal): Promise<SitesResponse> => {
@@ -92,7 +52,7 @@ export const api = {
       const { mockSites } = await import("./mock.ts");
       return mockSites(signal);
     }
-    return parseSitesResponse(await request<unknown>("/sites", undefined, signal));
+    return requestJson(BASE + "/sites", undefined, signal, parseSitesResponse);
   },
 
   layers: async (signal?: AbortSignal): Promise<LayersResponse> => {
@@ -100,6 +60,6 @@ export const api = {
       const { mockLayers } = await import("./mock.ts");
       return mockLayers(signal);
     }
-    return parseLayersResponse(await request<unknown>("/layers", undefined, signal));
+    return requestJson(BASE + "/layers", undefined, signal, parseLayersResponse);
   },
 };

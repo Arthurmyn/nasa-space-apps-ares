@@ -196,11 +196,11 @@ export function slicePath(path: readonly LonLat[], fromFraction: number, toFract
 export function pointAtFraction(
   path: readonly LonLat[],
   fraction: number,
+  lengths: readonly number[] = cumulativeLengths(path),
 ): { point: LonLat; bearingDeg: number } | null {
   const first = path[0];
   if (!first) return null;
   if (path.length === 1) return { point: first, bearingDeg: 0 };
-  const lengths = cumulativeLengths(path);
   const total = lengths[lengths.length - 1] ?? 0;
   const target = Math.min(1, Math.max(0, fraction)) * total;
   for (let i = 1; i < path.length; i += 1) {

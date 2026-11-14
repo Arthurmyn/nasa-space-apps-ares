@@ -205,14 +205,14 @@ export function HudView({ onBackToPlan }: { onBackToPlan: () => void }) {
           <SlopeGauge hud={hud} />
         </div>
 
-        <div className="hud__alert" role="status">
-          <Icon name="alert" />
+        <div className={`hud__alert${hazard ? "" : " hud__alert--neutral"}`} role="status">
+          <Icon name={hazard ? "alert" : "info"} />
           {hazard ? (
             <span>
               Nearest hazard: <strong>{hazard.label}</strong> <span className="mono">{formatDistance(hazard.distM)}, {describeBearing(hazardRel)}</span>
             </span>
           ) : (
-            <span>No hazard zones on this route</span>
+            <span>Hazard zones are not computed yet</span>
           )}
         </div>
       </section>

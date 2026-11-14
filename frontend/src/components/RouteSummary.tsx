@@ -137,6 +137,7 @@ export function RouteSummary() {
   const p = usePlanner();
   const { state, view, stale, fetching } = p;
   const route = state.route;
+  const supportsAlternatives = route?.supports_alternatives === true;
 
   return (
     <section className="panel__section" aria-labelledby="summary-title">
@@ -162,7 +163,7 @@ export function RouteSummary() {
 
       {view === "error" && (
         <div className="notice notice--error" role="alert">
-          <Icon name="wifiOff" />
+          <Icon name="alert" />
           <span>{state.error}</span>
           <button type="button" className="btn" onClick={p.recalculate} disabled={fetching}>
             <Icon name="refresh" /> Retry
@@ -208,7 +209,7 @@ export function RouteSummary() {
           >
             <Icon name="refresh" /> Recalculate
           </button>
-          <button
+          {supportsAlternatives && <button
             type="button"
             className="btn"
             aria-pressed={state.compare}
@@ -216,14 +217,14 @@ export function RouteSummary() {
             disabled={state.stops.length === 0}
           >
             <Icon name="compare" /> Compare
-          </button>
+          </button>}
           <button type="button" className="btn btn--ghost" onClick={p.reset}>
             <Icon name="trash" /> Clear
           </button>
         </div>
       )}
 
-      {state.compare && route && (
+      {supportsAlternatives && state.compare && route && (
         <div className="compare">
           {fetching && !route.alternative ? (
             <p className="progress-text" role="status">

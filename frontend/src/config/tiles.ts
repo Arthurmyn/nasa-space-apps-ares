@@ -71,10 +71,15 @@ export interface GridImageConfig {
   opacity: number;
 }
 
-export const GRID_IMAGES: Partial<Record<LayerId, GridImageConfig>> = {
-  optical: { file: "hillshade.png", opacity: 0.6 },
-  slope: { file: "slope.png", opacity: 0.8 },
+/** Explicit inventory of bundled assets, scoped to the site that owns their bbox. */
+export const SITE_GRID_IMAGES: Record<string, Partial<Record<LayerId, GridImageConfig>>> = {
+  "gale-bx": {
+    optical: { file: "hillshade.png", opacity: 0.6 },
+    slope: { file: "slope.png", opacity: 0.8 },
+  },
 };
 
+export const gridImagesForSite = (siteId: string): Partial<Record<LayerId, GridImageConfig>> => SITE_GRID_IMAGES[siteId] ?? {};
+
 /** True when the layer has some image source, either tiles or a grid PNG. */
-export const layerHasImagery = (id: LayerId): boolean => TILE_SOURCES[id].url !== null || GRID_IMAGES[id] !== undefined;
+export const layerHasImagery = (id: LayerId, siteId: string): boolean => TILE_SOURCES[id].url !== null || gridImagesForSite(siteId)[id] !== undefined;

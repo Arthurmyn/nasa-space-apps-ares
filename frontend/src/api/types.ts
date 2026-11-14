@@ -106,6 +106,13 @@ export interface RouteAlternative {
   polyline: LonLat[];
 }
 
+export interface RouteNavigation {
+  /** Exact cumulative route distance for each polyline vertex, in backend metres. */
+  vertex_dist_m: number[];
+  /** For each edge, the index of the geometry edge that supplies its heading. */
+  heading_segments: number[];
+}
+
 export interface RouteResponse {
   /** ISO 8601 UTC timestamp of when the backend computed this route. */
   computed_at: string;
@@ -124,6 +131,10 @@ export interface RouteResponse {
   assumptions: Assumption[];
   /** Present only when the request set `compare: true` and the backend found one. */
   alternative: RouteAlternative | null;
+  /** Missing on legacy responses; use the raw geometric tangent in that case. */
+  navigation?: RouteNavigation | null;
+  /** Route-service capability, independent of layer-list availability. */
+  supports_alternatives?: boolean;
 }
 
 // ---- Site data: docs/DATA_CONTRACT.md -----------------------------------------
@@ -196,9 +207,9 @@ export class ApiError extends Error {
 
   constructor(kind: ApiErrorKind, message: string, status: number | null = null, detail: string | null = null) {
     super(message);
-    this.detail = detail;
     this.name = "ApiError";
     this.kind = kind;
     this.status = status;
+    this.detail = detail;
   }
 }

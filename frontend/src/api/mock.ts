@@ -194,6 +194,8 @@ export async function mockRoute(req: RouteRequest, signal?: AbortSignal): Promis
   }
 
   return {
+    supports_alternatives: true,
+    navigation: { vertex_dist_m: dist, heading_segments: main.polyline.slice(1).map((_, i) => i) },
     computed_at: new Date().toISOString(),
     distance_m: distance,
     max_slope_deg: maxSlope,
