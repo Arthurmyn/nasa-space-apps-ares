@@ -38,12 +38,30 @@ function SlopeLegend() {
   );
 }
 
+function SourceNote({ source }: { source: string }) {
+  const parts = source
+    .split(";")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (parts.length <= 1) return <p className="legend__source">Source: {source}</p>;
+  return (
+    <div className="legend__source">
+      <span>Sources</span>
+      <ul className="legend__source-list">
+        {parts.map((p) => (
+          <li key={p}>{p}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function LayerLegend({ meta, source }: { meta: LayerMeta; source: string | null }) {
   return (
     <div className="layer-row__legend">
       {meta.id === "slope" && <SlopeLegend />}
       {meta.isEstimate && <p className="legend__note">Estimate. Modelled, not measured.</p>}
-      {source && <p className="legend__note">Source: {source}</p>}
+      {source && <SourceNote source={source} />}
       {!layerHasImagery(meta.id) && (
         <p className="legend__note legend__note--warn">
           <Icon name="info" size={12} /> No imagery for this layer yet
