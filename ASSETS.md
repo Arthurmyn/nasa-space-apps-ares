@@ -72,13 +72,21 @@ It shows the "Sample data" badge because the planner ran on synthetic data. Re-r
 
 ## Tile sources
 
-None configured. `frontend/src/config/tiles.ts` holds one empty entry per layer (`url: null`).
+Configured in `frontend/src/config/tiles.ts`. Layers without a URL draw nothing and the layers panel says "Tiles not configured".
 
-TODO(team): when a tile source is chosen, add a row here with URL, license, attribution text and layer.
+| Layer | URL | License | Attribution | Where used |
+|-------|-----|---------|-------------|------------|
+| optical | `https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0//default/default028mm/{z}/{y}/{x}.jpg` | NASA/JPL imagery from Mars Trek. NASA media is generally not copyrighted, but the Mars Trek terms of use were not checked; TODO(team) confirm before submission | NASA/JPL, Mars Trek (Viking MDIM 2.1) | Map basemap (`optical` layer), `frontend/src/map/useRasterLayers.ts` |
 
-| Layer | URL | License | Attribution |
-|-------|-----|---------|-------------|
-| (none yet) | | | |
+Mars Trek optical basemap, as read from its WMTS GetCapabilities (`https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/WMTSCapabilities.xml`):
+
+- Product: Viking MDIM 2.1 colour mosaic, global, 232 m/px. JPEG, 256 px tiles.
+- Grid: EPSG:104905 (Mars equirectangular), matrix set `default028mm`, bbox -180 -90 180 90, origin top-left. Level 0 is 2 x 1 tiles, doubling per level, levels 0 to 7.
+- URL order is `{level}/{row}/{col}`. Rows count from the top (XYZ-like, not TMS).
+- This is not the Web Mercator grid MapLibre expects, so `frontend/src/map/equirectProtocol.ts` fetches the source tiles and reprojects them into Mercator tiles in the browser (math in `frontend/src/lib/equirect.ts`). MapLibre zoom 8 reads level 7; deeper zoom is overzoomed.
+- Tiles outside coverage answer 404. The loader treats that as a transparent tile and shows no error. Other HTTP errors are reported.
+- The server sends `Access-Control-Allow-Origin: *`, which the canvas reprojection needs.
+- Our DTM-derived layers (slope, route, grid) are drawn above this basemap.
 
 ## Data layers
 

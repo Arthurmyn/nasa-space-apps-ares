@@ -1,8 +1,16 @@
 import type { LayerId } from "../api/types.ts";
 
 export interface TileSourceConfig {
-  /** XYZ template, for example "https://example.org/tiles/{z}/{x}/{y}.png". Null until a source exists. */
+  /**
+   * Tile URL template, or null until a source exists.
+   * `grid: "xyz"`: Web Mercator, for example "https://example.org/tiles/{z}/{x}/{y}.png".
+   * `grid: "wmts-equirect"`: WMTS plate carree grid, template order {z}/{y}/{x} = level/row/column,
+   * rows counted from the top (not TMS). The map reprojects these tiles to Web Mercator.
+   */
   url: string | null;
+  grid: "xyz" | "wmts-equirect";
+  /** Deepest level the server has tiles for. Only used by "wmts-equirect". */
+  maxLevel: number;
   tileSize: 256 | 512;
   minzoom: number;
   maxzoom: number;
@@ -14,6 +22,8 @@ export interface TileSourceConfig {
 
 const unconfigured = (opacity: number): TileSourceConfig => ({
   url: null,
+  grid: "xyz",
+  maxLevel: 0,
   tileSize: 256,
   minzoom: 0,
   maxzoom: 18,
@@ -21,11 +31,30 @@ const unconfigured = (opacity: number): TileSourceConfig => ({
   opacity,
 });
 
-// TODO(team): fill in a tile URL per layer once a source is chosen, and list each one in
-// ASSETS.md (URL, license, where used). While `url` is null the map shows the plain dark
-// background with a coordinate grid and the layers panel says "Tiles not configured".
+/**
+ * Mars Trek, Viking MDIM 2.1 colour mosaic, global, 232 m/px. WMTS GetCapabilities (checked):
+ * EPSG:104905 equirectangular, matrix set default028mm, 256 px tiles, levels 0 to 7
+ * (2 x 1 tiles at level 0, doubling each level), bbox -180 -90 180 90, JPEG, top-left origin.
+ * Tiles outside coverage return 404; the loader treats that as transparent, not an error.
+ * MapLibre zoom 8 reads level 7, so maxzoom is 8 and deeper zoom is overzoomed.
+ * Source: https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/WMTSCapabilities.xml
+ */
+const MARS_TREK_VIKING: TileSourceConfig = {
+  url: "https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0//default/default028mm/{z}/{y}/{x}.jpg",
+  grid: "wmts-equirect",
+  maxLevel: 7,
+  tileSize: 256,
+  minzoom: 0,
+  maxzoom: 8,
+  attribution: "NASA/JPL, Mars Trek (Viking MDIM 2.1)",
+  opacity: 1,
+};
+
+// TODO(team): fill in a tile URL for the other layers once a source is chosen, and list each
+// one in ASSETS.md (URL, license, where used). While `url` is null the map draws nothing for
+// that layer and the layers panel says "Tiles not configured".
 export const TILE_SOURCES: Record<LayerId, TileSourceConfig> = {
-  optical: unconfigured(1),
+  optical: MARS_TREK_VIKING,
   slope: unconfigured(0.65),
   thermal: unconfigured(0.65),
   geology: unconfigured(0.65),

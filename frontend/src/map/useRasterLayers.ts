@@ -3,6 +3,7 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 import { LAYER_IDS, type LayerId } from "../api/types.ts";
 import { TILE_SOURCES } from "../config/tiles.ts";
 import type { LayersModel } from "../state/PlannerContext.tsx";
+import { EQUIRECT_SCHEME, registerEquirectProtocol } from "./equirectProtocol.ts";
 import { LYR } from "./layers.ts";
 
 const tileId = (id: LayerId) => `ares-tiles-${id}`;
@@ -20,6 +21,7 @@ export function useRasterLayers(map: MapLibreMap | null, layers: LayersModel): v
 
   useEffect(() => {
     if (!map) return;
+    registerEquirectProtocol();
 
     for (const id of LAYER_IDS) {
       const cfg = TILE_SOURCES[id];
@@ -29,7 +31,7 @@ export function useRasterLayers(map: MapLibreMap | null, layers: LayersModel): v
       if (wanted && !present && cfg.url !== null) {
         map.addSource(tileId(id), {
           type: "raster",
-          tiles: [cfg.url],
+          tiles: [cfg.grid === "wmts-equirect" ? `${EQUIRECT_SCHEME}://${id}/{z}/{x}/{y}` : cfg.url],
           tileSize: cfg.tileSize,
           minzoom: cfg.minzoom,
           maxzoom: cfg.maxzoom,
