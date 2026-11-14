@@ -16,7 +16,8 @@ python -m pytest scripts/tests -q
 сетка HiRISE DTM `DTEEC_009149_1750_009294_1750_U01`, `is_test_data: false`.
 Тесты генерируют синтетическую сетку только в `tmp_path`.
 Итоговая настоящая сетка: 316 × 430, ячейка 2 м; 765 118 байт для сетки,
-767 817 байт вместе с `stops.json` и `assumptions.json`.
+767 745 байт вместе с `stops.json` и `assumptions.json` (JSON с LF в Git).
+Проверка: `python -m pytest scripts/tests -q` — 51 тест пройден.
 
 Генерация по настоящему DTM (заменяет эти файлы):
 
