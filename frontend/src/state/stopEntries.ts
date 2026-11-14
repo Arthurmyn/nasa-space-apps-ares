@@ -52,8 +52,8 @@ export function buildStopEntries(state: PlannerState): StopEntry[] {
       lon: p.lon,
       lat: p.lat,
       distM: matched ? api.dist_m : null,
-      note: matched ? api.note : null,
-      image: matched ? api.image : null,
+      note: matched ? api.note : (p.note ?? null),
+      image: matched ? api.image : (p.image ?? null),
     });
   });
 
