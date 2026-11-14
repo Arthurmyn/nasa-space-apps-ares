@@ -238,7 +238,10 @@ def test_committed_real_grid_stops_and_assumptions_match_contract():
     for stop in stops["stops"]:
         assert set(stop) == {"id", "name", "lon", "lat", "note", "image", "source_id"}
         assert all(isinstance(stop[k], str) and stop[k] for k in ["id", "name", "note", "source_id"])
-        assert stop["image"] is None
+        image = stop["image"]
+        assert set(image) == {"url", "alt", "credit"} and all(image.values())
+        assert image["url"].startswith("/app/stops/") and image["credit"].startswith("NASA/JPL-Caltech")
+        assert (ROOT / "frontend/public" / image["url"].removeprefix("/app/")).is_file()
         assert f"{stop['source_id']}: {sources[stop['source_id']]}" in meta["sources"]
         matching = [f for f in rover["features"] if f["geometry"]["coordinates"][:2] == [stop["lon"], stop["lat"]]]
         assert len(matching) == 1
