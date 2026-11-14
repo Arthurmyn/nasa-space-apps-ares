@@ -135,8 +135,8 @@ docker compose up --build
 | Layer | Stack | Folder |
 |-------|-------|--------|
 | Frontend | React 18, TypeScript, Vite, MapLibre GL | [`frontend/`](frontend/) |
-| Backend | Python 3.10+, FastAPI, Pydantic, numpy; Vercel and Docker use Python 3.12 | [`backend/`](backend/) |
-| Infra | Docker Compose, GitHub templates | [`docker-compose.yml`](docker-compose.yml), [`.github/`](.github/) |
+| Backend | Python 3.10+, FastAPI, Pydantic, numpy; Docker uses Python 3.12 | [`backend/`](backend/) |
+| Infra | Docker Compose, Caddy, GitHub Actions deploy to a VPS | [`deploy/`](deploy/), [`docker-compose.yml`](docker-compose.yml), [`.github/`](.github/) |
 
 More in [docs/architecture.md](docs/architecture.md); the API contract is in [docs/api.md](docs/api.md) and the data contract in [docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md).
 
