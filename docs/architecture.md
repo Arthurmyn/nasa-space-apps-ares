@@ -22,7 +22,7 @@
 
 ## Граница backend ↔ ML
 
-ML-команда отдаёт **один интерфейс** — `ml/src/inference.py`:
+ML-команда отдаёт **один интерфейс** - `ml/src/inference.py`:
 
 ```python
 def load_model(path: str) -> Any: ...
