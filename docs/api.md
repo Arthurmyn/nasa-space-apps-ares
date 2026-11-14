@@ -54,7 +54,7 @@ The API badge reflects the last completed request. Network failures show `API of
 
 ### `GET /sites`
 
-Returns `{ "sites": [{ "id", "name", "groups": [...], "stops": [...] }] }`.
+Returns `{ "sites": [{ "id", "name", "groups": [...], "stops": [...], "context" }] }`. `context` is `null` or `{ title, text, sources: [{ title, url, credit }] }`: a short cited text about the site, read from `stops.json`.
 The site identity comes from `meta.json`; groups and catalog stops (including note, image and source_id) come from `stops.json`, as specified in `DATA_CONTRACT.md`.
 
 ### `POST /route`
