@@ -26,6 +26,13 @@ The same file lives in `frontend/public/fonts/` and `landing/public/fonts/`. The
 
 Unit tests use Node's built-in test runner (`npm test`); no test framework was added.
 
+## Logo and favicon
+
+| File | What | Source | License | Where used |
+|------|------|--------|---------|------------|
+| `docs/brand/ares-orbital-planet-logo.png` (1536 x 1024) | ARES logo: a glowing planet with a ring, mint and violet | Supplied by the team (file "ARES Orbital Planet Logo.png"). **Origin and tool not recorded; it looks AI-generated, so the team must confirm the tool and its terms and disclose it with the other AI visuals** | Unknown, to be confirmed | Source file for the derived icons below |
+| `landing/public/` and `frontend/public/`: `favicon-32.png`, `favicon.ico` (16, 32, 48), `apple-touch-icon.png` (180), `ares-logo-512.png` | The planet cropped to a square on a near-black background and resized | Derived from the logo above (Pillow) | As the logo | Browser tab icon of the landing page and of the planner |
+
 ## Icons
 
 Hand-drawn 16px stroke icons, authored for this project as inline SVG paths in `frontend/src/components/Icon.tsx` (same license as the repository). The favicon is an inline SVG data URI in `frontend/index.html`, also project-authored. No third-party icon set.
