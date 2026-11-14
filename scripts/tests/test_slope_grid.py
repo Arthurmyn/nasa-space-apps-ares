@@ -243,7 +243,7 @@ def test_committed_real_grid_stops_and_assumptions_match_contract():
         matching = [f for f in rover["features"] if f["geometry"]["coordinates"][:2] == [stop["lon"], stop["lat"]]]
         assert len(matching) == 1
         assert str(matching[0]["properties"]["sol"]) in stop["note"]
-        assert "rover_sols4534-4805.geojson" in stop["note"]
+        assert "docs/" not in stop["note"] and ".geojson" not in stop["note"]  # readable, no file paths
         bbox = meta["bbox"]
         assert bbox["lon_min"] <= stop["lon"] < bbox["lon_max"]
         assert bbox["lat_min"] < stop["lat"] <= bbox["lat_max"]
