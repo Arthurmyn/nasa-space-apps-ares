@@ -1,7 +1,7 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from app.schemas.route import LayersResponse, RouteRequest, RouteResponse, SitesResponse
 from app.services.grid import Grid
@@ -11,10 +11,21 @@ router = APIRouter(tags=["planner"])
 logger = logging.getLogger(__name__)
 
 
-def get_grid(request: Request) -> Grid:
-    if request.app.state.grid is None:
-        raise HTTPException(status_code=503, detail=request.app.state.grid_error)
-    return request.app.state.grid
+def resolve_grid(request: Request, site_id: str | None) -> Grid:
+    """The grid of `site_id`, or of the default site when it is omitted."""
+    state = request.app.state
+    if not state.grids:
+        raise HTTPException(status_code=503, detail=state.grid_error)
+    if site_id is None:
+        return state.grid
+    grid = state.grids.get(site_id)
+    if grid is None:
+        raise HTTPException(status_code=404, detail=f"Unknown site '{site_id}'.")
+    return grid
+
+
+def get_grid(request: Request, site_id: Annotated[str | None, Query(max_length=64)] = None) -> Grid:
+    return resolve_grid(request, site_id)
 
 
 GridDependency = Annotated[Grid, Depends(get_grid)]
@@ -52,16 +63,19 @@ def layers(grid: GridDependency):
 
 
 @router.get("/sites", response_model=SitesResponse)
-def sites(grid: GridDependency):
-    return {"sites": [grid.site]}
+def sites(request: Request):
+    state = request.app.state
+    if not state.grids:
+        raise HTTPException(status_code=503, detail=state.grid_error)
+    # The default site first, then the others by id.
+    ordered = [state.grid, *(g for sid, g in sorted(state.grids.items()) if g is not state.grid)]
+    return {"sites": [g.site for g in ordered]}
 
 
 @router.post("/route", response_model=RouteResponse)
-def plan_route(body: RouteRequest, grid: GridDependency):
+def plan_route(body: RouteRequest, request: Request):
+    grid = resolve_grid(request, body.site_id)
     try:
         return route(grid, body)
     except ValueError as exc:
-        # Logged so a failed route on the server can be told apart (outside grid, unreachable, ...).
-        # Warning level: uvicorn does not set up INFO for application loggers.
-        logger.warning("Route rejected: %s", exc)
         raise HTTPException(status_code=422, detail=str(exc)) from exc

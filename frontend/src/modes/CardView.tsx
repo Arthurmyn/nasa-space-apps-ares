@@ -331,7 +331,7 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
             </table>
           )}
           <ol className="doc__refs">
-            {REFERENCES.map((r) => (
+            {REFERENCES.filter((r) => !r.design).map((r) => (
               <li key={r.n} value={r.n}>
                 [{r.n}] {r.citation} <span className="mono">{r.url}</span>
               </li>

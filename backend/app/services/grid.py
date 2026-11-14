@@ -9,7 +9,8 @@ import numpy as np
 
 from app.schemas.route import Assumption, Site
 
-DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "gale-bx"
+DATA_ROOT = Path(__file__).resolve().parents[2] / "data"
+DEFAULT_SITE_ID = "gale-bx"
 
 
 class Grid:
@@ -129,6 +130,49 @@ def load_grid(directory):
         # Keep the health endpoint alive, but never silently substitute terrain.
         return (
             None,
-            "Terrain data unavailable: backend/data/gale-bx must contain valid "
+            f"Terrain data unavailable: {Path(directory).name} must contain valid "
             "meta.json, elevation.bin, slope.bin, stops.json and assumptions.json.",
         )
+
+
+def site_directories(root) -> list[Path]:
+    """The site folders under `root`, or `root` itself when it holds a single site (meta.json)."""
+    root = Path(root)
+    if (root / "meta.json").is_file():
+        return [root]
+    if not root.is_dir():
+        return []
+    return sorted(p for p in root.iterdir() if (p / "meta.json").is_file())
+
+
+def load_grids(root) -> tuple[dict[str, Grid], str | None]:
+    """Load every site under `root`. Returns {site_id: Grid} and an error text when none loaded.
+
+    A site that fails to load is logged and left out: it never falls back to another site's
+    terrain. A folder whose meta.json names another site_id is rejected so that an id always
+    means the same terrain.
+    """
+    grids: dict[str, Grid] = {}
+    error = None
+    for directory in site_directories(root) or [Path(root)]:
+        grid, failure = load_grid(directory)
+        if grid is None:
+            error = error or failure
+            continue
+        site_id = grid.site.id
+        if len(site_directories(root)) > 1 and directory.name != site_id:
+            logging.getLogger(__name__).error(
+                "Skipping %s: meta.json site_id is %s", directory, site_id
+            )
+            continue
+        grids[site_id] = grid
+    if not grids and error is None:
+        error = "Terrain data unavailable: no site folder with meta.json was found."
+    return grids, error
+
+
+def default_site_id(grids: dict[str, Grid]) -> str | None:
+    """gale-bx when loaded (backward compatible), otherwise the first site by id."""
+    if DEFAULT_SITE_ID in grids:
+        return DEFAULT_SITE_ID
+    return min(grids) if grids else None

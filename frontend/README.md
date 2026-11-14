@@ -61,6 +61,6 @@ The API contract is a proposal; see "Frontend proposal" in [`docs/api.md`](../do
 
 ## Notes
 
-- Scale bar, grid spacing and distances use Mars' radius (3389.5 km). MapLibre's own scale control assumes Earth, so it is not used.
+- Scale bar, grid spacing and distances use the radius of the data grid, 3396.19 km (`mars_radius_m` in `meta.json`). MapLibre's own scale control assumes Earth, so it is not used.
 - The MapLibre worker is registered explicitly in `src/map/worker.ts`; without it the worker 404s under Vite.
 - Raster tile layers (`src/map/useRasterLayers.ts`) are implemented but have not been exercised yet, because no tile source is configured.

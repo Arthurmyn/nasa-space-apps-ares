@@ -76,11 +76,11 @@ export const api = {
     return requestJson(BASE + "/sites", undefined, signal, parseSitesResponse);
   },
 
-  layers: async (signal?: AbortSignal): Promise<LayersResponse> => {
+  layers: async (siteId: string, signal?: AbortSignal): Promise<LayersResponse> => {
     if (dataSource === "mock") {
       const { mockLayers } = await import("./mock.ts");
       return mockLayers(signal);
     }
-    return requestJson(BASE + "/layers", undefined, signal, parseLayersResponse);
+    return requestJson(`${BASE}/layers?site_id=${encodeURIComponent(siteId)}`, undefined, signal, parseLayersResponse);
   },
 };

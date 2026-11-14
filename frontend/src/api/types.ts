@@ -45,6 +45,8 @@ export interface PointInput {
 }
 
 export interface RouteRequest {
+  /** Which site's terrain to plan on; the backend uses its default site when omitted. */
+  site_id?: string;
   start: PointInput;
   /** Ordered science stops, 1 to MAX_STOPS. */
   stops: PointInput[];

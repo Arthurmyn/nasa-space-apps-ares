@@ -160,8 +160,8 @@ def build(cube: Path, root: Path = ROOT, site: str = SITE) -> dict:
             "page_url": PAGE_URL,
             "download_url": CUBE_URL,
             "team_page_url": TEAM_URL,
-            "credit": "NASA/ASU/USGS (Mars Odyssey THEMIS, USGS Astrogeology Science Center)",
-            "license": "Public domain (US Government work), credit NASA/ASU/USGS",
+            "credit": "NASA/JPL-Caltech/Arizona State University (Mars Odyssey THEMIS); USGS Astrogeology Science Center",
+            "license": "THEMIS Citation Policy, https://themis.asu.edu/terms: credit NASA/JPL-Caltech/Arizona State University; no license text on the USGS page",
             "product_id": label.get("PRODUCT_ID"),
             "dataset_id": label.get("DATA_SET_ID"),
             "instrument": label.get("INSTRUMENT_ID"),
@@ -200,8 +200,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("cube", type=Path, help="gale_crater_themis_dayir_isis.cub from USGS Astropedia")
     parser.add_argument("--output-root", type=Path, default=ROOT)
+    parser.add_argument("--site", default=SITE, help="site folder under backend/data (default gale-bx)")
     args = parser.parse_args()
-    info = build(args.cube, args.output_root)
+    info = build(args.cube, args.output_root, args.site)
     print(
         f"thermal.png {info['output']['width']}x{info['output']['height']}, "
         f"pixel {info['native_pixel_m']} m, {info['site_thermal_pixels']} THEMIS pixels, "

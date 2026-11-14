@@ -79,6 +79,7 @@ export const useLayers = (): LayersModel => useApp().layers;
 
 function useLayersModel(): LayersModel {
   const { site } = useSite();
+  const siteId = site.id;
   const [status, setStatus] = useState<LayersStatus>("loading");
   const [info, setInfo] = useState<Partial<Record<LayerId, LayerInfo>>>({});
   const [active, setActive] = useState<ReadonlySet<LayerId>>(() => new Set(DEFAULT_ACTIVE_LAYERS));
@@ -90,7 +91,7 @@ function useLayersModel(): LayersModel {
     inflight.current = ctrl;
     setStatus("loading");
     api
-      .layers(ctrl.signal)
+      .layers(siteId, ctrl.signal)
       .then((res) => {
         if (ctrl.signal.aborted) return;
         setInfo(Object.fromEntries(res.layers.map((l) => [l.id, l])));
@@ -101,7 +102,7 @@ function useLayersModel(): LayersModel {
         console.error("Failed to load layer list", e);
         setStatus("error");
       });
-  }, []);
+  }, [siteId]);
 
   useEffect(() => {
     load();
@@ -126,6 +127,7 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
   stateRef.current = state;
   const inflight = useRef<AbortController | null>(null);
   const { site } = useSite();
+  const siteId = site.id;
   const bbox = site.bbox;
 
   // slope.bin lets a click be checked before it becomes a stop (DTM gap, slope over the limit).
@@ -180,7 +182,7 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
 
   const fetchRoute = useCallback(async () => {
     const snapshot = stateRef.current;
-    const request = buildRouteRequest(snapshot);
+    const request = buildRouteRequest(snapshot, siteId);
     if (!request) return;
 
     inflight.current?.abort();
@@ -202,7 +204,7 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       };
       dispatch({ type: "route/failure", message: describeError(e, labelFor) });
     }
-  }, []);
+  }, [siteId]);
 
   // Debounced recompute after every edit to the points.
   useEffect(() => {
