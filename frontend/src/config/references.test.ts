@@ -11,6 +11,12 @@ test("every source of the site context is in the Card references", () => {
   }
 });
 
+test("the Mount Sharp path image is listed as a design reference only", () => {
+  const ref = REFERENCES.find((r) => r.url === "https://science.nasa.gov/resource/curiositys-proposed-path-up-mount-sharp/");
+  assert.ok(ref);
+  assert.equal(ref.design, true);
+});
+
 test("reference numbers are 1 to n without gaps", () => {
   assert.deepEqual(REFERENCES.map((r) => r.n), REFERENCES.map((_, i) => i + 1));
 });
