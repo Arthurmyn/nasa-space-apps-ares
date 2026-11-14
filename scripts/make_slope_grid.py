@@ -183,6 +183,8 @@ def encode_files(grid, z, caution_deg=10, limit_deg=15):
             f"backend/data/{sid}/elevation.bin": z.astype("<f4").tobytes(order="C"),
             f"backend/data/{sid}/slope.bin": slope.tobytes(order="C"),
             f"frontend/public/data/{sid}/meta.json": meta,
+            # The HUD's 3D terrain reads the same elevations as the backend.
+            f"frontend/public/data/{sid}/elevation.bin": z.astype("<f4").tobytes(order="C"),
             f"frontend/public/data/{sid}/hillshade.png": png_bytes(hillshade),
             f"frontend/public/data/{sid}/slope.png": png_bytes(colors)}
 
