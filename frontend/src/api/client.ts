@@ -15,20 +15,6 @@ const BASE = (import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "" : "http
 /** "mock" only when VITE_USE_MOCK=true. The UI shows a "Sample data" badge in that case. */
 export const dataSource: "mock" | "live" = import.meta.env.VITE_USE_MOCK === "true" ? "mock" : "live";
 
-export interface HealthResponse {
-  status: string;
-  model_loaded: boolean;
-}
-
-export interface PredictRequest {
-  features: Record<string, number>;
-}
-
-export interface PredictResponse {
-  prediction: number | string;
-  confidence: number | null;
-}
-
 async function request<T>(path: string, init?: RequestInit, signal?: AbortSignal): Promise<T> {
   const timeout = new AbortController();
   const timer = window.setTimeout(() => timeout.abort(), REQUEST_TIMEOUT_MS);
@@ -59,10 +45,6 @@ async function request<T>(path: string, init?: RequestInit, signal?: AbortSignal
 }
 
 export const api = {
-  health: () => request<HealthResponse>("/health"),
-  predict: (body: PredictRequest) =>
-    request<PredictResponse>("/predict", { method: "POST", body: JSON.stringify(body) }),
-
   route: async (body: RouteRequest, signal?: AbortSignal): Promise<RouteResponse> => {
     if (dataSource === "mock") {
       const { mockRoute } = await import("./mock.ts");
