@@ -4,3 +4,5 @@
 *.jpg binary
 *.pkl binary
 *.pt binary
+# Grid arrays must remain byte-for-byte identical on Windows and Unix.
+*.bin binary
