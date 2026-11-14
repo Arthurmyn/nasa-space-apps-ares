@@ -116,7 +116,7 @@ Cited as [1] to [5] in the assumptions (and [6], the site context page, on the c
 2. NASA Moon to Mars Architecture 2024, Lunar Mobility Drivers and Needs: https://www.nasa.gov/wp-content/uploads/2024/06/acr24-lunar-mobility-drivers-and-needs.pdf
 3. Apollo 11 Lunar Surface Journal, Lunar gaits: https://www.nasa.gov/wp-content/uploads/static/history/alsj/a11/a11.gaits.html
 4. JPL PIA26017, Curiosity's difficult climb: https://www.jpl.nasa.gov/images/pia26017-a-map-of-curiositys-difficult-climb/
-5. Hassler, D. M. et al., Mars' Surface Radiation Environment Measured with the Mars Science Laboratory's Curiosity Rover, Science 343 (6169), 1244797, online 9 Dec 2013, print 24 Jan 2014: https://doi.org/10.1126/science.1244797 (DOI and bibliographic data checked in Crossref). The figure of 0.67 mSv per day (average galactic cosmic ray dose equivalent rate on the Martian surface, August 2012 to June 2013) was checked in the SwRI release quoting the RAD principal investigator: https://www.swri.org/press-release/swri-scientists-publish-first-radiation-measurements-surface-mars. The paper itself was not read.
+5. Hassler, D. M. et al., Mars' Surface Radiation Environment Measured with the Mars Science Laboratory's Curiosity Rover, Science 343 (6169), 1244797, online 9 Dec 2013, print 24 Jan 2014: https://doi.org/10.1126/science.1244797 (DOI and bibliographic data checked in Crossref). The value used is Table 1 of the paper (GCR only): dose equivalent 0.64 ± 0.12 mSv per day, absorbed 0.21 ± 0.04 mGy per day, quality factor 3.05 ± 0.26, August 2012 to June 2013 near solar maximum; checked by the team against the paper (ares_layers/facts/site_facts.json). The SwRI release quotes a rounded 0.67 mSv per day.
 6. NASA/JPL, NASA's Curiosity Rover Sees Martian 'Spiderwebs' Up Close, 23 February 2026: https://nasa.gov/missions/mars-science-laboratory/curiosity-rover/nasas-curiosity-rover-sees-martian-spiderwebs-up-close
 
 The values attributed to [1] to [4] (a 20 deg EVA walking capability, a 2 km distance limit, Apollo walking speeds, the 23 deg slope at Gale) were supplied by the team and not re-checked against the documents. There is no official human-on-Mars slope standard; the 15 deg and 10 deg limits are ARES planning values.
@@ -151,6 +151,6 @@ The JPL news release `https://www.jpl.nasa.gov/news/nasas-curiosity-mars-rover-s
 | Constant | Value | Source | Where |
 |----------|-------|--------|-------|
 | Mars mean radius | 3389.5 km | IAU Working Group on Cartographic Coordinates and Rotational Elements (WGCCRE) reports | `frontend/src/lib/geo.ts`: scale bar, grid spacing, distances |
-| GCR dose equivalent rate at the Gale surface | 0.67 mSv per day (August 2012 to June 2013) | Reference [5], Curiosity RAD; checked in the SwRI release | `frontend/src/config/radiation.ts`: estimated dose in the route summary and on the card |
+| GCR dose equivalent rate at the Gale surface | 0.64 ± 0.12 mSv per day (August 2012 to June 2013, GCR only) | Reference [5], Table 1, Curiosity RAD | `frontend/src/config/radiation.ts`: estimated dose in the route summary and on the card |
 
 Slope thresholds (`SLOPE_LIMITS` in `frontend/src/config/route.ts`) are ARES planning values equal to `assumptions.json`; the sources and the lunar-versus-Mars caveat are listed under "Referenced documents".

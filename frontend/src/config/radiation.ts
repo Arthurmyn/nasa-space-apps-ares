@@ -1,25 +1,25 @@
 /**
- * Radiation at the surface of Mars, one measured number for the whole site.
+ * Radiation at the surface of Mars, one published number for the whole site.
  *
  * Source: Hassler, D. M. et al., "Mars' Surface Radiation Environment Measured with the Mars
- * Science Laboratory's Curiosity Rover", Science 343 (6169), 1244797, online 9 Dec 2013,
- * https://doi.org/10.1126/science.1244797. The figure below is the one in the SwRI release about
- * that paper (quote from the RAD principal investigator): "an average GCR dose equivalent rate of
- * 0.67 millisieverts per day from August 2012 to June 2013 on the Martian surface".
- * https://www.swri.org/press-release/swri-scientists-publish-first-radiation-measurements-surface-mars
- * Checked against that release; the paper itself is not open and was not read.
+ * Science Laboratory's Curiosity Rover", Science 343 (6169), 1244797 (2014),
+ * https://doi.org/10.1126/science.1244797, Table 1 (GCR only): dose equivalent rate
+ * 0.64 ± 0.12 mSv/day; absorbed 0.21 ± 0.04 mGy/day; mean quality factor 3.05 ± 0.26.
+ * Independent check: 0.21 mGy/day x 3.05 = 0.640 mSv/day. Verified by the team against the
+ * paper (ares_layers/facts/site_facts.json). Measured Aug 2012 - Jun 2013, about 300 sols, near
+ * solar maximum, when galactic cosmic rays are lower; 2026 values are likely higher (inference).
  */
-export const GCR_DOSE_EQUIVALENT_MSV_PER_DAY = 0.67;
+export const GCR_DOSE_EQUIVALENT_MSV_PER_DAY = 0.64;
+export const GCR_DOSE_EQUIVALENT_SIGMA_MSV_PER_DAY = 0.12;
 
 export const RADIATION_CITATION = {
-  text: "Hassler et al., Science 343, 1244797 (2014)",
+  text: "Hassler et al., Science 343, 1244797 (2014), Table 1",
   doi: "https://doi.org/10.1126/science.1244797",
-  release: "https://www.swri.org/press-release/swri-scientists-publish-first-radiation-measurements-surface-mars",
   period: "August 2012 to June 2013",
 } as const;
 
 /** Shown wherever the dose is shown. */
 export const RADIATION_NOTE =
-  "Galactic cosmic rays only, measured by Curiosity RAD at Gale, excludes solar particle events, not a forecast.";
+  "Published mean, not live: GCR only, MSL/RAD 2012-13 at solar maximum, excludes solar particle events. 2026 values are likely higher.";
 
 export const RADIATION_LABEL = "Estimated radiation dose for this walk";
