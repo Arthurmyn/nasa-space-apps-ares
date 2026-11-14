@@ -36,7 +36,7 @@
 
 /* MapLibre attribution, restyled to match. Needed whenever tiles are attributed. */
 .maplibregl-ctrl-attrib {
-  background: rgb(20 16 13 / 0.85) !important;
+  background: rgb(11 11 15 / 0.85) !important;
   color: var(--text-muted) !important;
   font-family: var(--font-sans);
   font-size: 11px;
@@ -58,7 +58,7 @@
 .map-tick {
   position: absolute;
   padding: 1px 4px;
-  background: rgb(11 7 5 / 0.8);
+  background: rgb(5 5 7 / 0.8);
   border: 1px solid var(--line-strong);
   border-radius: 3px;
   white-space: nowrap;
@@ -93,7 +93,7 @@
   gap: var(--space-2);
   margin: 0;
   padding: 6px 12px;
-  background: rgb(20 16 13 / 0.92);
+  background: rgb(11 11 15 / 0.92);
   border: 1px solid var(--line-strong);
   border-radius: 999px;
   font-size: var(--fs-sm);
@@ -147,7 +147,7 @@
 }
 
 .map-zoom .btn {
-  background: rgb(20 16 13 / 0.92);
+  background: rgb(11 11 15 / 0.92);
 }
 
 .map-readout {
@@ -160,7 +160,7 @@
   font-size: 11px;
   pointer-events: none;
   padding: 1px 6px;
-  background: rgb(11 7 5 / 0.8);
+  background: rgb(5 5 7 / 0.8);
   border-radius: 3px;
 }
 
@@ -177,7 +177,7 @@
   margin: 0;
   padding: 6px 10px;
   list-style: none;
-  background: rgb(20 16 13 / 0.92);
+  background: rgb(11 11 15 / 0.92);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   font-size: var(--fs-xs);
@@ -192,7 +192,7 @@
 
 .map-key__line {
   width: 22px;
-  border-top: 4px solid var(--rust);
+  border-top: 4px solid var(--accent);
 }
 
 .map-key__line--alt {
@@ -209,7 +209,7 @@
   padding: 0;
   border: 2px solid var(--bg);
   border-radius: 50%;
-  background: var(--rust);
+  background: var(--accent);
   color: var(--text-on-accent);
   font-family: var(--font-mono);
   font-size: var(--fs-sm);
@@ -227,8 +227,8 @@
 
 .pin-marker--start {
   background: var(--bg);
-  color: var(--rust);
-  border-color: var(--rust);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .pin-marker--selected {
@@ -245,7 +245,7 @@
 
 .hazard-label {
   padding: 2px 6px;
-  background: rgb(11 7 5 / 0.88);
+  background: rgb(5 5 7 / 0.88);
   border: 1px solid var(--hazard);
   border-radius: 3px;
   color: var(--text);

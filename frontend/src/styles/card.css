@@ -218,7 +218,7 @@
 
 .sketch__route {
   fill: none;
-  stroke: var(--rust);
+  stroke: var(--accent-line);
   stroke-width: 3.5;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -261,14 +261,14 @@
 }
 
 .sketch__pin {
-  fill: var(--rust-ink);
+  fill: var(--accent-ink);
   stroke: #fff;
   stroke-width: 2;
 }
 
 .sketch__pin--start {
   fill: #fff;
-  stroke: var(--rust-ink);
+  stroke: var(--accent-ink);
 }
 
 .sketch__pin-text {
@@ -279,7 +279,7 @@
 }
 
 .sketch__pin--start + .sketch__pin-text {
-  fill: var(--rust-ink);
+  fill: var(--accent-ink);
 }
 
 /* ---- Print ---- */

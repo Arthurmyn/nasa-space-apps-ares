@@ -80,7 +80,7 @@
 .seg[aria-pressed="true"] {
   background: var(--panel-raised);
   color: var(--text);
-  box-shadow: inset 0 -2px 0 var(--rust);
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 .seg:focus-visible {
@@ -201,7 +201,7 @@
     inset: var(--topbar-h) 0 0 0;
     z-index: 20;
     border: 0;
-    background: rgb(11 7 5 / 0.6);
+    background: rgb(5 5 7 / 0.6);
   }
 }
 
