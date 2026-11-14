@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_HANDOFF = ROOT / "docs/research/r0/gale_bx_handoff.json"
 RADIUS = 3396190
 MAX_BYTES = 3_000_000
+RESERVE_BYTES = 100_000
 WINDOW_M = 5
 
 
@@ -187,16 +188,20 @@ def generate(handoff, output_root, cell=1.0, dtm=None, fake=False):
             z = read_dtm(dtm, grid)
         files = encode_files(grid, z)
         # Include companion files such as stops.json and assumptions.json, if present.
-        total = sum(map(len, files.values()))
+        grid_bytes = sum(map(len, files.values()))
+        total = grid_bytes
         for directory in ["backend/data/gale-bx", "frontend/public/data/gale-bx"]:
             for path in (output_root / directory).rglob("*"):
                 if path.is_file() and path.relative_to(output_root).as_posix() not in files:
                     total += path.stat().st_size
-        if total <= MAX_BYTES:
+        if grid_bytes <= MAX_BYTES - RESERVE_BYTES and total <= MAX_BYTES:
             break
         if cell >= 2:
-            raise ValueError(f"Grid still exceeds 3 MB at cell={cell}: {total} bytes; nothing written")
-        print(f"Grid is {total} bytes (>3 MB); rebuilding with --cell 2")
+            raise ValueError(f"3 MB limit or {RESERVE_BYTES}-byte reserve exceeded at cell={cell}: "
+                             f"grid={grid_bytes}, total={total} bytes; nothing written")
+        print(f"Grid={grid_bytes} bytes (budget {MAX_BYTES - RESERVE_BYTES}, "
+              f"reserve {RESERVE_BYTES}); total={total} bytes (limit {MAX_BYTES}); "
+              "rebuilding with --cell 2")
         cell = 2.0
     # Do not publish the oversized first attempt.
     for relative, data in files.items():

@@ -14,6 +14,7 @@ from rasterio.transform import from_origin
 from scipy.ndimage import label
 
 from scripts.make_slope_grid import build_grid, compute_slope, encode_files, fake_elevation, generate, read_dtm
+from scripts import make_slope_grid as slope_grid
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -152,6 +153,21 @@ def test_size_fallback_and_failure_do_not_publish_oversized_files(tmp_path, caps
     with pytest.raises(ValueError, match="3 MB"):
         generate(handoff, tmp_path, cell=1, fake=True)
     assert (backend / "meta.json").read_bytes() == before
+
+
+def test_reserve_triggers_fallback_even_when_grid_fits_total_limit(tmp_path, capsys, monkeypatch):
+    assert slope_grid.RESERVE_BYTES == 100_000
+    handoff = json.loads(HANDOFF.read_text())
+    grid = build_grid(handoff, 1)
+    grid.meta["is_test_data"] = True
+    grid.meta["sources"] = ["Synthetic inclined plane, two hills and a ravine; NOT HiRISE terrain"]
+    size = sum(map(len, encode_files(grid, fake_elevation(grid)).values()))
+    # Place the total ceiling above the 1 m grid but its reserved ceiling below it.
+    monkeypatch.setattr(slope_grid, "MAX_BYTES", size + 50_000)
+    meta = generate(handoff, tmp_path, fake=True)
+    assert meta["cell_m"] == 2
+    assert "--cell 2" in capsys.readouterr().out
+    assert sum(p.stat().st_size for p in tmp_path.rglob("*") if p.is_file()) <= size - 50_000
 
 
 @pytest.mark.parametrize("cell", [0, -1, float("nan"), float("inf")])
