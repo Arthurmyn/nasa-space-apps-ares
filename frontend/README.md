@@ -23,7 +23,7 @@ Mock mode shows a **Sample data** badge in the top bar. The data is synthetic (a
 | `npm test` | Unit tests for pure functions, using Node's built-in test runner. Needs Node 22.18 or newer (it runs the `.ts` tests directly); tested on Node 24 |
 | `npm run build` | Type check, then production build |
 
-The planner is served under `/app/` (Vite `base`), and `npm run build` writes to `dist/app`. The landing page in [`../landing`](../landing) owns `/`; see the root `vercel.json`.
+The planner is served under `/app/` (Vite `base`) and `npm run build` writes to `dist/app`. The site root redirects to `/app/`; see the root `vercel.json`.
 
 ## Using the app
 
