@@ -22,3 +22,12 @@ export function imageCorners(b: GridBbox): [Corner, Corner, Corner, Corner] {
     [b.lon_min, b.lat_min],
   ];
 }
+
+export function insideBbox(b: GridBbox, lon: number, lat: number): boolean {
+  return lon >= b.lon_min && lon <= b.lon_max && lat >= b.lat_min && lat <= b.lat_max;
+}
+
+/** The nearest point of the box, for a point that was dragged past its edge. */
+export function clampToBbox(b: GridBbox, lon: number, lat: number): [lon: number, lat: number] {
+  return [Math.min(b.lon_max, Math.max(b.lon_min, lon)), Math.min(b.lat_max, Math.max(b.lat_min, lat))];
+}
