@@ -30,7 +30,7 @@ Conventions: coordinates are `[lon, lat]` in degrees on Mars, longitude east-pos
 
 ### `GET /layers`
 
-Which data layers exist for the site. A layer that is missing or has `available: false` is shown disabled with its `reason`.
+Which data layers exist for the site. An explicit `available: false` is authoritative and disables the layer with its `reason`. When the API has no entry, the UI may fall back to configured global tiles or a site-specific inventory of bundled images. Unknown sites never inherit another site's terrain PNGs.
 
 ```json
 {
@@ -48,7 +48,9 @@ Which data layers exist for the site. A layer that is missing or has `available:
 | `layers[].reason` | string \| null | Shown when not available. Default text: "No data for this site" |
 | `layers[].source` | string \| null | Dataset and provider, shown in the layer legend |
 
-Layer imagery itself is not served by the API. Grid images are in `frontend/public/data/gale-bx/` per `DATA_CONTRACT.md`; tile sources are configured separately in `frontend/src/config/tiles.ts`.
+Layer imagery itself is not served by the API. Grid images are in `frontend/public/data/gale-bx/` per `DATA_CONTRACT.md`; tile sources and the per-site `SITE_GRID_IMAGES` inventory are configured in `frontend/src/config/tiles.ts`.
+
+The API badge reflects the last completed request. Network failures show `API offline`; HTTP 5xx show `API service error`; unreadable JSON or an invalid success schema show `Invalid API response`; timeouts show `API timed out`. Success is recorded only after JSON decoding and endpoint validation. Caller cancellation, including during body decoding, preserves the previous status and returns an `aborted` error.
 
 ### `GET /sites`
 
@@ -81,6 +83,7 @@ Response `200` (example values only):
 
 ```json
 {
+  "supports_alternatives": false,
   "computed_at": "2030-01-01T14:32:05Z",
   "distance_m": 4860.0,
   "max_slope_deg": 12.4,
@@ -88,6 +91,7 @@ Response `200` (example values only):
   "safety": "caution",
   "safety_reason": "Steepest section is 12.4°, above the 10° caution threshold.",
   "polyline": [[77.5, 18.4], [77.501, 18.402]],
+  "navigation": { "vertex_dist_m": [0, 4860.0], "heading_segments": [0] },
   "stops": [
     { "id": "stop-1", "name": null, "lon": 77.51, "lat": 18.41, "dist_m": 1200.0,
       "note": "Short science note", "image": { "url": "https://…", "alt": "…", "credit": "…" } }
@@ -116,6 +120,8 @@ Response `200` (example values only):
 | `safety` | `"ok" \| "caution" \| "avoid"` | UI labels: "Route within limits", "Proceed with caution", "Avoid this route" |
 | `safety_reason` | string | One plain sentence saying why |
 | `polyline` | `[lon, lat][]`, 2+ points | Start through every stop |
+| `navigation` | object, optional on legacy responses | Exact vertex distances and heading-edge references, described below |
+| `supports_alternatives` | boolean, optional on legacy responses | Route-service capability; defaults to false. Current backend: false; mock: true. Compare depends on the route response, independently of `/layers` |
 | `stops[]` | see below | Same order as the request |
 | `stops[].id` | string | Echo of the request id |
 | `stops[].name` | string \| null | UI falls back to "Stop A", "Stop B", ... |
@@ -128,13 +134,17 @@ Response `200` (example values only):
 | `assumptions[]` | `{ name, value, source }` | Listed under "How this is computed" |
 | `alternative` | object \| null | Only when `compare: true`. Null if no alternative exists |
 
+`navigation.vertex_dist_m` has one cumulative distance in backend metres per polyline vertex, beginning at 0 and ending at `distance_m`. `navigation.heading_segments[i]` is the zero-based index of the edge whose direction applies while traversing edge `i` (vertex `i` to vertex `i+1`). A normal A* edge references itself. The backend assigns departure/arrival connectors to the first/last actual A* edge of their own leg, including at intermediate stops. Genuine movement within a single cell references itself. No cell-size or length heuristic is used by the HUD.
+
+The HUD interpolates position against these exact distances and uses the outgoing edge at a stop or corner, the incoming edge at the final vertex. Duplicate/coincident stops add no artificial heading change. Distances and headings are prepared once per immutable route response. Older responses without navigation metadata retain raw geometric tangents; the client does not guess which edges are connectors. The validator checks array lengths, distance order/endpoints, reference bounds and canonical nonzero heading edges. Navigation is HUD-only metadata: if it fails these checks, the UI drops it with a console warning and treats the response as legacy; the route itself is still accepted.
+
 Notes for the backend:
 - The grid and companion JSON files are loaded once at startup from `backend/data/gale-bx/`. Restart the process after replacing data. Missing, invalid, or truncated files produce `503`; there is no automatic terrain substitution.
 - Routes use eight-neighbour A*, with cost `step_length * (1 + (destination_slope / effective_limit)^2)`. No-data cells and cells over the effective limit are blocked. Diagonal movement cannot cut through blocked corners.
 - Stops are visited in request order. Requested ids, coordinates and names are echoed; note/image are attached only when the requested position matches a catalog stop (within `1e-8` degrees), so moving a point does not keep stale science information.
-- Profile samples come from the same traversed cells as the polyline, approximately every 20 m plus the endpoints. The maximum slope considers every traversed cell. Time uses `distance_m / (speed_kmh / 3.6)`. Assumptions contain `assumptions.json.items` plus an effective route slope limit, showing both the requested and site limits and their minimum. Safety uses the data's caution threshold; `safety_reason` also states the effective route limit. A successful route cannot be `avoid`: cells above the effective limit are blocked, so an impossible route returns 422. `hazards` is currently empty and `alternative` is null, including when `compare: true`.
+- Profile samples come from the same traversed cells as the polyline, approximately every 20 m plus the endpoints, stop boundaries and the steepest sample in each interval of each leg. The maximum slope considers every traversed cell. Time uses `distance_m / (speed_kmh / 3.6)`. Assumptions contain `assumptions.json.items` plus an effective route slope limit, showing both the requested and site limits and their minimum. Safety uses the data's caution threshold; `safety_reason` also states the effective route limit. A successful route cannot be `avoid`: cells above the effective limit are blocked, so an impossible route returns 422. `hazards` is currently empty and `alternative` is null, including when `compare: true`.
 - A point outside the grid, in no-data, above the limit, or a disconnected leg returns `422` with a plain-language `detail` naming the point or leg. Input validation also returns `422`.
 - The UI colours slope classes itself using two thresholds from `frontend/src/config/route.ts` (`cautionDeg`, `maxDeg`). **They are placeholders until the team confirms them.** If the backend should own the thresholds, add them to the response (for example `slope_limits: { caution_deg, max_deg }`) and the UI will read them from there.
-- `profile` and `polyline` describe the same route; the UI maps a profile distance to the same fraction of the polyline length.
-- Errors: `422` for invalid input (for example no stops, or more than five), `5xx` otherwise. The UI shows a plain-language message and never prints the response body.
+- `profile` and `polyline` describe the same route. The HUD uses exact `navigation.vertex_dist_m`; other map/profile interactions retain fraction-based interpolation.
+- Errors: `422` for invalid input (for example no stops, or more than five), `5xx` otherwise. The UI shows a plain-language message. For 422, a string `detail` is shown as text; validation arrays and non-JSON bodies use a generic points-rejected message. Other status codes use generic messages.
 - CORS: allow the frontend origin (`http://localhost:5173` in dev).

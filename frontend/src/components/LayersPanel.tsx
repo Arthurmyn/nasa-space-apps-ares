@@ -1,9 +1,10 @@
-import type { LayerId, LayerInfo } from "../api/types.ts";
+import type { LayerId } from "../api/types.ts";
 import { LAYER_META, LAYER_SOURCE_LABEL, NO_DATA_REASON, type LayerMeta } from "../config/layers.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
 import { layerHasImagery } from "../config/tiles.ts";
 import { SLOPE_CLASS_LABEL } from "../lib/slope.ts";
 import { useLayers, type LayersModel } from "../state/PlannerContext.tsx";
+import { useSite } from "../state/SiteContext.tsx";
 import { Icon } from "./Icon.tsx";
 
 interface RowState {
@@ -12,11 +13,11 @@ interface RowState {
 }
 
 function rowState(layers: LayersModel, id: LayerId): RowState {
+  const info = layers.info[id];
+  if (info) return { disabled: !info.available, reason: info.available ? null : info.reason ?? NO_DATA_REASON };
   if (layers.status === "loading") return { disabled: true, reason: "Loading layer list" };
   if (layers.status === "error") return { disabled: true, reason: "Layer list unavailable" };
-  const info: LayerInfo | undefined = layers.info[id];
-  if (!info || !info.available) return { disabled: true, reason: info?.reason ?? NO_DATA_REASON };
-  return { disabled: false, reason: null };
+  return { disabled: true, reason: NO_DATA_REASON };
 }
 
 function SlopeLegend() {
@@ -57,12 +58,13 @@ function SourceNote({ source }: { source: string }) {
 }
 
 function LayerLegend({ meta, source }: { meta: LayerMeta; source: string | null }) {
+  const { site } = useSite();
   return (
     <div className="layer-row__legend">
       {meta.id === "slope" && <SlopeLegend />}
       {meta.isEstimate && <p className="legend__note">Estimate. Modelled, not measured.</p>}
       {(LAYER_SOURCE_LABEL[meta.id] ?? source) && <SourceNote source={LAYER_SOURCE_LABEL[meta.id] ?? source ?? ""} />}
-      {!layerHasImagery(meta.id) && (
+      {!layerHasImagery(meta.id, site.id) && (
         <p className="legend__note legend__note--warn">
           <Icon name="info" size={12} /> No imagery for this layer yet
         </p>

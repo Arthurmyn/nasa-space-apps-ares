@@ -38,16 +38,12 @@ function GroupPicker() {
   const groups = entries.flatMap((site) => site.groups.map((group) => ({ site, group, key: `${site.id}:${group.id}` })));
 
   if (sites.status === "loading") return <p className="muted">Loading target groups</p>;
-  if (sites.status === "error") {
-    return (
-      <p className="muted">
-        Target groups are unavailable{" "}
-        <button type="button" className="btn btn--ghost" onClick={sites.retry}>
-          Retry
-        </button>
-      </p>
-    );
-  }
+  if (sites.status === "error") return (
+    <div>
+      <p className="muted" role="status">Target groups are unavailable</p>
+      <button type="button" className="btn" onClick={sites.retry}><Icon name="refresh" /> Retry target groups</button>
+    </div>
+  );
   if (groups.length === 0) return null;
 
   const label = (site: SiteEntry, name: string) => (entries.length > 1 ? `${site.name}: ${name}` : name);
@@ -112,7 +108,7 @@ export function StopsPanel() {
 
       <GroupPicker />
 
-      <button type="button" className="btn btn--block" onClick={addAtCentre} disabled={atMax}>
+      <button type="button" className="btn btn--block" onClick={addAtCentre} disabled={atMax && p.state.start !== null}>
         <Icon name="crosshair" /> {addLabel}
       </button>
     </section>

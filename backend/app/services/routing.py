@@ -64,7 +64,9 @@ def route(grid: Grid, request: RouteRequest):
     weights[~grid.valid | (grid.slope > limit)] = inf
     weights = weights.tolist()
     geometry, samples, stops = [], [], []
+    heading_segments = []
     distance, maximum = 0.0, 0.0
+    boundaries = {0}
     previous_xy = None
 
     def append(xy, index):
@@ -73,8 +75,9 @@ def route(grid: Grid, request: RouteRequest):
         if previous_xy is not None:
             step = hypot(xy[0] - previous_xy[0], xy[1] - previous_xy[1])
             if step < 1e-9:
-                return
+                return None
             distance += step
+            heading_segments.append(len(geometry) - 1)
         geometry.append(grid.lonlat(*xy))
         samples.append(
             ProfilePoint(
@@ -84,6 +87,7 @@ def route(grid: Grid, request: RouteRequest):
             )
         )
         previous_xy = xy
+        return len(geometry) - 2 if len(geometry) > 1 else None
 
     append(grid.xy(points[0].lon, points[0].lat), indices[0])
     for segment, (start, goal) in enumerate(zip(indices[:-1], indices[1:], strict=True)):
@@ -93,11 +97,25 @@ def route(grid: Grid, request: RouteRequest):
                 f"No route from '{points[segment].id}' to '{points[segment + 1].id}': "
                 f"terrain is disconnected by no-data cells or slopes above {limit:g} degrees."
             )
+        departure = None
+        grid_edges = []
         if start != goal:
-            for index in path:
-                append(grid.center_xy(index), index)
+            for i, index in enumerate(path):
+                edge = append(grid.center_xy(index), index)
+                if i == 0:
+                    departure = edge
+                elif edge is not None:
+                    grid_edges.append(edge)
         point = points[segment + 1]
-        append(grid.xy(point.lon, point.lat), goal)
+        arrival = append(grid.xy(point.lon, point.lat), goal)
+        if grid_edges:
+            # These edges are known click-to-cell connectors, irrespective of cell_m.
+            # Their heading belongs to this leg's first/last actual A* movement.
+            if departure is not None:
+                heading_segments[departure] = grid_edges[0]
+            if arrival is not None:
+                heading_segments[arrival] = grid_edges[-1]
+        boundaries.add(len(samples) - 1)
         # Client ids are arbitrary: enrich only a catalog stop at this position.
         catalog = next(
             (
@@ -120,13 +138,24 @@ def route(grid: Grid, request: RouteRequest):
         )
     if len(geometry) == 1:
         geometry.append(geometry[0])
-    # Keep every traversed cell for maximum/safety, sample the displayed profile ~20m apart.
-    profile = [samples[0]]
-    for sample in samples[1:-1]:
-        if sample.dist_m - profile[-1].dist_m >= 20:
-            profile.append(sample)
-    if samples[-1].dist_m > profile[-1].dist_m:
-        profile.append(samples[-1])
+        heading_segments.append(0)
+    vertex_dist_m = [sample.dist_m for sample in samples]
+    if len(vertex_dist_m) == 1:
+        vertex_dist_m.append(0.0)
+    # Preserve stop boundaries and the steepest sample in each ~20m bucket of each leg.
+    # This keeps Card's per-leg maxima consistent with the full-resolution route maximum.
+    keep = set(boundaries)
+    ordered = sorted(boundaries)
+    for first, last in zip(ordered[:-1], ordered[1:], strict=True):
+        bucket_start = first
+        peak = first
+        for i in range(first + 1, last + 1):
+            if samples[i].slope_deg > samples[peak].slope_deg:
+                peak = i
+            if samples[i].dist_m - samples[bucket_start].dist_m >= 20 or i == last:
+                keep.update((peak, i))
+                bucket_start = peak = i
+    profile = [samples[i] for i in sorted(keep)]
     safety = "ok" if maximum <= grid.caution else "caution"
     reason = (
         f"Maximum slope {maximum:g} degrees is within the {limit:g} degree route limit "
@@ -161,4 +190,6 @@ def route(grid: Grid, request: RouteRequest):
         assumptions=assumptions,
         hazards=[],
         alternative=None,
+        navigation={"vertex_dist_m": vertex_dist_m, "heading_segments": heading_segments},
+        supports_alternatives=False,
     )
