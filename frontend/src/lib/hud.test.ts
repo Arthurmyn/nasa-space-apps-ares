@@ -70,6 +70,12 @@ const route: RouteResponse = {
 };
 
 describe("computeHud", () => {
+  it("uses 20 metres of route for heading rather than tiny endpoint connectors", () => {
+    const connected = { ...route, polyline: [[0.00001, 0], [0, 0], [0, 0.001], [0.00001, 0.001]] as LonLat[] };
+    close(relativeBearing(computeHud(connected, 0, limits)!.headingDeg, 0), 0, 3);
+    close(relativeBearing(computeHud(connected, 1000, limits)!.headingDeg, 0), 0, 3);
+  });
+
   it("heads east, finds the next stop and reports slope from the profile", () => {
     const hud = computeHud(route, 250, limits);
     assert.ok(hud);

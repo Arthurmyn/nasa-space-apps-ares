@@ -32,13 +32,18 @@ function StopChip({ entry, selected }: { entry: StopEntry; selected: boolean }) 
 /** Picks a named group of science targets (for example "Boxwork") and places them as stops. */
 function GroupPicker() {
   const p = usePlanner();
-  const { sites } = useSite();
+  const { sites, retrySites } = useSite();
   const selectId = useId();
   const entries = sites.entries;
   const groups = entries.flatMap((site) => site.groups.map((group) => ({ site, group, key: `${site.id}:${group.id}` })));
 
   if (sites.status === "loading") return <p className="muted">Loading target groups</p>;
-  if (sites.status === "error") return <p className="muted">Target groups are unavailable</p>;
+  if (sites.status === "error") return (
+    <div role="status">
+      <p className="muted">Target groups are unavailable</p>
+      <button type="button" className="btn" onClick={retrySites}><Icon name="refresh" /> Retry target groups</button>
+    </div>
+  );
   if (groups.length === 0) return null;
 
   const label = (site: SiteEntry, name: string) => (entries.length > 1 ? `${site.name}: ${name}` : name);
@@ -103,7 +108,7 @@ export function StopsPanel() {
 
       <GroupPicker />
 
-      <button type="button" className="btn btn--block" onClick={addAtCentre} disabled={atMax}>
+      <button type="button" className="btn btn--block" onClick={addAtCentre} disabled={atMax && p.state.start !== null}>
         <Icon name="crosshair" /> {addLabel}
       </button>
     </section>

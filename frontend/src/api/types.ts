@@ -183,11 +183,13 @@ export type ApiErrorKind = "network" | "timeout" | "http" | "invalid" | "aborted
 export class ApiError extends Error {
   readonly kind: ApiErrorKind;
   readonly status: number | null;
+  readonly detail: string | null;
 
-  constructor(kind: ApiErrorKind, message: string, status: number | null = null) {
+  constructor(kind: ApiErrorKind, message: string, status: number | null = null, detail: string | null = null) {
     super(message);
     this.name = "ApiError";
     this.kind = kind;
     this.status = status;
+    this.detail = detail;
   }
 }

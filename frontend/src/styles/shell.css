@@ -206,12 +206,22 @@
 }
 
 @media (max-width: 520px) {
+  .topbar__data-badge > span {
+    display: none;
+  }
+
+  .topbar__left,
+  .topbar__right {
+    gap: var(--space-2);
+  }
+
   .topbar__brand {
     letter-spacing: 0.16em;
+    flex-shrink: 0;
   }
 
   .topbar .seg {
-    padding: 0 var(--space-3);
+    padding: 0 var(--space-2);
   }
 }
 

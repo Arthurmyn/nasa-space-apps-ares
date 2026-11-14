@@ -12,6 +12,7 @@ interface RowState {
 }
 
 function rowState(layers: LayersModel, id: LayerId): RowState {
+  if (layers.info[id]?.available) return { disabled: false, reason: null };
   if (layers.status === "loading") return { disabled: true, reason: "Loading layer list" };
   if (layers.status === "error") return { disabled: true, reason: "Layer list unavailable" };
   const info: LayerInfo | undefined = layers.info[id];

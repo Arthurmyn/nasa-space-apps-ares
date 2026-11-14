@@ -1,6 +1,6 @@
 import { ApiError } from "./types.ts";
 
-/** Plain-language message for the UI. Never includes raw server text or stack traces. */
+/** Plain-language errors, including the backend's string explanation of invalid route points. */
 export function describeError(error: unknown): string {
   if (!(error instanceof ApiError)) {
     return "Something went wrong while planning the route. Retry in a moment.";
@@ -15,6 +15,7 @@ export function describeError(error: unknown): string {
     case "aborted":
       return "The request was cancelled.";
     case "http":
+      if (error.status === 422 && error.detail) return error.detail;
       if (error.status === 422 || error.status === 400) {
         return "The route service rejected these points. Move a stop and try again.";
       }

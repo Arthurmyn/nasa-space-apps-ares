@@ -13,6 +13,8 @@ import { api } from "../api/client.ts";
 import { describeError } from "../api/errors.ts";
 import type { LayerId, LayerInfo } from "../api/types.ts";
 import { DEFAULT_ACTIVE_LAYERS } from "../config/layers.ts";
+import { availableLayers } from "../config/layerAvailability.ts";
+import { useSite } from "./SiteContext.tsx";
 import { NOTICE_MS, ROUTE_DEBOUNCE_MS } from "../config/route.ts";
 import {
   buildRouteRequest,
@@ -71,6 +73,7 @@ export const usePlanner = (): PlannerModel => useApp().planner;
 export const useLayers = (): LayersModel => useApp().layers;
 
 function useLayersModel(): LayersModel {
+  const { site } = useSite();
   const [status, setStatus] = useState<LayersStatus>("loading");
   const [info, setInfo] = useState<Partial<Record<LayerId, LayerInfo>>>({});
   const [active, setActive] = useState<ReadonlySet<LayerId>>(() => new Set(DEFAULT_ACTIVE_LAYERS));
@@ -109,7 +112,7 @@ function useLayersModel(): LayersModel {
     });
   }, []);
 
-  return useMemo(() => ({ status, info, active, toggle, retry: load }), [status, info, active, toggle, load]);
+  return useMemo(() => ({ status, info: availableLayers(site, info), active, toggle, retry: load }), [status, info, active, toggle, load, site]);
 }
 
 export function PlannerProvider({ children }: { children: ReactNode }) {

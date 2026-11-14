@@ -1,4 +1,6 @@
+import { useSyncExternalStore } from "react";
 import { dataSource } from "../api/client.ts";
+import { apiConnection } from "../api/connection.ts";
 import { formatUtcTime } from "../lib/format.ts";
 import { usePlanner } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
@@ -20,20 +22,24 @@ interface TopBarProps {
 
 function DataBadge() {
   const sample = dataSource === "mock";
+  const connection = useSyncExternalStore(apiConnection.subscribe, apiConnection.getSnapshot);
+  const label = sample ? "Sample data" : connection === "online" ? "Live API" : connection === "offline" ? "API offline" : "Connecting to API";
   return (
     <span
-      className={`badge ${sample ? "badge--caution" : "badge--ok"}`}
-      title={sample ? "Values come from built-in sample data, not the route service" : "Values come from the route service"}
+      className={`badge topbar__data-badge ${sample || connection !== "online" ? "badge--caution" : "badge--ok"}`}
+      title={label}
+      role="status"
+      aria-label={label}
     >
-      <Icon name={sample ? "info" : "check"} />
-      <span>{sample ? "Sample data" : "Live API"}</span>
+      <Icon name={sample || connection === "unknown" ? "info" : connection === "offline" ? "wifiOff" : "check"} />
+      <span>{label}</span>
     </span>
   );
 }
 
 function TestDataBadge() {
   return (
-    <span className="badge badge--caution" title="The terrain grid is generated for testing, not measured Mars data">
+    <span className="badge badge--caution topbar__data-badge" aria-label="Test data" title="The terrain grid is generated for testing, not measured Mars data">
       <Icon name="alert" />
       <span>Test data</span>
     </span>

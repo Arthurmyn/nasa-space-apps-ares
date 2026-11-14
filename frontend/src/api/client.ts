@@ -1,5 +1,5 @@
 // Types mirror backend/app/schemas/. Route types live in ./types.ts (proposal, see docs/api.md).
-import { REQUEST_TIMEOUT_MS } from "../config/route.ts";
+import { requestJson } from "./request.ts";
 import { siteFileUrl } from "./siteFiles.ts";
 import { parseLayersResponse, parseRouteResponse, parseSiteMeta, parseSitesResponse } from "./validate.ts";
 import {
@@ -22,32 +22,7 @@ const BASE = (import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "" : "http
 export const dataSource: "mock" | "live" = import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === "true" ? "mock" : "live";
 
 async function request<T>(path: string, init?: RequestInit, signal?: AbortSignal): Promise<T> {
-  const timeout = new AbortController();
-  const timer = window.setTimeout(() => timeout.abort(), REQUEST_TIMEOUT_MS);
-  const onCallerAbort = () => timeout.abort();
-  signal?.addEventListener("abort", onCallerAbort);
-
-  try {
-    const res = await fetch(BASE + path, {
-      headers: { "Content-Type": "application/json" },
-      ...init,
-      signal: timeout.signal,
-    });
-    if (!res.ok) throw new ApiError("http", `HTTP ${res.status}`, res.status);
-    try {
-      return (await res.json()) as T;
-    } catch {
-      throw new ApiError("invalid", "Response was not valid JSON");
-    }
-  } catch (e) {
-    if (e instanceof ApiError) throw e;
-    if (signal?.aborted) throw new ApiError("aborted", "Request cancelled");
-    if (timeout.signal.aborted) throw new ApiError("timeout", "Request timed out");
-    throw new ApiError("network", "Network error");
-  } finally {
-    window.clearTimeout(timer);
-    signal?.removeEventListener("abort", onCallerAbort);
-  }
+  return requestJson<T>(BASE + path, init, signal);
 }
 
 /** Static JSON next to the app, not the API: /app/data/<site>/meta.json. */

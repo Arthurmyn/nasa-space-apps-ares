@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { dataSource } from "../api/client.ts";
 import type { RouteResponse } from "../api/types.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
 import { formatDistance, formatDuration, formatSigned, formatSlope } from "../lib/format.ts";
@@ -172,7 +173,7 @@ export function RouteSummary() {
 
       {view === "error" && (
         <div className="notice notice--error" role="alert">
-          <Icon name="wifiOff" />
+          <Icon name="alert" />
           <span>{state.error}</span>
           <button type="button" className="btn" onClick={p.recalculate} disabled={fetching}>
             <Icon name="refresh" /> Retry
@@ -218,7 +219,7 @@ export function RouteSummary() {
           >
             <Icon name="refresh" /> Recalculate
           </button>
-          <button
+          {dataSource === "mock" && <button
             type="button"
             className="btn"
             aria-pressed={state.compare}
@@ -226,7 +227,7 @@ export function RouteSummary() {
             disabled={state.stops.length === 0}
           >
             <Icon name="compare" /> Compare
-          </button>
+          </button>}
           <button type="button" className="btn btn--ghost" onClick={p.reset}>
             <Icon name="trash" /> Clear
           </button>

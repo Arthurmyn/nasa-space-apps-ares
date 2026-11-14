@@ -10,6 +10,7 @@ interface SiteModel {
   site: SiteConfig;
   /** Selection list from GET /sites. It is optional: the map works without it. */
   sites: { status: SitesStatus; entries: readonly SiteEntry[] };
+  retrySites: () => void;
 }
 
 const Ctx = createContext<SiteModel | null>(null);
@@ -30,6 +31,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   const [meta, setMeta] = useState<MetaState>({ status: "loading" });
   const [sites, setSites] = useState<SiteModel["sites"]>({ status: "loading", entries: [] });
   const [attempt, setAttempt] = useState(0);
+  const [sitesAttempt, setSitesAttempt] = useState(0);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -63,10 +65,11 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         setSites({ status: "error", entries: [] });
       });
     return () => ctrl.abort();
-  }, [meta.status]);
+  }, [meta.status, sitesAttempt]);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
-  const value = useMemo(() => (meta.status === "ready" ? { site: meta.site, sites } : null), [meta, sites]);
+  const retrySites = useCallback(() => setSitesAttempt((n) => n + 1), []);
+  const value = useMemo(() => (meta.status === "ready" ? { site: meta.site, sites, retrySites } : null), [meta, sites, retrySites]);
 
   if (meta.status === "loading") {
     return (

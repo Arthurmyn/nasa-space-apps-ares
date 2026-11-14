@@ -122,6 +122,30 @@ def test_route_avoids_hill_and_matches_contract(terrain):
     assert data["assumptions"][0]["source"] == "TO VERIFY"
 
 
+def test_profile_preserves_slope_peaks_on_each_leg(terrain):
+    path, meta, slope = terrain
+    slope[:] = 40
+    slope[2, :] = 0  # A single walkable corridor, with peaks between 20m samples.
+    slope[2, 3] = 24
+    slope[2, 16] = 22
+    slope.tofile(path / "slope.bin")
+    payload = {
+        "start": point(meta, 2, 0, "start"),
+        "stops": [point(meta, 2, 11, "one"), point(meta, 2, 30, "two")],
+        "constraints": {"max_slope_deg": 15},
+    }
+    with TestClient(create_app(path)) as client:
+        response = client.post("/api/v1/route", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    boundary = data["stops"][0]["dist_m"]
+    profile = data["profile"]
+    assert any(p["dist_m"] == boundary for p in profile)
+    assert max(p["slope_deg"] for p in profile if p["dist_m"] <= boundary) == 12
+    assert max(p["slope_deg"] for p in profile if p["dist_m"] >= boundary) == 11
+    assert max(p["slope_deg"] for p in profile) == data["max_slope_deg"]
+
+
 @pytest.mark.parametrize("barrier", [40, 255])
 def test_unreachable_segment_returns_explanation(terrain, barrier):
     path, meta, slope = terrain

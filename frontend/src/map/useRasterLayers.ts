@@ -21,7 +21,7 @@ const ORDER: readonly LayerId[] = ["optical", "geology", "thermal", "radiation",
  * on the site bbox. Both are drawn under the coordinate grid and the route.
  */
 export function useRasterLayers(map: MapLibreMap | null, layers: LayersModel, site: SiteConfig): void {
-  const { info, active, status } = layers;
+  const { info, active } = layers;
 
   useEffect(() => {
     if (!map) return;
@@ -29,7 +29,7 @@ export function useRasterLayers(map: MapLibreMap | null, layers: LayersModel, si
 
     for (const id of LAYER_IDS) {
       const cfg = TILE_SOURCES[id];
-      const wanted = status === "ready" && cfg.url !== null && active.has(id) && info[id]?.available === true;
+      const wanted = cfg.url !== null && active.has(id) && info[id]?.available === true;
       const present = map.getLayer(tileId(id)) !== undefined;
 
       if (wanted && !present && cfg.url !== null) {
@@ -49,7 +49,7 @@ export function useRasterLayers(map: MapLibreMap | null, layers: LayersModel, si
 
       const image = GRID_IMAGES[id];
       if (!image) continue;
-      const imageWanted = status === "ready" && active.has(id) && info[id]?.available === true;
+      const imageWanted = active.has(id) && info[id]?.available === true;
       const imagePresent = map.getLayer(imageId(id)) !== undefined;
       if (imageWanted && !imagePresent) {
         map.addSource(imageId(id), { type: "image", url: siteFileUrl(site.id, image.file), coordinates: imageCorners(site.bbox) });
@@ -68,5 +68,5 @@ export function useRasterLayers(map: MapLibreMap | null, layers: LayersModel, si
       if (map.getLayer(tileId(id))) map.moveLayer(tileId(id), LYR.grid);
       if (map.getLayer(imageId(id))) map.moveLayer(imageId(id), LYR.grid);
     }
-  }, [map, info, active, status, site]);
+  }, [map, info, active, site]);
 }

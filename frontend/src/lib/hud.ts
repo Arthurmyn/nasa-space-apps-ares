@@ -1,5 +1,5 @@
 import type { LonLat, RouteResponse } from "../api/types.ts";
-import { bearing, haversine, metresPerDegLon, METRES_PER_DEG_LAT, pointAtFraction, ringCentroid } from "./geo.ts";
+import { bearing, cumulativeLengths, haversine, metresPerDegLon, METRES_PER_DEG_LAT, pointAtFraction, ringCentroid } from "./geo.ts";
 import { interpolateProfile } from "./profile.ts";
 import { profileDistToFraction } from "./routeGeo.ts";
 import { classifySlope, type SlopeClass, type SlopeLimits } from "./slope.ts";
@@ -68,6 +68,16 @@ export function computeHud(route: RouteResponse, posDistM: number, limits: Slope
   if (!at || !sample) return null;
 
   const position = at.point;
+  // A 20m window follows the path, smoothing sub-metre click-to-cell connectors.
+  // Shift the whole window inward at either endpoint, preserving forward travel direction.
+  const lengths = cumulativeLengths(route.polyline);
+  const length = lengths[lengths.length - 1] ?? 0;
+  const windowM = Math.min(20, length);
+  const fraction = profileDistToFraction(route.profile, posDistM);
+  const fromM = Math.max(0, Math.min(length - windowM, fraction * length - windowM / 2));
+  const from = length > 0 ? pointAtFraction(route.polyline, fromM / length) : null;
+  const to = length > 0 ? pointAtFraction(route.polyline, (fromM + windowM) / length) : null;
+  const headingDeg = from && to && haversine(from.point, to.point) > 1e-6 ? bearing(from.point, to.point) : at.bearingDeg;
   const nextIndex = route.stops.findIndex((s) => s.dist_m > posDistM + 0.5);
   const nextStop = nextIndex >= 0 ? route.stops[nextIndex] : undefined;
   const lastStop = route.stops[route.stops.length - 1];
@@ -84,7 +94,7 @@ export function computeHud(route: RouteResponse, posDistM: number, limits: Slope
 
   return {
     position,
-    headingDeg: at.bearingDeg,
+    headingDeg,
     slopeDeg: sample.slope_deg,
     slopeClass: classifySlope(sample.slope_deg, limits),
     next:

@@ -178,7 +178,7 @@ export default function MapView() {
           –
         </output>
       </div>
-      {state.compare && route && (
+      {state.compare && route?.alternative && (
         <ul className="map-key" aria-label="Map key">
           <li>
             <span className="map-key__line map-key__line--route" aria-hidden="true" /> Route
