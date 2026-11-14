@@ -1,0 +1,126 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import { describeError } from "./errors.ts";
+import { ApiError } from "./types.ts";
+import { parseLayersResponse, parseRouteResponse } from "./validate.ts";
+
+const valid = () => ({
+  computed_at: "2030-01-01T00:00:00Z",
+  distance_m: 100,
+  max_slope_deg: 5,
+  est_time_s: 60,
+  safety: "ok",
+  safety_reason: "Within limits.",
+  polyline: [
+    [0, 0],
+    [0.001, 0],
+  ],
+  stops: [{ id: "stop-1", name: null, lon: 0.001, lat: 0, dist_m: 100, note: null, image: null }],
+  hazards: [
+    {
+      id: "h1",
+      kind: "sand_trap",
+      label: "Sand trap",
+      polygon: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [0, 0],
+            [1, 0],
+            [1, 1],
+            [0, 0],
+          ],
+        ],
+      },
+    },
+  ],
+  profile: [
+    { dist_m: 0, elev_m: 0, slope_deg: 0 },
+    { dist_m: 100, elev_m: 3, slope_deg: -5 },
+  ],
+  assumptions: [{ name: "Speed", value: "1 m/s", source: "Doc" }],
+  alternative: null,
+});
+
+describe("parseRouteResponse", () => {
+  it("accepts a well-formed response and normalises slope to absolute", () => {
+    const r = parseRouteResponse(valid());
+    assert.equal(r.safety, "ok");
+    assert.equal(r.profile[1]?.slope_deg, 5);
+    assert.equal(r.stops[0]?.image, null);
+  });
+
+  it("rejects an unknown safety level", () => {
+    assert.throws(() => parseRouteResponse({ ...valid(), safety: "fine" }), ApiError);
+  });
+
+  it("rejects a polyline with fewer than two points", () => {
+    assert.throws(() => parseRouteResponse({ ...valid(), polyline: [[0, 0]] }), /polyline/);
+  });
+
+  it("rejects a latitude out of range", () => {
+    assert.throws(
+      () =>
+        parseRouteResponse({
+          ...valid(),
+          polyline: [
+            [0, 0],
+            [0, 95],
+          ],
+        }),
+      /latitude/,
+    );
+  });
+
+  it("rejects a profile whose distances do not increase", () => {
+    const bad = valid();
+    bad.profile = [
+      { dist_m: 10, elev_m: 0, slope_deg: 0 },
+      { dist_m: 10, elev_m: 0, slope_deg: 0 },
+    ];
+    assert.throws(() => parseRouteResponse(bad), /increasing/);
+  });
+
+  it("drops stop images whose URL is not http(s)", () => {
+    const bad = valid();
+    bad.stops = [
+      {
+        ...bad.stops[0],
+        image: { url: "javascript:alert(1)", alt: "x", credit: "y" },
+      } as never,
+    ];
+    assert.equal(parseRouteResponse(bad).stops[0]?.image, null);
+
+    const good = valid();
+    good.stops = [
+      { ...good.stops[0], image: { url: "https://example.org/a.jpg", alt: "x", credit: "y" } } as never,
+    ];
+    assert.equal(parseRouteResponse(good).stops[0]?.image?.url, "https://example.org/a.jpg");
+  });
+
+  it("rejects non-object input", () => {
+    assert.throws(() => parseRouteResponse(null), ApiError);
+    assert.throws(() => parseRouteResponse("nope"), ApiError);
+  });
+});
+
+describe("parseLayersResponse", () => {
+  it("accepts known layer ids", () => {
+    const r = parseLayersResponse({
+      layers: [{ id: "slope", available: true, reason: null, source: "X" }],
+    });
+    assert.equal(r.layers[0]?.id, "slope");
+  });
+  it("rejects unknown layer ids", () => {
+    assert.throws(() => parseLayersResponse({ layers: [{ id: "wind", available: true }] }), ApiError);
+  });
+});
+
+describe("describeError", () => {
+  it("gives plain-language text without leaking server detail", () => {
+    const msg = describeError(new ApiError("http", "HTTP 500 Traceback...", 500));
+    assert.match(msg, /status 500/);
+    assert.doesNotMatch(msg, /Traceback/);
+    assert.match(describeError(new ApiError("network", "x")), /Cannot reach/);
+  });
+});
