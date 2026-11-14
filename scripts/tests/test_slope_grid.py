@@ -186,13 +186,18 @@ def test_reserve_triggers_fallback_even_when_grid_fits_total_limit(tmp_path, cap
     grid = build_grid(handoff, 1)
     grid.meta["is_test_data"] = True
     grid.meta["sources"] = ["Synthetic inclined plane, two hills and a ravine; NOT HiRISE terrain"]
-    size = sum(map(len, encode_files(grid, fake_elevation(grid)).values()))
+    files = encode_files(grid, fake_elevation(grid))
+    # The HUD's frontend elevation.bin copy is outside the budget.
+    hud_copy = "frontend/public/data/gale-bx/elevation.bin"
+    assert files[hud_copy] == files["backend/data/gale-bx/elevation.bin"]
+    size = sum(len(data) for path, data in files.items() if path != hud_copy)
     # Place the total ceiling above the 1 m grid but its reserved ceiling below it.
     monkeypatch.setattr(slope_grid, "MAX_BYTES", size + 50_000)
     meta = generate(handoff, tmp_path, fake=True)
     assert meta["cell_m"] == 2
     assert "--cell 2" in capsys.readouterr().out
-    assert sum(p.stat().st_size for p in tmp_path.rglob("*") if p.is_file()) <= size - 50_000
+    written = [p for p in tmp_path.rglob("*") if p.is_file() and p.relative_to(tmp_path).as_posix() != hud_copy]
+    assert sum(p.stat().st_size for p in written) <= size - 50_000
 
 
 @pytest.mark.parametrize("thresholds", [None, (4, 8)])

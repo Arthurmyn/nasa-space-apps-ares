@@ -209,6 +209,8 @@ def encode_files(grid, z, caution_deg=10, limit_deg=15):
             f"frontend/public/data/{sid}/meta.json": meta,
             # Copy for the browser: a stop on a DTM gap or over the limit is refused on click.
             f"frontend/public/data/{sid}/slope.bin": slope.tobytes(order="C"),
+            # The HUD's 3D terrain reads the same elevations as the backend.
+            f"frontend/public/data/{sid}/elevation.bin": z.astype("<f4").tobytes(order="C"),
             f"frontend/public/data/{sid}/hillshade.png": png_bytes(hillshade),
             f"frontend/public/data/{sid}/slope.png": png_bytes(colors)}
 
@@ -259,9 +261,12 @@ def generate(handoff, output_root, cell=1.0, dtm=None, fake=False):
             z = read_dtm(dtm, grid)
             grid.meta["sources"].extend(stop_sources)
         files = encode_files(grid, z, caution_deg=caution_deg, limit_deg=limit_deg)
-        # Include companion files such as stops.json and assumptions.json, if present.
-        grid_bytes = sum(map(len, files.values()))
+        # The HUD's frontend elevation.bin is a byte-for-byte copy of the backend file, so it is
+        # kept outside both budgets, like the optical image.
+        hud_copy = f"frontend/public/data/{sid}/elevation.bin"
+        grid_bytes = sum(len(data) for path, data in files.items() if path != hud_copy)
         total = grid_bytes
+        # Include companion files such as stops.json and assumptions.json, if present.
         for directory in [f"backend/data/{sid}", f"frontend/public/data/{sid}"]:
             for path in (output_root / directory).rglob("*"):
                 if path.is_file() and path.relative_to(output_root).as_posix() not in files:

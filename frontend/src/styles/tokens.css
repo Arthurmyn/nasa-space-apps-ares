@@ -25,6 +25,24 @@
   --hazard: #ff6b81; /* hazards, avoid */
   --ok: #7be0a8; /* within limits */
 
+  /* HUD (3D view): the darker, violet-tinted palette of the design concept (docs/brand/hud-reference.png).
+     Contrast on --hud-panel (computed): --text 17.3, --hud-muted 6.9, --hud-mint 12.7, --hud-hazard 7.0, --hud-accent 7.1, --hud-caution 10.5. */
+  --hud-bg: #07070d;
+  --hud-panel: #0d0d17;
+  --hud-line: #2a2840;
+  --hud-radius: 16px;
+  --hud-accent: #a78bfa; /* route, active tab */
+  --hud-mint: #6ee7b7; /* current position, progress, ok */
+  --hud-hazard: #f87171; /* steep slopes */
+  --hud-caution: #f0b45a;
+  --hud-muted: #9a97b4; /* labels */
+  --hud-route: #c4b5fd;
+  --hud-contour: #c4b5fd;
+  --hud-terrain-dark: #0f0c17;
+  --hud-terrain-light: #7a6f98;
+  --hud-pill-bg: rgb(13 13 23 / 0.78);
+  --hud-pill-line: rgb(236 233 255 / 0.35);
+
   /* Safety/slope class colours, one place so map, profile and badges agree */
   --class-ok: var(--ok);
   --class-caution: var(--amber);
