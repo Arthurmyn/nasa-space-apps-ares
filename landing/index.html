@@ -212,18 +212,32 @@
     }
 
 
-    .demo-arrow{
+    .demo-hint{
       position:absolute;
       width:calc(220 * var(--u));
-      height:calc(150 * var(--u));
       right:calc(-94 * var(--u));
-      top:calc(100% - 16 * var(--u));
-      overflow:visible;
+      top:calc(100% - 2 * var(--u));
       pointer-events:none;
       transition:opacity .25s cubic-bezier(.23,1,.32,1);
     }
-    .bar.is-scrolled .demo-arrow{ opacity:0; }
-    @media (max-width: 1023px){ .demo-arrow{ display:none; } }
+    .demo-arrow{
+      display:block;
+      width:100%;
+      height:calc(150 * var(--u));
+      overflow:visible;
+    }
+    .demo-hint__text{
+      margin:calc(2 * var(--u)) 0 0 calc(50 * var(--u));
+      width:calc(170 * var(--u));
+      color:#fff;
+      font-size:calc(15 * var(--u));
+      font-weight:450;
+      font-variation-settings:'opsz' 15;
+      line-height:calc(20 * var(--u));
+      letter-spacing:calc(-0.2 * var(--u));
+    }
+    .bar.is-scrolled .demo-hint{ opacity:0; }
+    @media (max-width: 1023px){ .demo-hint{ display:none; } }
 
     .menu{
       display:none;
@@ -533,8 +547,9 @@
       .intro-play .cta .btn:nth-child(2){ animation:i-btn .62s var(--e-soft) 1.07s both; }
 
       /* The arrow draws itself once the intro has settled; the head lands after the line. */
-      .da-halo, .da-line{ stroke-dasharray:1; stroke-dashoffset:1; animation:da-draw 1s var(--e-reveal) 2.1s forwards; }
+      .da-line{ stroke-dasharray:1; stroke-dashoffset:1; animation:da-draw 1s var(--e-reveal) 2.1s forwards; }
       .da-head{ opacity:0; animation:da-head .28s var(--e-soft) 2.95s forwards; }
+      .demo-hint__text{ opacity:0; animation:da-head .5s var(--e-soft) 3.1s forwards; }
       @keyframes da-draw{ to{ stroke-dashoffset:0; } }
       @keyframes da-head{ from{ opacity:0; } to{ opacity:1; } }
     }
@@ -609,14 +624,15 @@
       <div class="actions">
         <a class="btn ghost" href="/app/">Launch app</a>
         <a class="btn solid" href="#demo">Get a demo</a>
-        <svg class="demo-arrow" viewBox="0 0 220 150" aria-hidden="true" focusable="false">
-          <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <path class="da-halo" pathLength="1" d="M206 138C132 150 70 112 62 30" stroke="#fff" stroke-width="7"/>
-            <path class="da-line" pathLength="1" d="M206 138C132 150 70 112 62 30" stroke="#7b3cff" stroke-width="3.6"/>
-            <path class="da-head da-head-halo" d="M43 52L62 24L83 49" stroke="#7b3cff" stroke-width="8"/>
-            <path class="da-head" d="M43 52L62 24L83 49" stroke="#fff" stroke-width="3.6"/>
-          </g>
-        </svg>
+        <div class="demo-hint">
+          <svg class="demo-arrow" viewBox="0 0 220 150" aria-hidden="true" focusable="false">
+            <g fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+              <path class="da-line" pathLength="1" d="M206 138C132 150 70 112 62 30"/>
+              <path class="da-head" d="M43 52L62 24L83 49"/>
+            </g>
+          </svg>
+          <p class="demo-hint__text">Watch a short demo to see ARES in action.</p>
+        </div>
         <button class="menu" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu-sheet">
           <svg viewBox="0 0 20 14" fill="none" aria-hidden="true">
             <path d="M0 1h20M0 7h20M0 13h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
