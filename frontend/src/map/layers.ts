@@ -106,7 +106,7 @@ export function addAresLayers(map: MapLibreMap, theme: MapTheme): void {
       type: "line",
       source: SRC.route,
       layout: { "line-cap": "round", "line-join": "round" },
-      paint: { "line-color": theme.rust, "line-width": 5 },
+      paint: { "line-color": theme.accent, "line-width": 5 },
     },
     // Thin class-coloured centre line, shown only while the Slope layer is on. Dash style
     // differs per class so the information is not carried by colour alone.

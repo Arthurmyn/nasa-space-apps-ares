@@ -5,7 +5,7 @@ export interface MapTheme {
   lineStrong: string;
   text: string;
   muted: string;
-  rust: string;
+  accent: string;
   cyan: string;
   hazard: string;
   classOk: string;
@@ -29,7 +29,7 @@ export function getMapTheme(): MapTheme {
     lineStrong: read("--line-strong"),
     text: read("--text"),
     muted: read("--text-muted"),
-    rust: read("--rust"),
+    accent: read("--accent"),
     cyan: read("--cyan"),
     hazard: read("--hazard"),
     classOk: read("--ok"),
