@@ -168,3 +168,20 @@ describe("parseSiteMeta and parseSitesResponse", () => {
     assert.equal(res.sites[0]?.stops[0]?.image, null);
   });
 });
+
+describe("describeError for a 422 with a reason", () => {
+  const err = new ApiError("http", "HTTP 422", 422, "Point 'stop-1' is outside the terrain grid.");
+
+  it("shows the API reason and maps point ids to map labels", () => {
+    const msg = describeError(err, (id) => (id === "stop-1" ? "Stop A" : null));
+    assert.equal(msg, "No route: Point 'Stop A' is outside the terrain grid. Move a point and try again.");
+  });
+
+  it("keeps the generic text when the 422 has no reason", () => {
+    assert.match(describeError(new ApiError("http", "HTTP 422", 422)), /rejected these points/);
+  });
+
+  it("never shows detail for other statuses", () => {
+    assert.doesNotMatch(describeError(new ApiError("http", "HTTP 500", 500, "secret trace")), /secret/);
+  });
+});
