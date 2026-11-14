@@ -2,6 +2,12 @@
 
 > NASA Space Apps Challenge 2026 project. **ARES plans a walking route for a person on foot on Mars: it keeps the route within slope limits and shows how long the walk back takes.**
 
+**Live demo: https://aresmars.us/app**
+
+| Plan: the whole site, slope and hillshade | Plan: a route through the Boxwork targets | Card: printable A4 route card |
+|---|---|---|
+| ![Initial view of the Gale boxwork site](docs/screenshots/initial-view-gale.png) | ![A route through the Boxwork targets](docs/screenshots/route-boxwork-group.png) | ![The A4 route card](docs/screenshots/card-why-this-site.png) |
+
 ## Problem
 
 A person walking on Mars needs a route that respects slope limits and a safe way back. Satellite images show terrain, but not whether a given line across it is walkable, how steep each stretch is, or how far from the start the walk goes.
@@ -39,103 +45,133 @@ From `backend/data/gale-bx/meta.json` and `sources.json`:
 - The science stops are Curiosity waypoints, not curated science targets, and a group is limited to 5 stops.
 - ARES is a hackathon project. It is not affiliated with NASA and is not certified for operational use.
 
-## How to run
+## Run it locally
+
+You need three things installed: **Python 3.10+** (the deployment uses 3.12), **Node.js 22.18+** (the frontend tests run `.ts` files directly; tested on Node 24) and **git**. No API keys and no data download are needed: the processed Gale grid is committed in `backend/data/gale-bx/` and `frontend/public/data/gale-bx/`.
 
 ```bash
-# backend (Python 3.10+), http://localhost:8000
-cd backend && python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements-dev.txt        # requirements.txt is enough to run, -dev adds test tools
-uvicorn app.main:app --reload
-
-# frontend, http://localhost:5173/app/ (in a second terminal)
-cd frontend && npm install && npm run dev
+git clone https://github.com/Arthurmyn/nasa-space-apps-ares.git
+cd nasa-space-apps-ares
 ```
 
-Tests: `cd backend && pytest`, and `cd frontend && npm run lint && npm test && npm run build`.
+**1. Backend** (terminal 1)
 
-## Архитектура
-
-```
-┌────────────┐   HTTP/JSON   ┌────────────┐   чтение при старте   ┌─────────────────┐
-│  frontend  │ ────────────▶ │  backend   │ ───────────────────▶ │ data/gale-bx/   │
-│ React+Vite │               │ FastAPI/A* │                       │ рельеф и цели   │
-└────────────┘               └────────────┘                       └─────────────────┘
-     :5173                        :8000                         backend/data/
-```
-
-| Слой | Стек | Папка |
-|------|------|-------|
-| Frontend | React 18, TypeScript, Vite | [`frontend/`](frontend/) |
-| Backend | Python 3.10+, FastAPI, Pydantic; Vercel/Docker: Python 3.12 | [`backend/`](backend/) |
-| Infra | Docker Compose, шаблоны GitHub | [`docker-compose.yml`](docker-compose.yml), [`.github/`](.github/) |
-
-Подробнее - [docs/architecture.md](docs/architecture.md), контракт API - [docs/api.md](docs/api.md).
-
-## Структура проекта
-
-```
-nasa-space-apps-ares/
-├── .github/                # шаблоны PR/issue
-├── docs/                   # архитектура, API-контракт, доска задач
-├── frontend/               # клиент (React + Vite + TS)
-│   └── src/api/            # клиент к backend
-├── backend/                # API (FastAPI)
-│   ├── app/api/routes/     # эндпоинты
-│   ├── app/core/           # конфиг
-│   ├── app/schemas/        # Pydantic-модели (контракт API)
-│   ├── app/services/       # загрузка сетки и маршрутизация A*
-│   └── tests/
-├── ml/                     # неиспользуемый шаблон, не часть продукта
-├── scripts/                # утилиты: сетка уклонов, тепловой слой, настройка GitHub
-└── docker-compose.yml
-```
-
-## Быстрый старт
-
-### Через Docker
-```bash
-cp .env.example .env
-docker compose up --build
-```
-- Frontend: http://localhost:5173
-- Backend: http://localhost:8000 · Swagger: http://localhost:8000/docs
-
-### Локально
-
-**Backend**
-
-Локально поддерживается Python 3.10 и новее. В Vercel (`backend/.python-version`)
-и Docker используется Python 3.12. Backend читает готовую сетку из
-`backend/data/gale-bx/`. Для тестов: `pip install -r requirements-dev.txt`.
+macOS / Linux:
 
 ```bash
 cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt     # requirements.txt is enough to run; -dev adds test tools
+uvicorn app.main:app --reload
+```
+
+Windows (PowerShell):
+
+```powershell
+cd backend
 python -m venv .venv
-.venv\Scripts\activate               # macOS/Linux: source .venv/bin/activate
+.venv\Scripts\Activate.ps1               # in cmd.exe: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 uvicorn app.main:app --reload
 ```
 
-**Frontend**
+Check it: http://localhost:8000/api/v1/health (JSON with `data_loaded: true`) and http://localhost:8000/docs (Swagger).
+
+**2. Frontend** (terminal 2)
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-## Команда
+Open **http://localhost:5173/app/** (note the `/app/` path: it is the Vite `base`). The frontend talks to the backend at `http://localhost:8000` by default.
 
-| Имя | Роль | GitHub |
-|-----|------|--------|
+**No backend?** Run the frontend on built-in sample data (dev server only; a "Sample data" badge is shown and the terrain is synthetic):
+
+```bash
+VITE_USE_MOCK=true npm run dev          # PowerShell: $env:VITE_USE_MOCK="true"; npm run dev
+```
+
+**Optional settings.** Defaults work without any file. To change them, copy `.env.example` to `.env` in the repository root:
+
+- `CORS_ORIGINS`: browser origins the backend accepts, comma separated (default `http://localhost:5173`). Set it if the frontend runs on another port.
+- `VITE_API_URL`: where the frontend finds the backend (default `http://localhost:8000` in development; empty means same origin).
+
+**Your first route**
+
+1. Open the **Plan** tab. The whole Gale boxwork site is on the map.
+2. Click the map to set the start, then click up to 5 stops. Or pick a group such as "Boxwork" under "Science targets" and then click a start.
+3. Read the route summary: length, maximum slope, time, safety status, estimated radiation dose and the elevation profile. Open "How this is computed" for the assumptions and sources.
+4. Open **HUD** (compass, next stop and slope; the position moves with a slider) and **Card**, then press "Print or save as PDF" for the one-page A4 route card.
+
+## Run the tests
+
+```bash
+cd backend && pytest
+cd frontend && npm run lint && npm test && npm run build
+```
+
+## Docker (optional, not verified)
+
+`docker compose up --build` is meant to start both services (frontend at http://localhost:5173/app/, backend at http://localhost:8000). It was not run while writing this README because no Docker daemon was available, so treat it as untested. The local steps above are the supported way to run the project.
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+## Architecture
+
+```
+┌────────────┐   HTTP/JSON   ┌────────────┐   read at startup   ┌─────────────────┐
+│  frontend  │ ────────────▶ │  backend   │ ──────────────────▶ │ data/gale-bx/   │
+│ React+Vite │               │ FastAPI/A* │                     │ terrain, stops  │
+└────────────┘               └────────────┘                     └─────────────────┘
+     :5173                        :8000                        backend/data/
+```
+
+| Layer | Stack | Folder |
+|-------|-------|--------|
+| Frontend | React 18, TypeScript, Vite, MapLibre GL | [`frontend/`](frontend/) |
+| Backend | Python 3.10+, FastAPI, Pydantic, numpy; Vercel and Docker use Python 3.12 | [`backend/`](backend/) |
+| Infra | Docker Compose, GitHub templates | [`docker-compose.yml`](docker-compose.yml), [`.github/`](.github/) |
+
+More in [docs/architecture.md](docs/architecture.md); the API contract is in [docs/api.md](docs/api.md) and the data contract in [docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md).
+
+## Project structure
+
+```
+nasa-space-apps-ares/
+├── .github/                # PR and issue templates
+├── docs/                   # architecture, API and data contracts, task board, research notes
+├── frontend/               # web app (React + Vite + TypeScript)
+│   ├── src/api/            # API client and response validation
+│   └── public/data/        # site grid images and metadata served to the browser
+├── backend/                # API (FastAPI)
+│   ├── app/api/routes/     # endpoints
+│   ├── app/core/           # settings
+│   ├── app/schemas/        # Pydantic models (the API contract)
+│   ├── app/services/       # grid loading, A* routing, hazard zones
+│   ├── data/gale-bx/       # processed terrain grid, stops, assumptions
+│   └── tests/
+├── landing/                # project page
+├── scripts/                # data scripts (slope grid, thermal layer) and GitHub setup
+├── ml/                     # unused template, not part of the product
+└── docker-compose.yml
+```
+
+## Team
+
+| Name | Role | GitHub |
+|------|------|--------|
 | Aikyn Sagyntai | Team lead | [@mathalama](https://github.com/mathalama) |
-| … | Frontend | |
-| … | Backend | |
 
-## Как контрибьютить
+## Contributing
 
-Любая работа начинается с **GitHub Issue**: опиши цель, ожидаемый результат, подзадачи и критерии готовности. Большую задачу раздели на отдельные issues с проверяемым результатом и укажи зависимости между ними.
+Every piece of work starts as a **GitHub issue**: state the goal, the expected result, the subtasks and the definition of done, and split a big task into issues with a checkable result. See [CONTRIBUTING.md](CONTRIBUTING.md) for branches, commits, pull requests and review, and [how to write and split issues](CONTRIBUTING.md#4-tasks-issues-and-board).
 
-См. [правила оформления и разделения задач](CONTRIBUTING.md#4-задачи-issues--доска), а также [CONTRIBUTING.md](CONTRIBUTING.md): ветки, коммиты, PR, ревью.
+## License
 
-## Лицензия
-[Apache License 2.0](LICENSE)
+[Apache License 2.0](LICENSE), see also [NOTICE](NOTICE).
