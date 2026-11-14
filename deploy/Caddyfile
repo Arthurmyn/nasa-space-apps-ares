@@ -1,0 +1,46 @@
+# Installed on the server as /etc/caddy/Caddyfile.
+# DOMAIN comes from /srv/ares/.env (systemd EnvironmentFile). Without it the site is plain HTTP on :80.
+# With a domain, Caddy gets a TLS certificate and redirects HTTP to HTTPS on its own.
+{
+	admin localhost:2019
+}
+
+{$DOMAIN::80} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	handle /api/* {
+		reverse_proxy 127.0.0.1:8000
+	}
+
+	redir /app /app/
+
+	@hashed path /assets/* /app/assets/*
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+
+	handle /app/* {
+		root * /srv/ares/current/frontend
+		try_files {path} /app/index.html
+		file_server
+	}
+
+	handle {
+		root * /srv/ares/current/landing
+		try_files {path} /index.html
+		file_server
+	}
+
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 20mb
+			roll_keep 5
+		}
+	}
+}

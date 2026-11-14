@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Entry point for deploys. Installed on the server as /srv/ares/bin/ssh-deploy.
+#
+# The GitHub Actions key is pinned to this script in ~deploy/.ssh/authorized_keys:
+#   restrict,command="/srv/ares/bin/ssh-deploy" ssh-ed25519 AAAA... ares-github-actions-deploy
+# so the only thing that key can do is deploy a commit of the repository.
+#
+# Manual use (as deploy): /srv/ares/bin/ssh-deploy <full commit sha>
+set -euo pipefail
+
+SHA="${SSH_ORIGINAL_COMMAND:-${1:-}}"
+if [[ ! "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "usage: ssh-deploy <40-char commit sha>" >&2
+  exit 2
+fi
+
+ROOT=/srv/ares
+REPO="$ROOT/repo"
+REMOTE=https://github.com/Arthurmyn/nasa-space-apps-ares.git
+
+# Serialize deploys. A deploy cancelled in GitHub may still be finishing here;
+# the next one waits for it instead of running alongside.
+exec 9>"$ROOT/.deploy.lock"
+echo "==> waiting for the deploy lock"
+flock 9
+
+[ -d "$REPO/.git" ] || git clone -q --no-checkout "$REMOTE" "$REPO"
+echo "==> fetching $SHA"
+git -C "$REPO" fetch -q --depth 1 origin "$SHA"
+git -C "$REPO" checkout -q -f --detach FETCH_HEAD
+# Keep node_modules between deploys to speed up npm ci.
+git -C "$REPO" clean -ffdq -e node_modules
+
+# The lock (fd 9) stays held by the deploy script.
+exec "$REPO/deploy/deploy.sh" "$SHA"
