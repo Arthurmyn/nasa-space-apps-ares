@@ -10,6 +10,7 @@ import "./styles/map.css";
 import "./styles/profile.css";
 import "./styles/card.css";
 import "./styles/hud.css";
+import "./styles/hud3d.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

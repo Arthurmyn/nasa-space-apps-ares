@@ -6,6 +6,7 @@ import { formatUtcTime } from "../lib/format.ts";
 import { usePlanner } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
 import { Icon } from "./Icon.tsx";
+import { UtcClock } from "./UtcClock.tsx";
 
 export type Mode = "plan" | "hud" | "card";
 
@@ -88,7 +89,7 @@ export function TopBar({ mode, modes, onMode, drawer, onDrawer }: TopBarProps) {
       <div className="topbar__right">
         {site.isTestData && <TestDataBadge />}
         <DataBadge />
-        <span className="topbar__time mono">{computed ? `Computed ${computed}` : "No route computed"}</span>
+        {mode === "hud" ? <UtcClock /> : <span className="topbar__time mono">{computed ? `Computed ${computed}` : "No route computed"}</span>}
         {mode === "plan" && (
           <button
             type="button"
