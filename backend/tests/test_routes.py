@@ -500,3 +500,81 @@ def test_hazard_zones_on_the_shipped_real_grid():
         for lon, lat in data["polyline"]:
             assert not inside(zone["polygon"], lon, lat), zone["id"]
     assert len(response.content) < 150_000  # simplified outlines keep the response small
+
+
+def thermal_info(meta):
+    return {
+        "schema": "ares.thermal/v1",
+        "layer": "thermal",
+        "site_id": meta["site_id"],
+        "bbox": meta["bbox"],
+        "source": {
+            "title": "Test THEMIS",
+            "credit": "NASA/ASU/USGS",
+            "page_url": "https://example.org/t",
+        },
+    }
+
+
+def layers_of(path):
+    with TestClient(create_app(path)) as client:
+        return {x["id"]: x for x in client.get("/api/v1/layers").json()["layers"]}
+
+
+def with_bbox(path, meta):
+    meta = {**meta, "bbox": {"lon_min": 1.0, "lon_max": 2.0, "lat_min": -2.0, "lat_max": -1.0}}
+    (path / "meta.json").write_text(json.dumps(meta), encoding="utf-8")
+    return meta
+
+
+def test_thermal_is_unavailable_without_its_file_and_radiation_is_not_a_map(terrain):
+    path, _, _ = terrain
+    layers = layers_of(path)
+    assert layers["thermal"]["available"] is False
+    assert layers["thermal"]["reason"] == "No data for this site"
+    assert layers["geology"]["reason"] == "No data for this site"
+    assert layers["radiation"]["available"] is False
+    assert layers["radiation"]["reason"] == "Single value for the whole site, see route summary"
+
+
+def test_thermal_becomes_available_with_a_matching_file(terrain):
+    path, meta, _ = terrain
+    meta = with_bbox(path, meta)
+    (path / "thermal.json").write_text(json.dumps(thermal_info(meta)), encoding="utf-8")
+    thermal = layers_of(path)["thermal"]
+    assert thermal["available"] is True and thermal["reason"] is None
+    assert "Test THEMIS" in thermal["source"] and "NASA/ASU/USGS" in thermal["source"]
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"bbox": {"lon_min": 0, "lon_max": 1, "lat_min": 0, "lat_max": 1}},
+        {"site_id": "other"},
+        {"schema": "x"},
+    ],
+)
+def test_thermal_file_for_another_place_is_ignored(terrain, change):
+    path, meta, _ = terrain
+    meta = with_bbox(path, meta)
+    (path / "thermal.json").write_text(
+        json.dumps({**thermal_info(meta), **change}), encoding="utf-8"
+    )
+    assert layers_of(path)["thermal"]["available"] is False
+
+
+def test_shipped_thermal_layer_matches_the_site_grid():
+    root = Path(__file__).parents[1]
+    meta = json.loads((root / "data/gale-bx/meta.json").read_text())
+    info = json.loads((root / "data/gale-bx/thermal.json").read_text())
+    public = root.parent / "frontend/public/data/gale-bx"
+    assert (public / "thermal.json").read_text() == (root / "data/gale-bx/thermal.json").read_text()
+    assert info["bbox"] == meta["bbox"] and info["site_id"] == meta["site_id"]
+    png = public / "thermal.png"
+    assert png.stat().st_size < 20_000
+    from PIL import Image
+
+    assert Image.open(png).size == (meta["width"], meta["height"])
+    assert info["native_pixel_m"] == 100.0
+    assert info["value"]["site_dn_min"] < info["value"]["site_dn_max"]
+    assert layers_of(root / "data/gale-bx")["thermal"]["available"] is True
