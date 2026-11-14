@@ -5,6 +5,12 @@ import { Icon } from "../components/Icon.tsx";
 import { RouteSketch } from "../components/RouteSketch.tsx";
 import { LEVEL_ICON, SafetyBadge } from "../components/SafetyBadge.tsx";
 import { SourceText } from "../components/SourceText.tsx";
+import {
+  GCR_DOSE_EQUIVALENT_MSV_PER_DAY,
+  RADIATION_CITATION,
+  RADIATION_LABEL,
+  RADIATION_NOTE,
+} from "../config/radiation.ts";
 import { REFERENCES } from "../config/references.ts";
 import { MAX_DISTANCE_FROM_START_M, SLOPE_LIMITS } from "../config/route.ts";
 import {
@@ -18,6 +24,7 @@ import {
   stopLabel,
 } from "../lib/format.ts";
 import { routeLegs } from "../lib/legs.ts";
+import { estimatedDoseMsv, formatDose } from "../lib/radiation.ts";
 import { sectionStats } from "../lib/profile.ts";
 import { routeSpeedMps, safetyMargins, walkBackTimeS } from "../lib/safety.ts";
 import { SLOPE_CLASS_LABEL } from "../lib/slope.ts";
@@ -259,11 +266,18 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
                   <th scope="row">Walk back to start from there</th>
                   <td className="mono">{walkBackS === null ? dash : formatDuration(walkBackS)}</td>
                 </tr>
+                <tr>
+                  <th scope="row">{RADIATION_LABEL}</th>
+                  <td className="mono">
+                    {formatDose(estimatedDoseMsv(GCR_DOSE_EQUIVALENT_MSV_PER_DAY, route.est_time_s))} [5]
+                  </td>
+                </tr>
               </tbody>
             </table>
             <p className="doc__note">
               Walk back retraces the planned route at the route's own speed
-              {speedKmh === null ? "" : ` (${speedKmh.toFixed(1)} km/h)`}.
+              {speedKmh === null ? "" : ` (${speedKmh.toFixed(1)} km/h)`}. Dose: {GCR_DOSE_EQUIVALENT_MSV_PER_DAY} mSv/day
+              ({RADIATION_CITATION.period}) x walking time. {RADIATION_NOTE}
             </p>
           </section>
 

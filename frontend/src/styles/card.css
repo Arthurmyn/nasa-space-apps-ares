@@ -39,14 +39,14 @@
   --doc-line: #b8b8c4;
   width: 210mm;
   min-height: 297mm;
-  padding: 10mm 12mm;
+  padding: 8mm 11mm;
   background: #fff;
   color: var(--doc-ink);
   font-size: 8.5pt;
   line-height: 1.35;
   display: grid;
   align-content: start;
-  gap: 3.5mm;
+  gap: 2.6mm;
 }
 
 .doc__head {
@@ -131,7 +131,7 @@
 
 .doc__cols {
   display: grid;
-  grid-template-columns: 80mm minmax(0, 1fr);
+  grid-template-columns: 72mm minmax(0, 1fr);
   gap: 5mm;
   align-items: start;
 }
@@ -142,19 +142,19 @@
 
 .doc__stack {
   display: grid;
-  gap: 4mm;
+  gap: 2.6mm;
   min-width: 0;
 }
 
 .doc__table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 7.4pt;
+  font-size: 7.2pt;
 }
 
 .doc__table th,
 .doc__table td {
-  padding: 0.8mm 1mm;
+  padding: 0.55mm 1mm;
   border-bottom: 0.2mm solid var(--doc-line);
   text-align: left;
   vertical-align: baseline;
@@ -236,10 +236,11 @@
 }
 
 .doc__refs {
-  margin: 2mm 0 0;
+  margin: 1.2mm 0 0;
   padding: 0;
   list-style: none;
-  font-size: 6.6pt;
+  font-size: 6.2pt;
+  line-height: 1.25;
   color: var(--doc-muted);
 }
 
