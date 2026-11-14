@@ -8,6 +8,16 @@
     "frontend": {
       "root": "frontend",
       "framework": "vite"
+    },
+    "backend": {
+      "root": "backend",
+      "framework": "fastapi",
+      "entrypoint": "app.main:app",
+      "functions": {
+        "app/main.py": {
+          "includeFiles": "data/gale-bx/**"
+        }
+      }
     }
   },
   "redirects": [
@@ -18,6 +28,10 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": { "service": "backend" }
+    },
     {
       "source": "/app/(.*)",
       "destination": { "service": "frontend" }

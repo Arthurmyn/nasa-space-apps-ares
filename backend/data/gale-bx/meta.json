@@ -4,7 +4,7 @@
   "name": "Gale crater: boxwork (Mount Sharp)",
   "preliminary": true,
   "dtm_product_id": "DTEEC_009149_1750_009294_1750_U01",
-  "is_test_data": false,
+  "is_test_data": true,
   "width": 316,
   "height": 430,
   "cell_m": 2.0,
@@ -26,7 +26,6 @@
   "slope_nodata": 255,
   "slope_window_m": 5,
   "sources": [
-    "HiRISE DTM DTEEC_009149_1750_009294_1750_U01, NASA/JPL/University of Arizona",
-    "src-msl-traverse: NASA/JPL Curiosity MSL waypoints; https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json; snapshot: docs/research/r0/rover_sols4534-4805.geojson"
+    "Synthetic inclined plane, two hills and a ravine; NOT HiRISE terrain"
   ]
 }
