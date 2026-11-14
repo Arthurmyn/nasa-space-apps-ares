@@ -17,6 +17,7 @@ import {
   type RouteRequest,
   type RouteResponse,
   type SafetyLevel,
+  type SitesResponse,
 } from "./types.ts";
 
 const LATENCY_MS = 650;
@@ -227,5 +228,25 @@ export async function mockLayers(signal?: AbortSignal): Promise<LayersResponse> 
   const missing = (id: LayerId): LayerInfo => ({ id, available: false, reason: NO_DATA_REASON, source: null });
   return {
     layers: [available("slope"), available("optical"), missing("thermal"), missing("geology"), available("radiation")],
+  };
+}
+
+/** Sample targets around the map centre, so the group picker can be tried without a backend. */
+export async function mockSites(signal?: AbortSignal): Promise<SitesResponse> {
+  await delay(250, signal);
+  const origin: LonLat = [137.3828, -4.8032];
+  const at = (id: string, east: number, north: number) => {
+    const [lon, lat] = offsetLonLat(origin, east, north);
+    return { id, name: `Sample target ${id.toUpperCase()}`, lon, lat, note: "Sample data, not a real target.", image: null, source_id: null };
+  };
+  return {
+    sites: [
+      {
+        id: "gale-bx",
+        name: "Sample site",
+        groups: [{ id: "sample", name: "Sample group", stop_ids: ["s1", "s2", "s3"] }],
+        stops: [at("s1", -120, 90), at("s2", 40, -60), at("s3", 160, 110)],
+      },
+    ],
   };
 }
