@@ -167,6 +167,10 @@ nasa-space-apps-ares/
 | Name | Role | GitHub |
 |------|------|--------|
 | Aikyn Sagyntai | Team lead | [@mathalama](https://github.com/mathalama) |
+| Artur Jaxygaliyev | Full Stack, Data Analyst | [@arthurmyn](https://github.com/Arthurmyn) |
+| Alikhan Korazbay | Research Engineer | [@Alikhan](https://github.com/alikshal) |
+| Berdibek Amir | Visual, GEN AI | [@Berdibek](https://github.com/berdibekGTX) |
+
 
 ## Contributing
 
