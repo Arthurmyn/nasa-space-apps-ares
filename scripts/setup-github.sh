@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Одноразовая настройка GitHub-репозитория: лейблы, milestones, доска, защита веток.
-# Требует: gh CLI, авторизация с правами repo + project (gh auth refresh -s project).
-# Запуск: bash scripts/setup-github.sh
+# One-time GitHub repository setup: labels, milestones, board, branch protection.
+# Requires: the gh CLI, authorized with repo + project rights (gh auth refresh -s project).
+# Run: bash scripts/setup-github.sh
 set -euo pipefail
 
 REPO="${REPO:-Arthurmyn/nasa-space-apps-ares}"
@@ -31,11 +31,11 @@ echo "==> Project board"
 PROJECT_NUM=$(gh project create --owner "$OWNER" --title "Ares Hackathon" --format json --jq '.number')
 gh project link "$PROJECT_NUM" --owner "$OWNER" --repo "$REPO"
 echo "  Project #$PROJECT_NUM created and linked."
-echo "  Добавь колонки Backlog/To Do/In Progress/Review/Done в поле Status и включи Workflows (см. docs/project-board.md)."
+echo "  Add the columns Backlog/To Do/In Progress/Review/Done to the Status field and turn on Workflows (see docs/project-board.md)."
 
 echo "==> Branch protection (main)"
 for b in main; do
-  gh api -X PUT "repos/$REPO/branches/$b/protection" --input - <<JSON || echo "  ! не удалось защитить $b (нужен push ветки / платный план для private)"
+  gh api -X PUT "repos/$REPO/branches/$b/protection" --input - <<JSON || echo "  ! could not protect $b (the branch needs a push / a paid plan for private repos)"
 {
   "required_status_checks": null,
   "enforce_admins": false,

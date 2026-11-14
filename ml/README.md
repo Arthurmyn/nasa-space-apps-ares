@@ -1,31 +1,33 @@
 # ML
 
-## Структура
-| Папка | Что лежит | В git? |
-|-------|-----------|--------|
-| `data/raw/` | исходные данные | ❌ |
-| `data/processed/` | очищенные данные | ❌ |
-| `notebooks/` | EDA, эксперименты (`01_eda.ipynb`, `02_baseline.ipynb`, …) | ✅ |
-| `models/` | обученные модели (`model.pkl`) | ❌ |
-| `src/train.py` | воспроизводимое обучение | ✅ |
-| `src/inference.py` | **контракт с backend**: `load_model`, `predict` | ✅ |
+> This folder is an unused template. Nothing in the backend or the frontend imports it, and it is not part of the ARES route planner.
 
-## Данные
-- Датасет: _ссылка на Drive/Kaggle_
-- Модель: _ссылка на актуальный `model.pkl`_
+## Structure
+| Folder | What is in it | In git? |
+|--------|---------------|---------|
+| `data/raw/` | source data | ❌ |
+| `data/processed/` | cleaned data | ❌ |
+| `notebooks/` | EDA, experiments (`01_eda.ipynb`, `02_baseline.ipynb`, …) | ✅ |
+| `models/` | trained models (`model.pkl`) | ❌ |
+| `src/train.py` | reproducible training | ✅ |
+| `src/inference.py` | **the contract with the backend**: `load_model`, `predict` | ✅ |
 
-## Запуск
+## Data
+- Dataset: _link to Drive/Kaggle_
+- Model: _link to the current `model.pkl`_
+
+## Running
 ```bash
 pip install -r ml/requirements.txt
-python -m ml.src.train        # из корня репо
+python -m ml.src.train        # from the repo root
 ```
 
-## Эксперименты
-| Дата | Модель | Метрика | Заметки |
-|------|--------|---------|---------|
-| - | LogisticRegression (синтетика) | acc ≈ 0.9 | baseline-заглушка |
+## Experiments
+| Date | Model | Metric | Notes |
+|------|-------|--------|-------|
+| - | LogisticRegression (synthetic data) | acc ≈ 0.9 | baseline placeholder |
 
-## Правила
-- Ноутбуки - для исследований; финальный код переносим в `src/`.
-- Перед коммитом ноутбука - *Clear All Outputs* (меньше конфликтов).
-- Меняешь формат входа/выхода `predict` - обнови `docs/api.md` и предупреди backend.
+## Rules
+- Notebooks are for research; move the final code into `src/`.
+- Before committing a notebook, *Clear All Outputs* (fewer conflicts).
+- If you change the input or output format of `predict`, update `docs/api.md` and warn the backend team.

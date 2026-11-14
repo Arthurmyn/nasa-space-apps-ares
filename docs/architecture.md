@@ -1,43 +1,45 @@
-# Архитектура
+# Architecture
 
-## Компоненты
+> Note: the component table and data flow below describe the original project template (a `predict` endpoint backed by a model). The current system is a route planner: the backend reads a terrain grid and runs A* routing. For the current state see [README.md](../README.md), [api.md](api.md) and [DATA_CONTRACT.md](DATA_CONTRACT.md).
 
-| Компонент | Ответственность | Владелец |
-|-----------|----------------|----------|
-| `frontend` | UI, вызовы API, отображение результатов модели | Frontend |
-| `backend` | REST API, валидация, бизнес-логика, загрузка модели | Backend |
-| `ml` | Подготовка данных, обучение, сохранение модели, функция `predict` | ML |
+## Components
 
-## Поток данных
+| Component | Responsibility | Owner |
+|-----------|----------------|-------|
+| `frontend` | UI, API calls, showing model results | Frontend |
+| `backend` | REST API, validation, business logic, model loading | Backend |
+| `ml` | Data preparation, training, saving the model, the `predict` function | ML |
+
+## Data flow
 
 ```
-Пользователь → frontend → POST /api/v1/predict → backend
-                                                   │
-                                   services/ml.py  │  загружает ml/models/model.pkl
-                                                   ▼  один раз при старте
-                                       ml.src.inference.predict(...)
-                                                   │
-пользователь ← frontend ← JSON { prediction, ... } ┘
+User → frontend → POST /api/v1/predict → backend
+                                           │
+                           services/ml.py  │  loads ml/models/model.pkl
+                                           ▼  once at startup
+                               ml.src.inference.predict(...)
+                                           │
+user ← frontend ← JSON { prediction, ... } ┘
 ```
 
-## Граница backend ↔ ML
+## The backend ↔ ML boundary
 
-ML-команда отдаёт **один интерфейс** - `ml/src/inference.py`:
+The ML team provides **one interface**, `ml/src/inference.py`:
 
 ```python
 def load_model(path: str) -> Any: ...
 def predict(model: Any, features: dict) -> dict: ...
 ```
 
-Бэкенд не знает, что внутри (sklearn, PyTorch, вызов LLM API). Это позволяет ML менять модель, не трогая API.
+The backend does not know what is inside (sklearn, PyTorch, a call to an LLM API). This lets ML change the model without touching the API.
 
-## Решения (ADR-lite)
+## Decisions (ADR-lite)
 
-| # | Решение | Почему |
-|---|---------|--------|
-| 1 | Монорепо | Одна команда, одна доска, атомарные PR через слои |
-| 2 | FastAPI | Тот же Python, что и ML; авто-Swagger для фронта |
-| 3 | React + Vite + TS | Быстрый dev-сервер, типы ловят ошибки контракта |
-| 4 | Модель в памяти процесса бэка | Для хакатона проще отдельного inference-сервиса |
+| # | Decision | Why |
+|---|----------|-----|
+| 1 | Monorepo | One team, one board, atomic PRs across layers |
+| 2 | FastAPI | The same Python as ML; automatic Swagger for the frontend |
+| 3 | React + Vite + TS | Fast dev server, types catch contract errors |
+| 4 | Model in the backend process memory | Simpler than a separate inference service for a hackathon |
 
-_Добавляйте сюда строки, когда принимаете важное решение._
+_Add rows here when you make an important decision._
