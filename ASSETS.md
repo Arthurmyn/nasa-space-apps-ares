@@ -2,6 +2,8 @@
 
 Every font, icon set, library, image, tile source and data layer used by the app, with its license and where it is used. Update this file whenever something is added. If a license is unclear, do not use the asset.
 
+The project itself is licensed under the Apache License 2.0 (`LICENSE`, `NOTICE`). The licenses below are those of third-party material.
+
 ## Fonts (self-hosted, no third-party requests at runtime)
 
 | Font | Weights | Source | License | Used for |
@@ -26,9 +28,16 @@ The same file lives in `frontend/public/fonts/` and `landing/public/fonts/`. The
 
 Unit tests use Node's built-in test runner (`npm test`); no test framework was added.
 
+## Logo and favicon
+
+| File | What | Source | License | Where used |
+|------|------|--------|---------|------------|
+| `docs/brand/ares-orbital-planet-logo.png` (1536 x 1024) | ARES logo: a glowing planet with a ring, mint and violet | Supplied by the team (file "ARES Orbital Planet Logo.png"). **Origin and tool not recorded; it looks AI-generated, so the team must confirm the tool and its terms and disclose it with the other AI visuals** | Unknown, to be confirmed | Source file for the derived icons below |
+| `landing/public/` and `frontend/public/`: `favicon-32.png`, `favicon.ico` (16, 32, 48), `apple-touch-icon.png` (180), `ares-logo-512.png` | The planet cropped to a square on a near-black background and resized | Derived from the logo above (Pillow) | As the logo | Browser tab icon of the landing page and of the planner |
+
 ## Icons
 
-Hand-drawn 16px stroke icons, authored for this project as inline SVG paths in `frontend/src/components/Icon.tsx` (same license as the repository). The favicon is an inline SVG data URI in `frontend/index.html`, also project-authored. No third-party icon set.
+Hand-drawn 16px stroke icons, authored for this project as inline SVG paths in `frontend/src/components/Icon.tsx` (same license as the repository (Apache-2.0)). The favicon is an inline SVG data URI in `frontend/index.html`, also project-authored. No third-party icon set.
 
 ## Images
 
@@ -55,7 +64,7 @@ Processing: the video was re-encoded (H.264, CRF 23, audio removed); the picture
 
 | File | What | Source | License | Where used |
 |------|------|--------|---------|------------|
-| `landing/public/media/demo.mp4` (1440 x 900, about 63 s, no audio) and `demo-poster.jpg` | Screen recording of the planner in its sample-data build, with a cursor overlay | Recorded by the team's tooling from this repository (headless Chrome, Playwright), re-encoded to H.264. No third-party content | Same as the repository (MIT) | "See the planner work" section, opened by the "Get a demo" button |
+| `landing/public/media/demo.mp4` (1440 x 900, about 63 s, no audio) and `demo-poster.jpg` | Screen recording of the planner in its sample-data build, with a cursor overlay | Recorded by the team's tooling from this repository (headless Chrome, Playwright), re-encoded to H.264. No third-party content | Same as the repository (Apache-2.0) | "See the planner work" section, opened by the "Get a demo" button |
 
 It shows the "Sample data" badge because the planner ran on synthetic data. Re-record it when the planner uses real terrain data.
 
