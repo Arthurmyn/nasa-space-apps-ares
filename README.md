@@ -1,15 +1,40 @@
 # NASA Space Apps - ARES
 
-> Хакатон-проект. **Одна фраза о том, что мы делаем и для кого** - заполнить, когда утвердим идею.
+> NASA Space Apps Challenge 2026 project. **ARES plans a walking route for a person on foot on Mars: it keeps the route within slope limits and shows how long the walk back takes.**
 
-> **Перед началом любой работы прочитай [docs/context/](docs/context/)** - там лежат материалы и контекст по задачам проекта.
-> Это единый источник правды. Если контекст расходится с кодом или чатом - уточни у команды.
+## Problem
 
-## Проблема
-_Какую боль решаем? Кто пользователь?_
+A person walking on Mars needs a route that respects slope limits and a safe way back. Satellite images show terrain, but not whether a given line across it is walkable, how steep each stretch is, or how far from the start the walk goes.
 
-## Решение
-_Что делает продукт? Ключевые фичи (3–5 пунктов)._
+## Solution
+
+ARES plans a Marswalk route at Gale crater (boxwork, Mount Sharp):
+
+- **Terrain.** A 2 m grid of elevation and slope built from a HiRISE digital terrain model (DTM).
+- **Routing.** The backend runs A* over the slope grid (8 neighbours). A cell steeper than the slope limit cannot be crossed. The route goes from a start through up to 5 stops.
+- **Limits with sources.** The slope limits, walking speed and maximum distance from the start are listed with their sources in `backend/data/gale-bx/assumptions.json`. They cite NASA and JPL documents [1] to [4], also listed in `frontend/src/config/references.ts`.
+- **Three modes** in the web app:
+  - **Plan:** map with layers (slope, hillshade over Mars imagery), stops, route summary, elevation profile and a "How this is computed" panel.
+  - **HUD:** a heads-up view with compass, next stop and slope. The position moves with a slider (simulated).
+  - **Card:** a printable one-page A4 route card with the map, stops, slope by leg, safety margins and the sources.
+
+## Data and sources
+
+From `backend/data/gale-bx/meta.json` and `sources.json`:
+
+- **Terrain:** HiRISE DTM `DTEEC_009149_1750_009294_1750_U01`, NASA/JPL/University of Arizona. The grid cell is 2 m and slopes are smoothed over a 5 m window.
+- **Imagery:** Viking MDIM 2.1 colour mosaic through NASA/JPL Mars Trek, used as the map basemap.
+- **Science stops:** Curiosity (MSL) waypoints, NASA/JPL, `https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json` (snapshot in `docs/research/r0/`).
+- **Slope and walking limits:** documents [1] to [4]; see `ASSETS.md` for links, licenses and where each source is used.
+
+## Limitations
+
+- One site only, and it is preliminary (`"preliminary": true` in `meta.json`). The terrain grid and the science stops need review by the science team.
+- The HUD position comes from a slider. There is no live position feed.
+- Layers without data show "No data for this site".
+- The NASA slope values are lunar and Artemis values. No official human-on-Mars slope standard was found; the 15 degree limit and the 10 degree caution threshold are ARES planning values.
+- The science stops are Curiosity waypoints, not curated science targets, and a group is limited to 5 stops.
+- ARES is a hackathon project. It is not affiliated with NASA and is not certified for operational use.
 
 ## Архитектура
 
