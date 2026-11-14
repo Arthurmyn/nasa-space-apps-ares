@@ -1,6 +1,6 @@
-"""Baseline-обучение. Заменить синтетику на реальный датасет из ml/data/.
+"""Baseline training. Replace the synthetic data with a real dataset from ml/data/.
 
-Запуск из корня репо: python -m ml.src.train
+Run from the repo root: python -m ml.src.train
 """
 
 from pathlib import Path
@@ -15,7 +15,7 @@ MODELS_DIR = Path(__file__).resolve().parents[1] / "models"
 
 
 def main() -> None:
-    # TODO: загрузить реальные данные: pd.read_csv(DATA_DIR / "processed" / "train.csv")
+    # TODO: load real data: pd.read_csv(DATA_DIR / "processed" / "train.csv")
     X, y = make_classification(n_samples=500, n_features=2, n_informative=2, n_redundant=0,
                                random_state=42)
     feature_names = ["x1", "x2"]

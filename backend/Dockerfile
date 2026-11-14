@@ -1,4 +1,4 @@
-# Контекст сборки — корень репозитория (см. docker-compose.yml).
+# The build context is the repository root (see docker-compose.yml).
 FROM python:3.12-slim
 WORKDIR /app
 COPY backend/requirements.txt backend/requirements.txt

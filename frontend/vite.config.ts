@@ -7,6 +7,6 @@ export default defineConfig({
   // through to the service, so the build output also lives in dist/app.
   base: "/app/",
   build: { outDir: "dist/app", emptyOutDir: true },
-  envDir: "..", // читаем .env из корня репо
+  envDir: "..", // read .env from the repository root
   server: { port: 5173 },
 });
