@@ -92,16 +92,5 @@
       },
       "source_id": "src-msl-traverse"
     }
-  ],
-  "context": {
-    "title": "Why this site",
-    "text": "Mount Sharp has boxwork: low ridges roughly 1 to 2 meters (3 to 6 feet) tall with sandy hollows between them, crisscrossing the surface for miles. NASA says the formations suggest ancient groundwater flowed on this part of Mars later than scientists expected. Seen from space they look like giant spiderwebs. The stops on this map are plain Curiosity waypoints, not science targets.",
-    "sources": [
-      {
-        "title": "NASA's Curiosity Rover Sees Martian 'Spiderwebs' Up Close",
-        "url": "https://nasa.gov/missions/mars-science-laboratory/curiosity-rover/nasas-curiosity-rover-sees-martian-spiderwebs-up-close",
-        "credit": "NASA/JPL-Caltech, Jet Propulsion Laboratory, 23 February 2026"
-      }
-    ]
-  }
+  ]
 }

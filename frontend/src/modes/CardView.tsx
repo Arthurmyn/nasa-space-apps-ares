@@ -304,7 +304,12 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
               <div className="doc__context">
                 <h3 id="doc-context" className="doc__h">7. {context.title}</h3>
                 <p>
-                  {context.text} [6]
+                  {context.text}{" "}
+                  {context.sources
+                    .map((s) => REFERENCES.find((r) => r.url === s.url)?.n)
+                    .filter((n) => n !== undefined)
+                    .map((n) => `[${n}]`)
+                    .join(" ")}
                 </p>
               </div>
             )}

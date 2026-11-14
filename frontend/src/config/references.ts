@@ -1,4 +1,4 @@
-/** Documents cited by the assumptions in backend/data/gale-bx/assumptions.json as [1] to [5]; [6] is the source of the site context text. */
+/** Documents cited by the assumptions in backend/data/gale-bx/assumptions.json as [1] to [5]; a site context text (stops.json "context") cites its sources from this list too. */
 export interface Reference {
   n: number;
   /** True for a reference that is not a source of any number or claim, for example a design reference. */
@@ -35,11 +35,6 @@ export const REFERENCES: readonly Reference[] = [
   },
   {
     n: 6,
-    citation: "NASA's Curiosity Rover Sees Martian 'Spiderwebs' Up Close, NASA/JPL-Caltech, Jet Propulsion Laboratory, 23 February 2026.",
-    url: "https://nasa.gov/missions/mars-science-laboratory/curiosity-rover/nasas-curiosity-rover-sees-martian-spiderwebs-up-close",
-  },
-  {
-    n: 7,
     design: true,
     citation: "Curiosity's Proposed Path up Mount Sharp (PIA23179), NASA/JPL-Caltech/ESA/University of Arizona/JHUAPL/MSSS/USGS Astrogeology Science Center, 15 May 2019. Used as a reference for how NASA draws a route on Mount Sharp; no data from it is used.",
     url: "https://science.nasa.gov/resource/curiositys-proposed-path-up-mount-sharp/",
