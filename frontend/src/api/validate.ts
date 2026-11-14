@@ -14,6 +14,11 @@ import {
   type RouteResponse,
   type RouteStop,
   type SafetyLevel,
+  type SiteEntry,
+  type SiteMeta,
+  type SiteStop,
+  type SitesResponse,
+  type StopGroup,
   type StopImage,
 } from "./types.ts";
 
@@ -85,17 +90,18 @@ export function isHttpUrl(value: string): boolean {
 const SAFETY: readonly SafetyLevel[] = ["ok", "caution", "avoid"];
 const HAZARD_KINDS: readonly HazardKind[] = ["rough_terrain", "sand_trap", "steep_slope", "other"];
 
+function stopImage(v: unknown, path: string): StopImage | null {
+  if (v === null || v === undefined) return null;
+  const i = obj(v, path);
+  const url = str(i.url, `${path}.url`);
+  // Only http(s) may reach an <img src>; javascript:, data: and the like are dropped.
+  if (!isHttpUrl(url)) return null;
+  return { url, alt: str(i.alt, `${path}.alt`), credit: str(i.credit, `${path}.credit`) };
+}
+
 function stop(v: unknown, path: string): RouteStop {
   const o = obj(v, path);
-  let image: StopImage | null = null;
-  if (o.image !== null && o.image !== undefined) {
-    const i = obj(o.image, `${path}.image`);
-    const url = str(i.url, `${path}.image.url`);
-    // Only http(s) may reach an <img src>; javascript:, data: and the like are dropped.
-    if (isHttpUrl(url)) {
-      image = { url, alt: str(i.alt, `${path}.image.alt`), credit: str(i.credit, `${path}.image.credit`) };
-    }
-  }
+  const image = stopImage(o.image, `${path}.image`);
   return {
     id: str(o.id, `${path}.id`),
     name: strOrNull(o.name, `${path}.name`),
@@ -181,4 +187,67 @@ export function parseLayersResponse(raw: unknown): LayersResponse {
     };
   });
   return { layers };
+}
+
+const latitude = (v: unknown, path: string): number => {
+  const n = num(v, path);
+  return n < -90 || n > 90 ? fail(path, "a latitude between -90 and 90") : n;
+};
+
+export function parseSiteMeta(raw: unknown): SiteMeta {
+  const o = obj(raw, "meta");
+  const c = obj(o.center, "meta.center");
+  const b = obj(o.bbox, "meta.bbox");
+  const bbox = {
+    lon_min: num(b.lon_min, "meta.bbox.lon_min"),
+    lon_max: num(b.lon_max, "meta.bbox.lon_max"),
+    lat_min: latitude(b.lat_min, "meta.bbox.lat_min"),
+    lat_max: latitude(b.lat_max, "meta.bbox.lat_max"),
+  };
+  if (bbox.lon_min >= bbox.lon_max || bbox.lat_min >= bbox.lat_max) fail("meta.bbox", "a box with min below max");
+  return {
+    site_id: str(o.site_id, "meta.site_id"),
+    name: str(o.name, "meta.name"),
+    preliminary: o.preliminary === true,
+    is_test_data: o.is_test_data === true,
+    center: { lon: num(c.lon, "meta.center.lon"), lat: latitude(c.lat, "meta.center.lat") },
+    bbox,
+    sources: arr(o.sources ?? [], "meta.sources").map((s, i) => str(s, `meta.sources[${i}]`)),
+  };
+}
+
+function siteStop(v: unknown, path: string): SiteStop {
+  const o = obj(v, path);
+  return {
+    id: str(o.id, `${path}.id`),
+    name: str(o.name, `${path}.name`),
+    lon: num(o.lon, `${path}.lon`),
+    lat: latitude(o.lat, `${path}.lat`),
+    note: strOrNull(o.note, `${path}.note`),
+    image: stopImage(o.image, `${path}.image`),
+    source_id: strOrNull(o.source_id, `${path}.source_id`),
+  };
+}
+
+function group(v: unknown, path: string): StopGroup {
+  const o = obj(v, path);
+  return {
+    id: str(o.id, `${path}.id`),
+    name: str(o.name, `${path}.name`),
+    stop_ids: arr(o.stop_ids, `${path}.stop_ids`).map((s, i) => str(s, `${path}.stop_ids[${i}]`)),
+  };
+}
+
+export function parseSitesResponse(raw: unknown): SitesResponse {
+  const o = obj(raw, "response");
+  const sites: SiteEntry[] = arr(o.sites, "sites").map((v, i) => {
+    const p = obj(v, `sites[${i}]`);
+    return {
+      id: str(p.id, `sites[${i}].id`),
+      name: str(p.name, `sites[${i}].name`),
+      groups: arr(p.groups, `sites[${i}].groups`).map((g, j) => group(g, `sites[${i}].groups[${j}]`)),
+      stops: arr(p.stops, `sites[${i}].stops`).map((s, j) => siteStop(s, `sites[${i}].stops[${j}]`)),
+    };
+  });
+  return { sites };
 }
