@@ -16,6 +16,7 @@ interface Deps {
   onAdd: (lon: number, lat: number) => void;
   onMove: (id: string, lon: number, lat: number) => void;
   onSelect: (id: string | null) => void;
+  onRemove: (id: string) => void;
   onCursor: (at: LonLat | null) => void;
 }
 
@@ -70,7 +71,12 @@ export function useMapInteractions(map: MapLibreMap | null, deps: Deps): void {
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
-      const { selected, onMove: move, onSelect } = ref.current;
+      // Selecting a stop redraws its marker and focus falls back to the page body, so keys are
+      // taken from the map or from the body, never from a field, button or list elsewhere.
+      const target = e.target;
+      const onMap = target instanceof Node && container.contains(target);
+      if (!onMap && target !== document.body) return;
+      const { selected, onMove: move, onSelect, onRemove } = ref.current;
       const arrow = ARROWS[e.key];
 
       if (arrow) {
@@ -85,6 +91,9 @@ export function useMapInteractions(map: MapLibreMap | null, deps: Deps): void {
         }
       } else if (e.key === "Escape") {
         onSelect(null);
+      } else if (e.key === "Delete" || e.key === "Backspace") {
+        if (!selected) return;
+        onRemove(selected.id);
       } else if (e.key === "+" || e.key === "=") {
         map.zoomIn({ duration: prefersReducedMotion() ? 0 : 200 });
       } else if (e.key === "-" || e.key === "_") {
@@ -99,12 +108,12 @@ export function useMapInteractions(map: MapLibreMap | null, deps: Deps): void {
     map.on("click", onClick);
     map.on("mousemove", onMove);
     map.on("mouseout", onLeave);
-    container.addEventListener("keydown", onKeyDown);
+    document.addEventListener("keydown", onKeyDown);
     return () => {
       map.off("click", onClick);
       map.off("mousemove", onMove);
       map.off("mouseout", onLeave);
-      container.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("keydown", onKeyDown);
       if (frame) cancelAnimationFrame(frame);
     };
   }, [map]);

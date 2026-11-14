@@ -5,6 +5,7 @@ import {
   formatDistance,
   formatDuration,
   formatSigned,
+  formatSignedElevation,
   formatSlope,
   formatUtcTime,
   stopLabel,
@@ -78,5 +79,17 @@ describe("formatSigned", () => {
     assert.equal(formatSigned(1200, formatDistance), `+${nb("1.20 km")}`);
     assert.equal(formatSigned(-180, formatDistance), `−${nb("180 m")}`);
     assert.equal(formatSigned(0, formatDistance), nb("0 m"));
+  });
+});
+
+describe("formatSignedElevation", () => {
+  it("shows the sign for a non-zero value", () => {
+    assert.equal(formatSignedElevation(12.4, "+"), "+12\u00a0m");
+    assert.equal(formatSignedElevation(12.4, "−"), "−12\u00a0m");
+  });
+
+  it("never prints a minus before zero", () => {
+    assert.equal(formatSignedElevation(0, "−"), "0\u00a0m");
+    assert.equal(formatSignedElevation(0.3, "−"), "0\u00a0m");
   });
 });

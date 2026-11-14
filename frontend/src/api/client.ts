@@ -21,6 +21,17 @@ const BASE = (import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "" : "http
  */
 export const dataSource: "mock" | "live" = import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === "true" ? "mock" : "live";
 
+/** The user-facing reason of a 422 answer, or null when the body does not have one. */
+async function readDetail(res: Response): Promise<string | null> {
+  try {
+    const body: unknown = await res.json();
+    const detail = typeof body === "object" && body !== null ? (body as { detail?: unknown }).detail : null;
+    return typeof detail === "string" && detail.trim() !== "" ? detail.trim().slice(0, 300) : null;
+  } catch {
+    return null;
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit, signal?: AbortSignal): Promise<T> {
   const timeout = new AbortController();
   const timer = window.setTimeout(() => timeout.abort(), REQUEST_TIMEOUT_MS);
@@ -33,7 +44,7 @@ async function request<T>(path: string, init?: RequestInit, signal?: AbortSignal
       ...init,
       signal: timeout.signal,
     });
-    if (!res.ok) throw new ApiError("http", `HTTP ${res.status}`, res.status);
+    if (!res.ok) throw new ApiError("http", `HTTP ${res.status}`, res.status, res.status === 422 ? await readDetail(res) : null);
     try {
       return (await res.json()) as T;
     } catch {

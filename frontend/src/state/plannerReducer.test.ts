@@ -116,8 +116,25 @@ describe("plannerReducer stops/preset", () => {
   it("places the targets as named stops and keeps the start", () => {
     const s = run([add(1), preset(3)]);
     assert.equal(s.start?.id, "start");
-    assert.deepEqual(s.stops.map((p) => p.name), ["Target 1", "Target 2", "Target 3"]);
+    assert.equal(s.stops.length, 3);
     assert.equal(s.notice, null);
+  });
+
+  it("with a start, visits the nearest target first instead of the list order", () => {
+    // Start at (1, 1); the targets are (0, 0), (1, 1) and (2, 2). The one under the start is first.
+    const s = run([add(1), preset(3)]);
+    assert.equal(s.stops[0]?.name, "Target 2");
+    assert.equal(s.stops.length, 3);
+  });
+
+  it("without a start, keeps the list order", () => {
+    const s = run([preset(3)]);
+    assert.deepEqual(s.stops.map((p) => p.name), ["Target 1", "Target 2", "Target 3"]);
+  });
+
+  it("keeps the science note of a target before any route exists", () => {
+    const s = run([{ type: "stops/preset", stops: [{ lon: 0, lat: 0, name: "T", note: "Look at the ridge" }] }]);
+    assert.equal(s.stops[0]?.note, "Look at the ridge");
   });
 
   it("replaces earlier stops instead of appending", () => {
@@ -138,5 +155,19 @@ describe("plannerReducer stops/preset", () => {
     const req = buildRouteRequest(run([add(9)], placed));
     assert.equal(req?.stops.length, 2);
     assert.equal(req?.stops[0]?.name, "Target 1");
+  });
+});
+
+describe("plannerReducer plan/load and notice/set", () => {
+  it("restores a start and stops with fresh ids and asks for a route", () => {
+    const s = run([{ type: "plan/load", start: { lon: 1, lat: 1 }, stops: [{ lon: 2, lat: 2 }, { lon: 3, lat: 3 }] }]);
+    assert.equal(s.start?.id, "start");
+    assert.deepEqual(s.stops.map((p) => p.id), ["stop-1", "stop-2"]);
+    assert.equal(s.nextStopNo, 3);
+    assert.ok(s.planVersion > 0);
+  });
+
+  it("notice/set shows a message", () => {
+    assert.equal(run([{ type: "notice/set", message: "Outside the grid" }]).notice, "Outside the grid");
   });
 });
