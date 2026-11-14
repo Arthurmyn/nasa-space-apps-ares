@@ -1,6 +1,13 @@
 import { useId } from "react";
 import type { RouteResponse } from "../api/types.ts";
+import {
+  GCR_DOSE_EQUIVALENT_MSV_PER_DAY,
+  RADIATION_CITATION,
+  RADIATION_LABEL,
+  RADIATION_NOTE,
+} from "../config/radiation.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
+import { estimatedDoseMsv, formatDose } from "../lib/radiation.ts";
 import { formatDistance, formatDuration, formatSigned, formatSlope } from "../lib/format.ts";
 import { usePlanner } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
@@ -195,6 +202,16 @@ export function RouteSummary() {
             <span className="stat__label">Safety status</span>
             <SafetyBadge level={route.safety} />
             <p className="safety__reason">{route.safety_reason}</p>
+          </div>
+          <div className="dose">
+            <span className="stat__label">{RADIATION_LABEL}</span>
+            <span className="dose__value mono">{formatDose(estimatedDoseMsv(GCR_DOSE_EQUIVALENT_MSV_PER_DAY, route.est_time_s))}</span>
+            <p className="muted dose__note">
+              {RADIATION_NOTE}{" "}
+              <a href={RADIATION_CITATION.doi} target="_blank" rel="noreferrer">
+                {RADIATION_CITATION.text}
+              </a>
+            </p>
           </div>
         </div>
       )}
