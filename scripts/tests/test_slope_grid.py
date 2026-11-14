@@ -226,7 +226,7 @@ def test_committed_real_grid_stops_and_assumptions_match_contract():
         assert "TO VERIFY" not in item["source"]
     stops = json.loads((backend / "stops.json").read_text())
     sources = json.loads((backend / "sources.json").read_text())
-    assert set(stops) == {"groups", "stops"}
+    assert set(stops) == {"groups", "stops", "context"}
     assert 3 <= len(stops["stops"]) <= 6
     ids = [stop["id"] for stop in stops["stops"]]
     assert len(set(ids)) == len(ids)

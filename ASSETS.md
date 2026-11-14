@@ -110,15 +110,24 @@ With `VITE_USE_MOCK=true` the app uses synthetic sample data from `frontend/src/
 
 ## Referenced documents
 
-Cited as [1] to [5] in the assumptions (`backend/data/gale-bx/assumptions.json`) and printed on the route card. They are links to public NASA and JPL pages, not files in this repository. Full list: `frontend/src/config/references.ts`.
+Cited as [1] to [5] in the assumptions (and [6], the site context page, on the card) (`backend/data/gale-bx/assumptions.json`) and printed on the route card. They are links to public NASA and JPL pages, not files in this repository. Full list: `frontend/src/config/references.ts`.
 
 1. NASA EVA-EXP-0075, Exploration EVA System ConOps for Artemis Phase 1: https://www.nasa.gov/wp-content/uploads/2020/01/topic_1-_eva_lunar_surface_concept_of_operations.pdf
 2. NASA Moon to Mars Architecture 2024, Lunar Mobility Drivers and Needs: https://www.nasa.gov/wp-content/uploads/2024/06/acr24-lunar-mobility-drivers-and-needs.pdf
 3. Apollo 11 Lunar Surface Journal, Lunar gaits: https://www.nasa.gov/wp-content/uploads/static/history/alsj/a11/a11.gaits.html
 4. JPL PIA26017, Curiosity's difficult climb: https://www.jpl.nasa.gov/images/pia26017-a-map-of-curiositys-difficult-climb/
 5. Hassler, D. M. et al., Mars' Surface Radiation Environment Measured with the Mars Science Laboratory's Curiosity Rover, Science 343 (6169), 1244797, online 9 Dec 2013, print 24 Jan 2014: https://doi.org/10.1126/science.1244797 (DOI and bibliographic data checked in Crossref). The figure of 0.67 mSv per day (average galactic cosmic ray dose equivalent rate on the Martian surface, August 2012 to June 2013) was checked in the SwRI release quoting the RAD principal investigator: https://www.swri.org/press-release/swri-scientists-publish-first-radiation-measurements-surface-mars. The paper itself was not read.
+6. NASA/JPL, NASA's Curiosity Rover Sees Martian 'Spiderwebs' Up Close, 23 February 2026: https://nasa.gov/missions/mars-science-laboratory/curiosity-rover/nasas-curiosity-rover-sees-martian-spiderwebs-up-close
 
 The values attributed to [1] to [4] (a 20 deg EVA walking capability, a 2 km distance limit, Apollo walking speeds, the 23 deg slope at Gale) were supplied by the team and not re-checked against the documents. There is no official human-on-Mars slope standard; the 15 deg and 10 deg limits are ARES planning values.
+
+## Site context text
+
+The "Why this site" text (Plan panel and route card, reference [6]) is stored in `backend/data/gale-bx/stops.json` under `context`. It uses only facts stated in one page, read in full:
+
+- NASA/JPL, "NASA's Curiosity Rover Sees Martian 'Spiderwebs' Up Close", 23 February 2026, `https://nasa.gov/missions/mars-science-laboratory/curiosity-rover/nasas-curiosity-rover-sees-martian-spiderwebs-up-close`. Credit NASA/JPL-Caltech. Facts used: boxwork ridges roughly 1 to 2 m (3 to 6 ft) tall with sandy hollows, crisscrossing the surface for miles on Mount Sharp; the formations suggest ancient groundwater flowed on this part of Mars later than scientists expected; they look like giant spiderwebs from space.
+
+The JPL news release `https://www.jpl.nasa.gov/news/nasas-curiosity-mars-rover-starts-unpacking-boxwork-formations/` is not cited and nothing in the app comes from it: a direct download returned HTTP 403, and a delegated fetch returned only a summary, not the page text, so its facts could not be checked here.
 
 ## Constants
 

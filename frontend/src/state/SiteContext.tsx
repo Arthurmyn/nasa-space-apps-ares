@@ -137,3 +137,9 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     </Ctx.Provider>
   );
 }
+
+/** Science context of the open site from GET /sites, or null while it is loading or when there is none. */
+export function useSiteScienceContext() {
+  const { site, sites } = useSite();
+  return sites.entries.find((e) => e.id === site.id)?.context ?? null;
+}

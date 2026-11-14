@@ -39,14 +39,14 @@
   --doc-line: #b8b8c4;
   width: 210mm;
   min-height: 297mm;
-  padding: 8mm 11mm;
+  padding: 7mm 11mm;
   background: #fff;
   color: var(--doc-ink);
   font-size: 8.5pt;
   line-height: 1.35;
   display: grid;
   align-content: start;
-  gap: 2.6mm;
+  gap: 2.2mm;
 }
 
 .doc__head {
@@ -142,7 +142,7 @@
 
 .doc__stack {
   display: grid;
-  gap: 2.6mm;
+  gap: 2.2mm;
   min-width: 0;
 }
 
@@ -412,4 +412,14 @@
     display: block;
     overflow-x: auto;
   }
+}
+
+.doc__context {
+  margin-top: 1.6mm;
+}
+
+.doc__context p {
+  margin: 0;
+  font-size: 6.9pt;
+  line-height: 1.3;
 }
