@@ -126,6 +126,56 @@ export interface RouteResponse {
   alternative: RouteAlternative | null;
 }
 
+// ---- Site data: docs/DATA_CONTRACT.md -----------------------------------------
+
+export interface GridBbox {
+  lon_min: number;
+  lon_max: number;
+  lat_min: number;
+  lat_max: number;
+}
+
+/** /app/data/<site_id>/meta.json, the parts the frontend uses (contract section 3). */
+export interface SiteMeta {
+  site_id: string;
+  name: string;
+  preliminary: boolean;
+  /** True for generated test grids. The UI shows a "Test data" badge. */
+  is_test_data: boolean;
+  center: { lon: number; lat: number };
+  bbox: GridBbox;
+  /** Dataset credits, shown under "How this is computed". */
+  sources: string[];
+}
+
+export interface SiteStop {
+  id: string;
+  name: string;
+  lon: number;
+  lat: number;
+  note: string | null;
+  image: StopImage | null;
+  source_id: string | null;
+}
+
+export interface StopGroup {
+  id: string;
+  name: string;
+  stop_ids: string[];
+}
+
+/** One entry of GET /sites (contract section 7). */
+export interface SiteEntry {
+  id: string;
+  name: string;
+  groups: StopGroup[];
+  stops: SiteStop[];
+}
+
+export interface SitesResponse {
+  sites: SiteEntry[];
+}
+
 // ---- Client-side error model ----------------------------------------------
 
 export type ApiErrorKind = "network" | "timeout" | "http" | "invalid" | "aborted";
