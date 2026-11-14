@@ -24,7 +24,7 @@
   "elevation_nodata": "NaN",
   "slope_unit_deg": 0.5,
   "slope_nodata": 255,
-  "slope_window_m": 5,
+  "slope_window_m": 8.0,
   "sources": [
     "HiRISE DTM DTEEC_001488_1750_001752_1750_U02, NASA/JPL/University of Arizona"
   ]

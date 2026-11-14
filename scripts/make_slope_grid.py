@@ -30,7 +30,8 @@ DEFAULT_HANDOFF = ROOT / "docs/research/r0/gale_bx_handoff.json"
 RADIUS = 3396190
 MAX_BYTES = 3_000_000
 RESERVE_BYTES = 100_000
-WINDOW_M = 5
+# Target width of the box filter that smooths DTM noise before the slope is taken.
+SMOOTH_TARGET_M = 5
 # Cell sizes tried in turn when the grid does not fit the 3 MB budget.
 # The full team AOI (about 1.3 x 1.8 km) needs 3 m.
 FALLBACK_CELLS = (2.0, 3.0)
@@ -101,7 +102,7 @@ def build_grid(handoff, cell):
         "elevation_nodata": "NaN",
         "slope_unit_deg": 0.5,
         "slope_nodata": 255,
-        "slope_window_m": WINDOW_M,
+        "slope_window_m": slope_window_m(cell),
         "sources": [
             f"HiRISE DTM {handoff['dtm_product_id']}, NASA/JPL/University of Arizona",
         ],
@@ -141,9 +142,23 @@ def fake_elevation(grid):
     return z.astype("float32")
 
 
+def smoothing_cells(cell):
+    """Odd box-filter width in cells nearest SMOOTH_TARGET_M (5 at 1 m, 3 at 2 m, 1 at 3 m: no smoothing)."""
+    return max(1, int(math.floor(SMOOTH_TARGET_M/cell/2))*2+1)
+
+
+def slope_window_m(cell):
+    """Horizontal span the slope at one cell is measured over, written to meta.json.
+
+    The slope is a central difference (np.gradient) of box means, so along each axis it uses
+    DTM cells from -(box+1)/2 to +(box+1)/2 around the cell. The span between the centres of
+    those outermost cells is (box + 1) * cell: 6 m at 1 m, 8 m at 2 m, 6 m at 3 m.
+    """
+    return float((smoothing_cells(cell) + 1) * cell)
+
+
 def smoothed_gradient(z, cell):
-    # Nearest odd box width to 5 m (5 pixels at 1 m, 3 at 2 m).
-    size = max(1, int(math.floor(WINDOW_M/cell/2))*2+1)
+    size = smoothing_cells(cell)
     valid = np.isfinite(z)
     smooth = uniform_filter(np.where(valid, z, 0).astype("float64"), size=size, mode="nearest")
     # Require a complete smoothing window and its gradient neighbours. No gap filling.

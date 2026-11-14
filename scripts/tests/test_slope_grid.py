@@ -101,7 +101,7 @@ def test_fake_cli_and_contract_coordinates(tmp_path):
     assert sum(p.stat().st_size for p in tmp_path.rglob("*") if p.is_file()) <= 3_000_000
 
 
-@pytest.mark.parametrize("cell", [1.0, 2.0])
+@pytest.mark.parametrize("cell", [1.0, 2.0, 3.0])
 def test_smoothed_plane_slope_and_nodata(cell):
     y, x = np.indices((80, 90)) * cell
     z = (0.1*x + 0.2*y).astype("f4")
@@ -112,6 +112,14 @@ def test_smoothed_plane_slope_and_nodata(cell):
     assert np.all(slope[30:40, 30:40] == 255)
     assert slope[29, 35] == 255  # Do not invent terrain at a data gap.
     assert slope.dtype == np.uint8
+
+
+@pytest.mark.parametrize("cell, box, window", [(1.0, 5, 6.0), (2.0, 3, 8.0), (3.0, 1, 6.0)])
+def test_slope_window_follows_cell_size(cell, box, window):
+    # Box filter nearest 5 m, then a central difference: span = (box + 1) * cell.
+    assert slope_grid.smoothing_cells(cell) == box
+    assert slope_grid.slope_window_m(cell) == window
+    assert build_grid(json.loads(HANDOFF.read_text()), cell).meta["slope_window_m"] == window
 
 
 def test_real_reprojection_preserves_plane_and_source_nodata(tmp_path):
@@ -220,6 +228,7 @@ def test_committed_real_grid_stops_and_assumptions_match_contract():
     assert meta["is_test_data"] is False and meta["preliminary"] is True
     assert (backend / "meta.json").read_bytes() == (ROOT / "frontend/public/data/gale-bx/meta.json").read_bytes()
     assert (backend / "elevation.bin").stat().st_size == meta["width"] * meta["height"] * 4
+    assert meta["slope_window_m"] == slope_grid.slope_window_m(meta["cell_m"])
     assumptions = json.loads((backend / "assumptions.json").read_text())
     assert set(assumptions) == {"slope_limit_deg", "slope_caution_deg", "speed_kmh", "items"}
     assert [assumptions[k] for k in ["slope_limit_deg", "slope_caution_deg", "speed_kmh"]] == [15, 10, 2]
