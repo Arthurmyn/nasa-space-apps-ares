@@ -179,7 +179,24 @@ def test_offline_workflow_writes_evidence_and_preserves_region_work(tmp_path, ha
     accepted = json.dumps({"id": "GALE-BX", "habitat": {"name": "keep me"}})
     region.write_text(accepted)
     handoff = tmp_path / handoff_directory / "gale_bx_handoff.json"
-    result = r0_coverage.run(raw, output.resolve(), handoff, manifest=manifest)
+    planning_file = tmp_path / "final_points.geojson"
+    planning_file.write_text(
+        json.dumps(
+            {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {"role": "target"},
+                        "geometry": {"type": "Point", "coordinates": [137.40005, -4.8]},
+                    }
+                ],
+            }
+        )
+    )
+    result = r0_coverage.run(
+        raw, output.resolve(), handoff, manifest=manifest, planning_points=planning_file
+    )
     assert result["selected_dtm"] == "B"
     assert region.read_text() == accepted
     config = json.loads(handoff.read_text())
@@ -188,6 +205,8 @@ def test_offline_workflow_writes_evidence_and_preserves_region_work(tmp_path, ha
     assert not Path(evidence).is_absolute()
     assert (handoff.parent / evidence).resolve() == (output / "r0_result.json").resolve()
     proposal = config["aoi_proposal"]
+    assert proposal["planning_points_count"] == 1
+    assert (output / "planning_points.geojson").read_bytes() == planning_file.read_bytes()
     assert proposal["crs_proj"].find("+no_defs=True") == -1
     crs = CRS.from_user_input(proposal["crs_proj"])
     parallel = next(

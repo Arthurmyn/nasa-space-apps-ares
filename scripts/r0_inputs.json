@@ -7,7 +7,24 @@
       "snapshot": "data/r0_waypoints.geojson",
       "url": "https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json",
       "sha256": "ea8133b7e91f7fb35e34b566e27122969c593156f3d6fe5b5915be12fba292fe",
-      "bytes": 31051
+      "bytes": 31051,
+      "provenance": {
+        "description": "NASA MMGIS Curiosity drive positions, inclusive sols 4534–4805; all available positions retained, no daily interpolation",
+        "retrieved_on": "2026-11-14",
+        "date_precision": "day; exact retrieval time was not recorded",
+        "source_sha256": "5a32324f4b8ba22ebdfac50a503e195f47ccdc876ad4c15b19e29dc7cef15a09",
+        "source_bytes": 665124,
+        "filter": {
+          "field": "sol",
+          "minimum": 4534,
+          "maximum": 4805,
+          "inclusive": true,
+          "order": "stable ascending sol"
+        },
+        "serialization": "UTF-8; json.dumps defaults, allow_nan=False; one trailing LF; preserve full selected feature properties and geometry",
+        "reproduce_command": "python -m scripts.r0_snapshot --source data/r0/raw/MSL_waypoints.json --output data/r0/raw/r0_waypoints_recreated.geojson",
+        "verify_live_command": "python -m scripts.r0_snapshot --download"
+      }
     },
     {
       "file": "DTEEC_001488_1750_001752_1750_U02.IMG",

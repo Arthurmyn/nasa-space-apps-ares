@@ -54,7 +54,13 @@ def validate_cached(path: Path, expected: str, *, force: bool = False) -> str:
         return expected
     actual = sha256(path)
     if actual != expected or signature(path) != before:
-        raise ValueError(f"SHA-256 mismatch or file changed during verification: {path}")
+        raise ValueError(
+            f"SHA-256 mismatch or file changed during verification: {path}. "
+            "Repair with: python -m scripts.r0_coverage --download --verify-inputs "
+            "(include the same --raw path if customized). "
+            f"Or remove the corrupt file '{path}' and receipt '{receipt_path(path)}', "
+            "then rerun with --download."
+        )
     save_receipt(path, actual)
     return actual
 
@@ -102,7 +108,13 @@ def load_inputs(raw: Path, manifest: Path, *, fetch: bool, force: bool) -> tuple
             if digest != entry["sha256"]:
                 raise ValueError(f"SHA-256 mismatch for committed waypoint snapshot: {path}")
         elif path.exists():
-            digest = validate_cached(path, entry["sha256"], force=force)
+            try:
+                digest = validate_cached(path, entry["sha256"], force=force)
+            except ValueError:
+                if not fetch:
+                    raise
+                print(f"Repairing corrupt cache: {path}", flush=True)
+                digest = download(entry["url"], path, entry["sha256"], entry["bytes"])
         elif fetch:
             print(f"Downloading {entry['file']}", flush=True)
             digest = download(entry["url"], path, entry["sha256"], entry["bytes"])
@@ -114,5 +126,6 @@ def load_inputs(raw: Path, manifest: Path, *, fetch: bool, force: bool) -> tuple
         record = {key: entry[key] for key in ("file", "url", "bytes")} | {"sha256": digest}
         if snapshot:
             record["snapshot_relative_to_manifest"] = snapshot
+            record["provenance"] = entry.get("provenance", {})
         records.append(record)
     return inputs, records

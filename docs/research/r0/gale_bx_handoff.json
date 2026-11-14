@@ -4,7 +4,14 @@
   "decision": "campaign-covered",
   "dtm_product_id": "DTEEC_009149_1750_009294_1750_U01",
   "aoi_proposal": {
-    "status": "proposed; requires R1/Q6 terrain and habitat QA",
+    "status": "preliminary; recompute and approve after R6/D9 and R1/Q6 terrain QA",
+    "planning_ready": false,
+    "required_extent_inputs": [
+      "R6 science targets",
+      "D9 habitat"
+    ],
+    "planning_points_count": 0,
+    "extent_policy": "Recompute with all finalized targets and habitat before enabling /plan",
     "aoi_geojson": {
       "type": "Polygon",
       "coordinates": [
@@ -43,7 +50,7 @@
       "source_tag": "R0-AOI-proposal-v1",
       "label": "assumption"
     },
-    "center_method": "area centroid of campaign envelope + buffer clipped to valid DTM"
+    "center_method": "centroid of campaign + planning-point envelope and buffer, clipped to DTM"
   },
   "native_dtm": {
     "crs_wkt": "PROJCRS[\"EQUIRECTANGULAR MARS\",BASEGEOGCRS[\"GCS_MARS\",DATUM[\"D_MARS\",ELLIPSOID[\"MARS_localRadius\",3396190,0,LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]]],PRIMEM[\"Reference_Meridian\",0,ANGLEUNIT[\"degree\",0.0174532925199433,ID[\"EPSG\",9122]]]],CONVERSION[\"unnamed\",METHOD[\"Equidistant Cylindrical (Spherical)\",ID[\"EPSG\",1029]],PARAMETER[\"Latitude of 1st standard parallel\",0,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8823]],PARAMETER[\"Longitude of natural origin\",137.41,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8802]],PARAMETER[\"False easting\",0,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8806]],PARAMETER[\"False northing\",0,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8807]]],CS[Cartesian,2],AXIS[\"easting\",east,ORDER[1],LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]],AXIS[\"northing\",north,ORDER[2],LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]]]",

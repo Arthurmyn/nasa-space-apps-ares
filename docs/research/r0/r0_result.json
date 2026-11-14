@@ -1,6 +1,6 @@
 {
   "issue": 3,
-  "checked_at": "2026-11-14T11:17:33.969599+00:00",
+  "checked_at": "2026-11-14T11:27:03.411874+00:00",
   "requested_sol_range": [
     4534,
     4805
@@ -25,7 +25,14 @@
     -4.803166844999999
   ],
   "aoi_proposal": {
-    "status": "proposed; requires R1/Q6 terrain and habitat QA",
+    "status": "preliminary; recompute and approve after R6/D9 and R1/Q6 terrain QA",
+    "planning_ready": false,
+    "required_extent_inputs": [
+      "R6 science targets",
+      "D9 habitat"
+    ],
+    "planning_points_count": 0,
+    "extent_policy": "Recompute with all finalized targets and habitat before enabling /plan",
     "aoi_geojson": {
       "type": "Polygon",
       "coordinates": [
@@ -64,7 +71,7 @@
       "source_tag": "R0-AOI-proposal-v1",
       "label": "assumption"
     },
-    "center_method": "area centroid of campaign envelope + buffer clipped to valid DTM"
+    "center_method": "centroid of campaign + planning-point envelope and buffer, clipped to DTM"
   },
   "candidates": [
     {
@@ -185,7 +192,24 @@
       "url": "https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json",
       "bytes": 31051,
       "sha256": "ea8133b7e91f7fb35e34b566e27122969c593156f3d6fe5b5915be12fba292fe",
-      "snapshot_relative_to_manifest": "data/r0_waypoints.geojson"
+      "snapshot_relative_to_manifest": "data/r0_waypoints.geojson",
+      "provenance": {
+        "description": "NASA MMGIS Curiosity drive positions, inclusive sols 4534\u20134805; all available positions retained, no daily interpolation",
+        "retrieved_on": "2026-11-14",
+        "date_precision": "day; exact retrieval time was not recorded",
+        "source_sha256": "5a32324f4b8ba22ebdfac50a503e195f47ccdc876ad4c15b19e29dc7cef15a09",
+        "source_bytes": 665124,
+        "filter": {
+          "field": "sol",
+          "minimum": 4534,
+          "maximum": 4805,
+          "inclusive": true,
+          "order": "stable ascending sol"
+        },
+        "serialization": "UTF-8; json.dumps defaults, allow_nan=False; one trailing LF; preserve full selected feature properties and geometry",
+        "reproduce_command": "python -m scripts.r0_snapshot --source data/r0/raw/MSL_waypoints.json --output data/r0/raw/r0_waypoints_recreated.geojson",
+        "verify_live_command": "python -m scripts.r0_snapshot --download"
+      }
     },
     {
       "file": "DTEEC_001488_1750_001752_1750_U02.IMG",
