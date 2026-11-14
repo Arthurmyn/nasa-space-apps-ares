@@ -19,7 +19,7 @@
       "name": "Curiosity sol 4534",
       "lon": 137.3864361,
       "lat": -4.79761763,
-      "note": "Sol 4534: Curiosity waypoint RMC 116_0 from docs/research/r0/rover_sols4534-4805.geojson (MSL waypoints snapshot).",
+      "note": "Curiosity waypoint at sol 4534, 4.7976° S, 137.3864° E.",
       "image": null,
       "source_id": "src-msl-traverse"
     },
@@ -28,7 +28,7 @@
       "name": "Curiosity sol 4554",
       "lon": 137.3834371,
       "lat": -4.79971414,
-      "note": "Sol 4554: Curiosity waypoint RMC 116_1806 from docs/research/r0/rover_sols4534-4805.geojson (MSL waypoints snapshot).",
+      "note": "Curiosity waypoint at sol 4554, 4.7997° S, 137.3834° E.",
       "image": null,
       "source_id": "src-msl-traverse"
     },
@@ -37,7 +37,7 @@
       "name": "Curiosity sol 4585",
       "lon": 137.381053,
       "lat": -4.80256772,
-      "note": "Sol 4585: Curiosity waypoint RMC 117_702 from docs/research/r0/rover_sols4534-4805.geojson (MSL waypoints snapshot).",
+      "note": "Curiosity waypoint at sol 4585, 4.8026° S, 137.3811° E.",
       "image": null,
       "source_id": "src-msl-traverse"
     },
@@ -46,7 +46,7 @@
       "name": "Curiosity sol 4609",
       "lon": 137.3793204,
       "lat": -4.80474015,
-      "note": "Sol 4609: Curiosity waypoint RMC 117_2730 from docs/research/r0/rover_sols4534-4805.geojson (MSL waypoints snapshot).",
+      "note": "Curiosity waypoint at sol 4609, 4.8047° S, 137.3793° E.",
       "image": null,
       "source_id": "src-msl-traverse"
     },
@@ -55,7 +55,7 @@
       "name": "Curiosity sol 4655",
       "lon": 137.3798956,
       "lat": -4.80716832,
-      "note": "Sol 4655: Curiosity waypoint RMC 118_2538 from docs/research/r0/rover_sols4534-4805.geojson (MSL waypoints snapshot).",
+      "note": "Curiosity waypoint at sol 4655, 4.8072° S, 137.3799° E.",
       "image": null,
       "source_id": "src-msl-traverse"
     },
@@ -64,7 +64,7 @@
       "name": "Curiosity sol 4805",
       "lon": 137.38142,
       "lat": -4.8078367,
-      "note": "Sol 4805: Curiosity waypoint RMC 120_808 from docs/research/r0/rover_sols4534-4805.geojson (MSL waypoints snapshot).",
+      "note": "Curiosity waypoint at sol 4805, 4.8078° S, 137.3814° E.",
       "image": null,
       "source_id": "src-msl-traverse"
     }
