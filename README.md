@@ -14,17 +14,17 @@ _Что делает продукт? Ключевые фичи (3–5 пункт
 ## Архитектура
 
 ```
-┌────────────┐   HTTP/JSON   ┌────────────┐   python import   ┌────────────┐
-│  frontend  │ ────────────▶ │  backend   │ ────────────────▶ │     ml     │
-│ React+Vite │               │  FastAPI   │                   │ train/infer│
-└────────────┘               └────────────┘                   └────────────┘
-     :5173                        :8000                      ml/models/*.pkl
+┌────────────┐   HTTP/JSON   ┌────────────┐   чтение при старте   ┌─────────────────┐
+│  frontend  │ ────────────▶ │  backend   │ ───────────────────▶ │ data/gale-bx/   │
+│ React+Vite │               │ FastAPI/A* │                       │ рельеф и цели   │
+└────────────┘               └────────────┘                       └─────────────────┘
+     :5173                        :8000                         backend/data/
 ```
 
 | Слой | Стек | Папка |
 |------|------|-------|
 | Frontend | React 18, TypeScript, Vite | [`frontend/`](frontend/) |
-| Backend | Python 3.11, FastAPI, Pydantic | [`backend/`](backend/) |
+| Backend | Python 3.10+, FastAPI, Pydantic; Vercel/Docker: Python 3.12 | [`backend/`](backend/) |
 | ML | Python, scikit-learn (→ PyTorch при необходимости), Jupyter | [`ml/`](ml/) |
 | Infra | Docker Compose, шаблоны GitHub | [`docker-compose.yml`](docker-compose.yml), [`.github/`](.github/) |
 
@@ -42,7 +42,7 @@ nasa-space-apps-ares/
 │   ├── app/api/routes/     # эндпоинты
 │   ├── app/core/           # конфиг
 │   ├── app/schemas/        # Pydantic-модели (контракт API)
-│   ├── app/services/       # бизнес-логика, обёртка над ML
+│   ├── app/services/       # загрузка сетки и маршрутизация A*
 │   └── tests/
 ├── ml/                     # данные, ноутбуки, обучение, инференс
 │   ├── data/{raw,processed}/   # не коммитим
@@ -65,7 +65,7 @@ docker compose up --build
 
 ### Локально
 
-**ML** (сначала - чтобы у бэка была модель)
+**ML** (отдельные эксперименты; для запуска backend не требуется)
 ```bash
 cd ml
 pip install -r requirements.txt
@@ -73,11 +73,16 @@ cd .. && python -m ml.src.train      # сохранит ml/models/model.pkl
 ```
 
 **Backend**
+
+Локально поддерживается Python 3.10 и новее. В Vercel (`backend/.python-version`)
+и Docker используется Python 3.12. Backend читает готовую сетку из
+`backend/data/gale-bx/`; обучение ML-модели не требуется.
+
 ```bash
 cd backend
 python -m venv .venv
 .venv\Scripts\activate               # macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt -r ../ml/requirements.txt
+pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
