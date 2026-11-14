@@ -230,14 +230,34 @@
       height:calc(120 * var(--u));
       overflow:visible;
     }
+    .demo-hint__row{
+      display:flex;
+      align-items:center;
+      gap:calc(12 * var(--u));
+      margin:calc(4 * var(--u)) 0 0 calc(62 * var(--u));
+    }
+    .demo-play{
+      flex:none;
+      width:calc(40 * var(--u));
+      height:calc(40 * var(--u));
+      filter:drop-shadow(0 calc(6 * var(--u)) calc(14 * var(--u)) rgba(155,140,255,.35));
+    }
     .demo-hint__text{
       margin:0;
       color:#fff;
-      font-size:calc(15 * var(--u));
-      font-weight:450;
-      font-variation-settings:'opsz' 15;
-      line-height:calc(20 * var(--u));
-      letter-spacing:calc(-0.2 * var(--u));
+      font-size:calc(19 * var(--u));
+      line-height:calc(24 * var(--u));
+      letter-spacing:calc(-0.3 * var(--u));
+    }
+    .demo-hint__text strong{ display:block; font-weight:680; font-variation-settings:'opsz' 20; }
+    .demo-hint__text span{ display:block; font-weight:400; color:rgba(255,255,255,.78); }
+    .demo-hint__text b{ font-weight:700; color:#9b8cff; }
+    .demo-under{
+      display:block;
+      width:calc(222 * var(--u));
+      height:calc(13 * var(--u));
+      margin:calc(6 * var(--u)) 0 0 calc(114 * var(--u));
+      overflow:visible;
     }
     .bar.is-scrolled .demo-hint{ opacity:0; }
     @media (max-width: 1023px){ .demo-hint{ display:none; } }
@@ -558,7 +578,9 @@
       /* The arrow draws itself once the intro has settled; the head lands after the line. */
       .da-line{ stroke-dasharray:1; stroke-dashoffset:1; animation:da-draw 1s var(--e-reveal) 2.1s forwards; }
       .da-head{ opacity:0; animation:da-head .28s var(--e-soft) 2.95s forwards; }
-      .demo-hint__text{ opacity:0; animation:da-head .5s var(--e-soft) 3.1s forwards; }
+      .demo-hint__row{ opacity:0; animation:da-rise .6s var(--e-soft) 3.05s forwards; }
+      .da-under{ stroke-dasharray:1; stroke-dashoffset:1; animation:da-draw .8s var(--e-reveal) 3.55s forwards; }
+      @keyframes da-rise{ from{ opacity:0; transform:translate3d(0,8px,0); } to{ opacity:1; transform:none; } }
       @keyframes da-draw{ to{ stroke-dashoffset:0; } }
       @keyframes da-head{ from{ opacity:0; } to{ opacity:1; } }
     }
@@ -634,13 +656,23 @@
         <a class="btn ghost" href="/app/">Launch app</a>
         <a class="btn solid" href="#demo">Get a demo</a>
         <div class="demo-hint">
-          <svg class="demo-arrow" viewBox="0 0 220 150" aria-hidden="true" focusable="false">
-            <g fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
-              <path class="da-line" pathLength="1" d="M206 138C132 150 70 112 62 30"/>
-              <path class="da-head" d="M43 52L62 24L83 49"/>
+          <svg class="demo-arrow" viewBox="0 0 320 120" aria-hidden="true" focusable="false">
+            <g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
+              <path class="da-line" pathLength="1" stroke-width="3" d="M112 114C136 88 140 52 117 20"/>
+              <path class="da-head" stroke-width="3" d="M100 38L117 15L134 33"/>
             </g>
           </svg>
-          <p class="demo-hint__text">Watch a short demo to see ARES in action.</p>
+          <div class="demo-hint__row">
+            <svg class="demo-play" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+              <rect x="3" y="3" width="34" height="34" rx="9" fill="rgba(155,140,255,.16)" stroke="#9b8cff" stroke-width="2.2"/>
+              <path d="M16 12.5L28 20L16 27.5Z" fill="#9b8cff"/>
+            </svg>
+            <p class="demo-hint__text"><strong>Watch a short demo</strong><span>to see <b>ARES</b> in action</span></p>
+          </div>
+          <svg class="demo-under" viewBox="0 0 240 14" aria-hidden="true" focusable="false">
+            <defs><linearGradient id="du-grad" x1="0" x2="1"><stop offset="0" stop-color="#9b8cff" stop-opacity="0"/><stop offset="0.25" stop-color="#9b8cff"/><stop offset="0.8" stop-color="#9b8cff"/><stop offset="1" stop-color="#9b8cff" stop-opacity="0"/></linearGradient></defs>
+            <path class="da-under" pathLength="1" d="M6 9Q110 1 234 8" fill="none" stroke="url(#du-grad)" stroke-width="3" stroke-linecap="round"/>
+          </svg>
         </div>
         <button class="menu" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu-sheet">
           <svg viewBox="0 0 20 14" fill="none" aria-hidden="true">
