@@ -97,7 +97,7 @@ Response `200` (example values only):
       "note": "Short science note", "image": { "url": "https://…", "alt": "…", "credit": "…" } }
   ],
   "hazards": [
-    { "id": "hazard-1", "kind": "rough_terrain", "label": "Rough terrain",
+    { "id": "hazard-1", "kind": "steep_slope", "label": "Slope over 15 deg",
       "polygon": { "type": "Polygon", "coordinates": [[[77.5, 18.4], [77.5, 18.5], [77.6, 18.5], [77.5, 18.4]]] } }
   ],
   "profile": [
@@ -129,7 +129,7 @@ Response `200` (example values only):
 | `stops[].dist_m` | number | Distance along the route at which the stop is reached |
 | `stops[].note` | string \| null | Short science note |
 | `stops[].image` | `{ url, alt, credit } \| null` | Rover image. Only `http(s)` URLs are used. `alt` and `credit` are mandatory when an image is present |
-| `hazards[]` | `{ id, kind, label, polygon }` | `kind`: `rough_terrain \| sand_trap \| steep_slope \| other`. `polygon` is a GeoJSON Polygon with closed rings. `label` is drawn on the map |
+| `hazards[]` | `{ id, kind, label, polygon }` | `kind`: `rough_terrain \| sand_trap \| steep_slope \| other`. `polygon` is a GeoJSON Polygon in lon/lat with closed rings (the first is the outline, any others are holes). `label` is drawn on the map. The backend returns `steep_slope` zones only, see below |
 | `profile[]` | `{ dist_m, elev_m, slope_deg }` | `dist_m` strictly increasing from 0. `slope_deg` is the absolute local slope at the sample. Aim for a sample every 10 to 50 m |
 | `assumptions[]` | `{ name, value, source }` | Listed under "How this is computed" |
 | `alternative` | object \| null | Only when `compare: true`. Null if no alternative exists |
@@ -142,7 +142,7 @@ Notes for the backend:
 - The grid and companion JSON files are loaded once at startup from `backend/data/gale-bx/`. Restart the process after replacing data. Missing, invalid, or truncated files produce `503`; there is no automatic terrain substitution.
 - Routes use eight-neighbour A*, with cost `step_length * (1 + (destination_slope / effective_limit)^2)`. No-data cells and cells over the effective limit are blocked. Diagonal movement cannot cut through blocked corners.
 - Stops are visited in request order. Requested ids, coordinates and names are echoed; note/image are attached only when the requested position matches a catalog stop (within `1e-8` degrees), so moving a point does not keep stale science information.
-- Profile samples come from the same traversed cells as the polyline, approximately every 20 m plus the endpoints, stop boundaries and the steepest sample in each interval of each leg. The maximum slope considers every traversed cell. Time uses `distance_m / (speed_kmh / 3.6)`. Assumptions contain `assumptions.json.items` plus an effective route slope limit, showing both the requested and site limits and their minimum. Safety uses the data's caution threshold; `safety_reason` also states the effective route limit. A successful route cannot be `avoid`: cells above the effective limit are blocked, so an impossible route returns 422. `hazards` is currently empty and `alternative` is null, including when `compare: true`.
+- Profile samples come from the same traversed cells as the polyline, approximately every 20 m plus the endpoints, stop boundaries and the steepest sample in each interval of each leg. The maximum slope considers every traversed cell. Time uses `distance_m / (speed_kmh / 3.6)`. Assumptions contain `assumptions.json.items` plus an effective route slope limit, showing both the requested and site limits and their minimum. Safety uses the data's caution threshold; `safety_reason` also states the effective route limit. A successful route cannot be `avoid`: cells above the effective limit are blocked, so an impossible route returns 422. `alternative` is null, including when `compare: true`. `hazards` holds the steep-slope zones: the 4-connected groups of cells steeper than the effective route slope limit, which are the cells the router cannot cross. Groups under 10 cells are dropped, at most 8 are returned (the ones nearest to the route first), outlines are simplified, and no zone contains a point of the returned `polyline`. Ids are `hazard-1` to `hazard-8`, label `Slope over <limit> deg` (`backend/app/services/hazards.py`).
 - A point outside the grid, in no-data, above the limit, or a disconnected leg returns `422` with a plain-language `detail` naming the point or leg. Input validation also returns `422`.
 - The UI colours slope classes itself using two thresholds from `frontend/src/config/route.ts` (`cautionDeg`, `maxDeg`). **They are placeholders until the team confirms them.** If the backend should own the thresholds, add them to the response (for example `slope_limits: { caution_deg, max_deg }`) and the UI will read them from there.
 - `profile` and `polyline` describe the same route. The HUD uses exact `navigation.vertex_dist_m`; other map/profile interactions retain fraction-based interpolation.
