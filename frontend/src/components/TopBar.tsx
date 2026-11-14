@@ -18,15 +18,13 @@ interface TopBarProps {
   onDrawer: (drawer: Drawer) => void;
 }
 
+/** Only the dev mock needs a badge. Real data is the normal case and is not labelled. */
 function DataBadge() {
-  const sample = dataSource === "mock";
+  if (dataSource !== "mock") return null;
   return (
-    <span
-      className={`badge ${sample ? "badge--caution" : "badge--ok"}`}
-      title={sample ? "Values come from built-in sample data, not the route service" : "Values come from the route service"}
-    >
-      <Icon name={sample ? "info" : "check"} />
-      <span>{sample ? "Sample data" : "Live API"}</span>
+    <span className="badge badge--caution" title="Values come from built-in sample data, not the route service">
+      <Icon name="info" />
+      <span>Sample data</span>
     </span>
   );
 }
