@@ -1,0 +1,329 @@
+/* ---- Card mode: a one-page A5 landscape route card, on light paper ---- */
+
+.card-screen {
+  overflow: auto;
+  min-height: 0;
+  padding: var(--space-4);
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: var(--space-4);
+}
+
+.card-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  width: 210mm;
+  max-width: 100%;
+}
+
+.card-toolbar .notice {
+  margin: 0;
+  flex: 1;
+}
+
+.card-empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  max-width: 420px;
+  margin-top: var(--space-5);
+}
+
+.card {
+  width: 210mm;
+  min-height: 148mm;
+  padding: 6mm;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 7.5pt;
+  line-height: 1.35;
+  border-radius: var(--radius-sm);
+  display: grid;
+  align-content: start;
+  gap: 3mm;
+}
+
+.card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4mm;
+  padding-bottom: 2mm;
+  border-bottom: 0.3mm solid var(--ink);
+}
+
+.card__title {
+  font-size: 13pt;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.card__sub,
+.card__meta {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.card__meta {
+  font-size: 6.5pt;
+  text-align: right;
+}
+
+.card__grid {
+  display: grid;
+  grid-template-columns: 96mm 1fr;
+  gap: 4mm;
+  align-items: start;
+}
+
+.card__col {
+  display: grid;
+  gap: 2.5mm;
+  min-width: 0;
+}
+
+.card__h {
+  margin-bottom: 1mm;
+  font-size: 6.5pt;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.card__muted {
+  color: var(--ink-muted);
+}
+
+.card__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2mm;
+  margin: 0 0 1.5mm;
+}
+
+.card__stats dt {
+  font-size: 6.5pt;
+  color: var(--ink-muted);
+}
+
+.card__stats dd {
+  margin: 0;
+  font-size: 12pt;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.card__safety {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2mm;
+}
+
+/* On paper: darker inks, and status keeps its icon and text so it survives black and white. */
+.card .badge {
+  padding: 0.6mm 2mm;
+  font-size: 7.5pt;
+}
+
+.card .badge--ok,
+.card__class--ok {
+  color: var(--ok-ink);
+}
+
+.card .badge--caution,
+.card__class--caution {
+  color: var(--caution-ink);
+}
+
+.card .badge--avoid,
+.card__class--avoid {
+  color: var(--hazard-ink);
+}
+
+.card__class {
+  display: inline-flex;
+  align-items: center;
+  gap: 1mm;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.card__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 6.8pt;
+}
+
+.card__table th,
+.card__table td {
+  padding: 0.7mm 1mm;
+  border-bottom: 0.2mm solid var(--ink-line);
+  text-align: left;
+  vertical-align: baseline;
+  font-weight: 400;
+}
+
+.card__table thead th {
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+
+.card__table tbody th {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.card__table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.card__note {
+  margin-top: 1mm;
+  font-size: 6.2pt;
+  color: var(--ink-muted);
+}
+
+.card__assumptions ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 6.8pt;
+}
+
+.card__assumptions li {
+  break-inside: avoid;
+  padding: 0.3mm 0;
+}
+
+/* ---- Sketch (SVG) ---- */
+.sketch {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sketch__frame {
+  fill: #fff;
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+
+.sketch__route {
+  fill: none;
+  stroke: var(--rust);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sketch__hazard {
+  stroke: var(--hazard-ink);
+  stroke-width: 1.6;
+  stroke-dasharray: 5 3;
+}
+
+.sketch__hatch {
+  stroke: var(--hazard-ink);
+  stroke-width: 1.1;
+}
+
+.sketch__label {
+  fill: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.sketch__label--hazard {
+  fill: var(--hazard-ink);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 3px;
+}
+
+.sketch__scale {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+.sketch__north {
+  fill: var(--ink);
+}
+
+.sketch__pin {
+  fill: var(--rust-ink);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.sketch__pin--start {
+  fill: #fff;
+  stroke: var(--rust-ink);
+}
+
+.sketch__pin-text {
+  fill: #fff;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sketch__pin--start + .sketch__pin-text {
+  fill: var(--rust-ink);
+}
+
+/* ---- Print ---- */
+@page {
+  size: A5 landscape;
+  margin: 6mm;
+}
+
+@media print {
+  html,
+  body,
+  #root {
+    height: auto;
+    overflow: visible;
+    background: #fff;
+  }
+
+  body::before,
+  .topbar,
+  .card-toolbar {
+    display: none !important;
+  }
+
+  .shell {
+    display: block;
+    height: auto;
+  }
+
+  .card-screen {
+    display: block;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .card {
+    width: auto;
+    min-height: 0;
+    padding: 0;
+    border-radius: 0;
+    background: #fff;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

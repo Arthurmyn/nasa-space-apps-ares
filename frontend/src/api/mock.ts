@@ -1,0 +1,231 @@
+// SAMPLE DATA ONLY. Loaded only when VITE_USE_MOCK=true; the UI then shows a "Sample data"
+// badge. The terrain is a synthetic sine-wave surface and every value below is derived
+// from the request geometry. None of it describes real Martian terrain.
+import { SLOPE_LIMITS } from "../config/route.ts";
+import { NO_DATA_REASON } from "../config/layers.ts";
+import { METRES_PER_DEG_LAT, haversine, metresPerDegLon, offsetLonLat } from "../lib/geo.ts";
+import { classifySlope } from "../lib/slope.ts";
+import {
+  ApiError,
+  type HazardZone,
+  type LayerId,
+  type LayerInfo,
+  type LayersResponse,
+  type LonLat,
+  type PointInput,
+  type ProfilePoint,
+  type RouteRequest,
+  type RouteResponse,
+  type SafetyLevel,
+} from "./types.ts";
+
+const LATENCY_MS = 650;
+const SAMPLE_SPACING_M = 20;
+const SAMPLE_SPEED_MPS = 0.8;
+const SAMPLE_SOURCE = "Sample data (mock)";
+
+function delay(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(new ApiError("aborted", "Request cancelled"));
+    const timer = window.setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        window.clearTimeout(timer);
+        reject(new ApiError("aborted", "Request cancelled"));
+      },
+      { once: true },
+    );
+  });
+}
+
+type Local = readonly [east: number, north: number];
+
+function makeFrame(origin: LonLat) {
+  const mLon = metresPerDegLon(origin[1]);
+  const toLocal = (p: { lon: number; lat: number }): Local => [
+    (p.lon - origin[0]) * mLon,
+    (p.lat - origin[1]) * METRES_PER_DEG_LAT,
+  ];
+  const fromLocal = (l: Local): LonLat => offsetLonLat(origin, l[0], l[1]);
+  return { toLocal, fromLocal };
+}
+
+/** Synthetic terrain height in metres at a local position. */
+function sampleElevation([e, n]: Local): number {
+  return 34 * Math.sin(e / 410) * Math.cos(n / 530) + 14 * Math.sin((e + n) / 170) + 4.5 * Math.sin(e / 53);
+}
+
+interface BuiltPath {
+  polyline: LonLat[];
+  local: Local[];
+  /** Index in `polyline` of each waypoint (start first). */
+  waypointIndex: number[];
+}
+
+/** Smooth meandering path through the waypoints, sampled about every 20 m. */
+function buildPath(waypoints: readonly PointInput[], meander: number, sign: 1 | -1): BuiltPath {
+  const first = waypoints[0];
+  if (!first) return { polyline: [], local: [], waypointIndex: [] };
+  const { toLocal, fromLocal } = makeFrame([first.lon, first.lat]);
+  const pts = waypoints.map(toLocal);
+
+  const local: Local[] = [];
+  const waypointIndex: number[] = [0];
+  for (let i = 1; i < pts.length; i += 1) {
+    const a = pts[i - 1];
+    const b = pts[i];
+    if (!a || !b) continue;
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const len = Math.hypot(dx, dy);
+    const steps = Math.max(2, Math.ceil(len / SAMPLE_SPACING_M));
+    const amp = len > 0 ? Math.min(meander * 0.12 * len, meander * 40) * sign : 0;
+    const phase = i * 1.3;
+    for (let k = i === 1 ? 0 : 1; k <= steps; k += 1) {
+      const t = k / steps;
+      const off = amp * Math.sin(Math.PI * t) * Math.cos(2 * Math.PI * 1.5 * t + phase);
+      const nx = len > 0 ? -dy / len : 0;
+      const ny = len > 0 ? dx / len : 0;
+      local.push([a[0] + dx * t + nx * off, a[1] + dy * t + ny * off]);
+    }
+    waypointIndex.push(local.length - 1);
+  }
+  return { polyline: local.map(fromLocal), local, waypointIndex };
+}
+
+function pathLength(polyline: readonly LonLat[]): number[] {
+  const out: number[] = [0];
+  for (let i = 1; i < polyline.length; i += 1) {
+    const a = polyline[i - 1];
+    const b = polyline[i];
+    out.push((out[i - 1] ?? 0) + (a && b ? haversine(a, b) : 0));
+  }
+  return out;
+}
+
+function buildProfile(local: readonly Local[], dist: readonly number[]): ProfilePoint[] {
+  const elev = local.map(sampleElevation);
+  return local.map((_, i) => {
+    const j = i === 0 ? 1 : i;
+    const d = (dist[j] ?? 0) - (dist[j - 1] ?? 0);
+    const dz = (elev[j] ?? 0) - (elev[j - 1] ?? 0);
+    return {
+      dist_m: dist[i] ?? 0,
+      elev_m: elev[i] ?? 0,
+      slope_deg: d > 0 ? (Math.atan(Math.abs(dz) / d) * 180) / Math.PI : 0,
+    };
+  });
+}
+
+function buildHazards(path: BuiltPath): HazardZone[] {
+  const kinds: Array<{ kind: HazardZone["kind"]; label: string }> = [
+    { kind: "rough_terrain", label: "Rough terrain" },
+    { kind: "sand_trap", label: "Sand trap" },
+  ];
+  const zones: HazardZone[] = [];
+  const segments = Math.min(2, path.waypointIndex.length - 1);
+  for (let s = 0; s < segments; s += 1) {
+    const i0 = path.waypointIndex[s] ?? 0;
+    const i1 = path.waypointIndex[s + 1] ?? 0;
+    const mid = path.local[Math.floor((i0 + i1) / 2)];
+    const a = path.local[i0];
+    const b = path.local[i1];
+    const meta = kinds[s % kinds.length];
+    if (!mid || !a || !b || !meta) continue;
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const len = Math.hypot(dx, dy) || 1;
+    const side = s % 2 === 0 ? 1 : -1;
+    const cx = mid[0] + (-dy / len) * 150 * side;
+    const cy = mid[1] + (dx / len) * 150 * side;
+    const first = path.polyline[0];
+    if (!first) continue;
+    const { fromLocal } = makeFrame(first);
+    const ring: LonLat[] = [];
+    const vertices = 9;
+    for (let v = 0; v < vertices; v += 1) {
+      const ang = (2 * Math.PI * v) / vertices;
+      const r = 70 + 25 * Math.sin(v * 2.1 + s);
+      ring.push(fromLocal([cx + r * Math.cos(ang), cy + r * Math.sin(ang)]));
+    }
+    const start = ring[0];
+    if (start) ring.push(start);
+    zones.push({ id: `hazard-${s + 1}`, kind: meta.kind, label: meta.label, polygon: { type: "Polygon", coordinates: [ring] } });
+  }
+  return zones;
+}
+
+function safetyFor(maxSlope: number): { safety: SafetyLevel; reason: string } {
+  const cls = classifySlope(maxSlope, SLOPE_LIMITS);
+  const steepest = `Steepest section is ${maxSlope.toFixed(1)}°`;
+  if (cls === "ok") return { safety: "ok", reason: `${steepest}, within the ${SLOPE_LIMITS.cautionDeg}° caution threshold.` };
+  if (cls === "caution") {
+    return { safety: "caution", reason: `${steepest}, above the ${SLOPE_LIMITS.cautionDeg}° caution threshold.` };
+  }
+  return { safety: "avoid", reason: `${steepest}, above the ${SLOPE_LIMITS.maxDeg}° limit.` };
+}
+
+export async function mockRoute(req: RouteRequest, signal?: AbortSignal): Promise<RouteResponse> {
+  await delay(LATENCY_MS, signal);
+  if (req.stops.length === 0) throw new ApiError("http", "HTTP 422", 422);
+
+  const waypoints = [req.start, ...req.stops];
+  const main = buildPath(waypoints, 1, 1);
+  const dist = pathLength(main.polyline);
+  const profile = buildProfile(main.local, dist);
+  const maxSlope = profile.reduce((m, p) => Math.max(m, p.slope_deg), 0);
+  const distance = dist[dist.length - 1] ?? 0;
+  const { safety, reason } = safetyFor(maxSlope);
+
+  let alternative: RouteResponse["alternative"] = null;
+  if (req.compare) {
+    const alt = buildPath(waypoints, 2.2, -1);
+    const altDist = pathLength(alt.polyline);
+    const altProfile = buildProfile(alt.local, altDist);
+    const altLen = altDist[altDist.length - 1] ?? 0;
+    alternative = {
+      distance_m: altLen,
+      max_slope_deg: altProfile.reduce((m, p) => Math.max(m, p.slope_deg), 0),
+      est_time_s: altLen / SAMPLE_SPEED_MPS,
+      polyline: alt.polyline,
+    };
+  }
+
+  return {
+    computed_at: new Date().toISOString(),
+    distance_m: distance,
+    max_slope_deg: maxSlope,
+    est_time_s: distance / SAMPLE_SPEED_MPS,
+    safety,
+    safety_reason: reason,
+    polyline: main.polyline,
+    stops: req.stops.map((s, i) => ({
+      id: s.id,
+      name: s.name ?? null,
+      lon: s.lon,
+      lat: s.lat,
+      dist_m: dist[main.waypointIndex[i + 1] ?? 0] ?? 0,
+      note: "Sample note. A real science note comes from the API.",
+      image: null,
+    })),
+    hazards: buildHazards(main),
+    profile,
+    assumptions: [
+      { name: "Terrain model", value: "Synthetic sine-wave surface", source: SAMPLE_SOURCE },
+      { name: "Travel speed", value: `${SAMPLE_SPEED_MPS} m/s`, source: SAMPLE_SOURCE },
+      { name: "Max slope constraint", value: `${req.constraints.max_slope_deg}°`, source: "Route request" },
+      { name: "Hazard zones", value: "Generated beside the route", source: SAMPLE_SOURCE },
+    ],
+    alternative,
+  };
+}
+
+export async function mockLayers(signal?: AbortSignal): Promise<LayersResponse> {
+  await delay(250, signal);
+  const available = (id: LayerId): LayerInfo => ({ id, available: true, reason: null, source: SAMPLE_SOURCE });
+  const missing = (id: LayerId): LayerInfo => ({ id, available: false, reason: NO_DATA_REASON, source: null });
+  return {
+    layers: [available("slope"), available("optical"), missing("thermal"), missing("geology"), available("radiation")],
+  };
+}
