@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { describeError } from "./errors.ts";
 import { ApiError } from "./types.ts";
-import { parseLayersResponse, parseRouteResponse } from "./validate.ts";
+import { parseLayersResponse, parseRouteResponse, parseSiteMeta, parseSitesResponse } from "./validate.ts";
 
 const valid = () => ({
   computed_at: "2030-01-01T00:00:00Z",
@@ -122,5 +122,49 @@ describe("describeError", () => {
     assert.match(msg, /status 500/);
     assert.doesNotMatch(msg, /Traceback/);
     assert.match(describeError(new ApiError("network", "x")), /Cannot reach/);
+  });
+});
+
+describe("parseSiteMeta and parseSitesResponse", () => {
+  const meta = {
+    site_id: "gale-bx",
+    name: "Gale",
+    preliminary: true,
+    is_test_data: true,
+    center: { lon: 137.38, lat: -4.8 },
+    bbox: { lon_min: 137.37, lon_max: 137.39, lat_min: -4.81, lat_max: -4.79 },
+    sources: ["HiRISE DTM"],
+  };
+
+  it("reads the meta fields the app uses", () => {
+    const m = parseSiteMeta(meta);
+    assert.equal(m.is_test_data, true);
+    assert.deepEqual(m.sources, ["HiRISE DTM"]);
+  });
+
+  it("treats a missing is_test_data as real data and missing sources as none", () => {
+    const { is_test_data: _t, sources: _s, ...rest } = meta;
+    const m = parseSiteMeta(rest);
+    assert.equal(m.is_test_data, false);
+    assert.deepEqual(m.sources, []);
+  });
+
+  it("rejects an inverted bbox", () => {
+    assert.throws(() => parseSiteMeta({ ...meta, bbox: { ...meta.bbox, lat_min: -4.7 } }), ApiError);
+  });
+
+  it("parses sites with groups and stops, and drops non-http images", () => {
+    const res = parseSitesResponse({
+      sites: [
+        {
+          id: "gale-bx",
+          name: "Gale",
+          groups: [{ id: "boxwork", name: "Boxwork", stop_ids: ["a"] }],
+          stops: [{ id: "a", name: "A", lon: 1, lat: 2, note: null, image: { url: "javascript:x", alt: "", credit: "" }, source_id: null }],
+        },
+      ],
+    });
+    assert.equal(res.sites[0]?.groups[0]?.stop_ids[0], "a");
+    assert.equal(res.sites[0]?.stops[0]?.image, null);
   });
 });
