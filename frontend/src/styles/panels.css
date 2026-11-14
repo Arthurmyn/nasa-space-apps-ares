@@ -136,6 +136,7 @@
 }
 
 .layer-row {
+  min-width: 0;
   padding: var(--space-3);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -291,6 +292,21 @@
 
 .legend__note--warn {
   color: var(--amber);
+}
+
+/* Source strings carry long URLs and product IDs with no spaces; let them wrap. */
+.legend__source {
+  min-width: 0;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.legend__source-list {
+  display: grid;
+  gap: 2px;
+  margin: 4px 0 0;
+  padding-left: 1.1em;
 }
 
 /* ---- Route summary ---- */
