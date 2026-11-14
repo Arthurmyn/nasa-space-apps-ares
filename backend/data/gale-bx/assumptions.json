@@ -6,17 +6,27 @@
     {
       "name": "Max slope",
       "value": "15 deg",
-      "source": "TO VERIFY: document supporting the 15 deg route slope limit"
+      "source": "NASA states a 20 deg capability for EVA walking [1]; the ARES planning limit is 15 deg (conservative margin)."
     },
     {
       "name": "Caution slope",
       "value": "10 deg",
-      "source": "TO VERIFY: document supporting the 10 deg caution threshold"
+      "source": "ARES threshold. NASA notes that slopes above 10 deg are common at the lunar south pole and complicate traverses [2]."
     },
     {
       "name": "Walking speed",
       "value": "2 km/h",
-      "source": "TO VERIFY: document supporting the assumed walking speed"
+      "source": "Based on Apollo-observed average walking speeds of 1.0 to 2.0 ft/s, about 1.1 to 2.2 km/h [3]."
+    },
+    {
+      "name": "Max distance from lander",
+      "value": "2 km",
+      "source": "Exploration EVA concept of operations [1]."
+    },
+    {
+      "name": "Note",
+      "value": "No Mars slope standard",
+      "source": "No official human-on-Mars slope standard was found; the NASA values above are lunar and Artemis values. The Gale crater rover team routed Curiosity around a 23 deg slope via terrain under 15 deg [4]."
     }
   ]
 }

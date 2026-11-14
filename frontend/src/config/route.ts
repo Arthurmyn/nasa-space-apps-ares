@@ -16,8 +16,9 @@ export const KEY_STEP_PX_FAST = 48;
 /** Hover on the map snaps to the route within this many pixels. */
 export const ROUTE_HOVER_SNAP_PX = 16;
 
-// TODO(team): PLACEHOLDER thresholds. Confirm with the mission/science lead before the
-// demo; every slope class on screen derives from these two numbers.
+// These two numbers must equal slope_caution_deg and slope_limit_deg in
+// backend/data/gale-bx/assumptions.json; a test (config/route.test.ts) compares them. Every slope
+// class on screen derives from them. They are ARES planning values, see the assumptions on the card.
 export const SLOPE_LIMITS = {
   /** Above this slope a segment is "caution", degrees. */
   cautionDeg: 10,
@@ -27,3 +28,6 @@ export const SLOPE_LIMITS = {
 
 /** HUD look-ahead ring radius, metres. Display scale only; it does not affect any route logic. */
 export const HUD_RANGE_M = 400;
+
+/** Furthest straight-line distance from the start the plan should stay within, metres. Mirrors "Max distance from lander" in assumptions.json. */
+export const MAX_DISTANCE_FROM_START_M = 2000;

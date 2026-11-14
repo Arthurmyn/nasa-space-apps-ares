@@ -223,7 +223,7 @@ def test_committed_real_grid_stops_and_assumptions_match_contract():
     for item in assumptions["items"]:
         assert set(item) == {"name", "value", "source"}
         assert all(isinstance(value, str) and value for value in item.values())
-        assert item["source"].startswith("TO VERIFY:")
+        assert "TO VERIFY" not in item["source"]
     stops = json.loads((backend / "stops.json").read_text())
     sources = json.loads((backend / "sources.json").read_text())
     assert set(stops) == {"groups", "stops"}
