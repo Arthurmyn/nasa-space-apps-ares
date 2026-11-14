@@ -157,6 +157,11 @@ export interface SiteMeta {
   bbox: GridBbox;
   /** Dataset credits, shown under "How this is computed". */
   sources: string[];
+  /** Terrain model behind the grid, for the printed card. Null when meta.json does not say. */
+  dtm_product_id: string | null;
+  /** Grid cell size and slope smoothing window, metres. */
+  cell_m: number | null;
+  slope_window_m: number | null;
 }
 
 export interface SiteStop {
@@ -194,6 +199,10 @@ export type ApiErrorKind = "network" | "timeout" | "http" | "invalid" | "aborted
 export class ApiError extends Error {
   readonly kind: ApiErrorKind;
   readonly status: number | null;
+  /**
+   * Reason text from a 422 answer (`{"detail": "..."}`, docs/DATA_CONTRACT.md section 7): the API
+   * writes it for the user. Null for every other error.
+   */
   readonly detail: string | null;
 
   constructor(kind: ApiErrorKind, message: string, status: number | null = null, detail: string | null = null) {

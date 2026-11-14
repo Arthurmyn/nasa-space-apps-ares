@@ -6,6 +6,7 @@ import { siteFromMeta } from "./site.ts";
 import { gridImagesForSite, SITE_GRID_IMAGES } from "./tiles.ts";
 
 const siteFor = (id: string) => siteFromMeta({ site_id: id, name: "Test", preliminary: true, is_test_data: false,
+  dtm_product_id: null, cell_m: null, slope_window_m: null,
   center: { lon: 0, lat: 0 }, bbox: { lon_min: -1, lon_max: 1, lat_min: -1, lat_max: 1 }, sources: ["DTM"] });
 
 it("preserves an explicit backend refusal and its reason even for a shipped raster", () => {

@@ -21,6 +21,7 @@ interface TopBarProps {
   onDrawer: (drawer: Drawer) => void;
 }
 
+/** Status of the last completed API request, or a sample-data label in dev mock mode. */
 function DataBadge() {
   const sample = dataSource === "mock";
   const connection = useSyncExternalStore(apiConnection.subscribe, apiConnection.getSnapshot);

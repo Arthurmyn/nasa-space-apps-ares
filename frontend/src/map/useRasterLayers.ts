@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import { LAYER_IDS, type LayerId } from "../api/types.ts";
+import { dataSource } from "../api/client.ts";
 import { siteFileUrl } from "../api/siteFiles.ts";
 import type { SiteConfig } from "../config/site.ts";
 import { gridImagesForSite, TILE_SOURCES } from "../config/tiles.ts";
@@ -47,7 +48,8 @@ export function useRasterLayers(map: MapLibreMap | null, layers: LayersModel, si
         map.removeSource(tileId(id));
       }
 
-      const image = gridImagesForSite(site.id)[id];
+      // The dev mock draws a synthetic terrain; the real HiRISE rasters must not sit under it.
+      const image = dataSource === "mock" ? undefined : gridImagesForSite(site.id)[id];
       if (!image) continue;
       const imageWanted = active.has(id) && info[id]?.available === true;
       const imagePresent = map.getLayer(imageId(id)) !== undefined;

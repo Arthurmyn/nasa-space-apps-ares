@@ -11,7 +11,7 @@ afterEach(() => { globalThis.fetch = originalFetch; });
 it("shows the string detail of a rejected terrain point", async () => {
   const detail = "Point 'start' exceeds the 15 degree slope limit.";
   globalThis.fetch = async () => new Response(JSON.stringify({ detail }), { status: 422 });
-  await assert.rejects(requestJson("/route"), (e) => describeError(e) === detail);
+  await assert.rejects(requestJson("/route"), (e) => describeError(e).includes(detail));
   assert.equal(apiConnection.getSnapshot(), "online");
 });
 

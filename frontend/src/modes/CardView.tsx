@@ -1,33 +1,65 @@
 import { useMemo } from "react";
 import { dataSource } from "../api/client.ts";
-import { RouteSketch } from "../components/RouteSketch.tsx";
-import { SafetyBadge } from "../components/SafetyBadge.tsx";
+import type { SafetyLevel } from "../api/types.ts";
 import { Icon } from "../components/Icon.tsx";
-import { SLOPE_LIMITS } from "../config/route.ts";
-import { formatCoordinates, formatDistance, formatDuration, formatElevation, formatSlope, formatUtcTime, stopLabel } from "../lib/format.ts";
+import { RouteSketch } from "../components/RouteSketch.tsx";
+import { LEVEL_ICON, SafetyBadge } from "../components/SafetyBadge.tsx";
+import { SourceText } from "../components/SourceText.tsx";
+import { REFERENCES } from "../config/references.ts";
+import { MAX_DISTANCE_FROM_START_M, SLOPE_LIMITS } from "../config/route.ts";
+import {
+  documentId,
+  formatCoordinates,
+  formatDistance,
+  formatDuration,
+  formatSignedElevation,
+  formatSlope,
+  formatUtcStamp,
+  stopLabel,
+} from "../lib/format.ts";
 import { routeLegs } from "../lib/legs.ts";
+import { sectionStats } from "../lib/profile.ts";
+import { routeSpeedMps, safetyMargins, walkBackTimeS } from "../lib/safety.ts";
 import { SLOPE_CLASS_LABEL } from "../lib/slope.ts";
 import { usePlanner } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
-import { LEVEL_ICON } from "../components/SafetyBadge.tsx";
 
-/** One-page printable route card, A5 landscape. Everything on it comes from the route response. */
+/** Status words on the printed card; the planner screen uses longer ones. */
+const CARD_STATUS: Record<SafetyLevel, string> = {
+  ok: "Within limits",
+  caution: "Proceed with caution",
+  avoid: "Over limit",
+};
+
+const dash = "–";
+
+/** One-page A4 route card. Every number on it comes from the route response or the site data. */
 export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
   const { state, stale } = usePlanner();
   const { site } = useSite();
   const route = state.route;
 
-  const legs = useMemo(() => {
-    if (!route) return [];
+  const model = useMemo(() => {
+    if (!route) return null;
     const first = route.profile[0]?.dist_m ?? 0;
-    return routeLegs(
+    const last = route.profile[route.profile.length - 1]?.dist_m ?? first;
+    const legs = routeLegs(
       route.profile,
       [{ label: "S", distM: first }, ...route.stops.map((s, i) => ({ label: stopLabel(i), distM: s.dist_m }))],
       SLOPE_LIMITS,
     );
+    const margins = safetyMargins(route.polyline);
+    const speed = routeSpeedMps(route.distance_m, route.est_time_s);
+    return {
+      legs,
+      whole: sectionStats(route.profile, first, last),
+      margins,
+      speedKmh: speed === null ? null : speed * 3.6,
+      walkBackS: margins ? walkBackTimeS(margins, speed) : null,
+    };
   }, [route]);
 
-  if (!route) {
+  if (!route || !model) {
     return (
       <main className="card-screen">
         <div className="card-empty">
@@ -41,7 +73,10 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
     );
   }
 
-  const computed = formatUtcTime(route.computed_at);
+  const { legs, whole, margins, speedKmh, walkBackS } = model;
+  const start = route.polyline[0];
+  const overLimit = margins ? margins.farthestM > MAX_DISTANCE_FROM_START_M : false;
+  const mode = dataSource === "mock" ? "Sample data" : "Live API";
 
   return (
     <main className="card-screen">
@@ -51,73 +86,87 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
             <Icon name="alert" /> The points changed after this route was computed. Recalculate in Plan before printing.
           </p>
         ) : (
-          <p className="muted">Preview of the printed page. A5 landscape.</p>
+          <p className="muted">Preview of the printed page. A4 portrait.</p>
         )}
         <button type="button" className="btn btn--primary" onClick={() => window.print()}>
           <Icon name="print" /> Print or save as PDF
         </button>
       </div>
 
-      <article className="card" aria-label="Route card">
-        <header className="card__head">
+      <article className="doc" aria-label="ARES route card">
+        <header className="doc__head">
           <div>
-            <h2 className="card__title">ARES route card</h2>
-            <p className="card__sub">{site.name}</p>
+            <h2 className="doc__title">ARES ROUTE CARD</h2>
+            <p className="doc__site">{site.name}</p>
           </div>
-          <p className="card__meta mono">
-            {dataSource === "mock" ? "Sample data, not real terrain" : "Live API"}
-            {site.isTestData && " · Test data"}
-            {computed && ` · Computed ${computed}`}
-            {stale && " · Out of date"}
-          </p>
+          <dl className="doc__meta">
+            <div>
+              <dt>Document ID</dt>
+              <dd className="mono">{documentId(route.computed_at) ?? dash}</dd>
+            </div>
+            <div>
+              <dt>Revision</dt>
+              <dd>{site.preliminary ? "Preliminary" : "Issued"}</dd>
+            </div>
+            <div>
+              <dt>Computed</dt>
+              <dd className="mono">{formatUtcStamp(route.computed_at) ?? dash}</dd>
+            </div>
+            <div>
+              <dt>Data mode</dt>
+              <dd>
+                {mode}
+                {site.isTestData && ", test data"}
+                {stale && ", out of date"}
+              </dd>
+            </div>
+          </dl>
         </header>
 
-        <div className="card__grid">
-          <div className="card__col">
-            <section className="card__map" aria-label="Route map">
-              <RouteSketch route={route} />
-            </section>
-          <section className="card__assumptions" aria-labelledby="card-assump">
-            <h3 id="card-assump" className="card__h">Assumptions and sources</h3>
-            {route.assumptions.length === 0 ? (
-              <p className="card__muted">The route service returned no assumptions.</p>
-            ) : (
-              <ul>
-                {route.assumptions.map((a) => (
-                  <li key={a.name}>
-                    <strong>{a.name}:</strong> <span className="mono">{a.value}</span> <span className="card__muted">({a.source})</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+        <section className="doc__section" aria-labelledby="doc-summary">
+          <h3 id="doc-summary" className="doc__h">1. Route summary</h3>
+          <dl className="doc__stats">
+            <div>
+              <dt>Length</dt>
+              <dd className="mono">{formatDistance(route.distance_m)}</dd>
+            </div>
+            <div>
+              <dt>Max slope</dt>
+              <dd className="mono">{formatSlope(route.max_slope_deg)}</dd>
+            </div>
+            <div>
+              <dt>Mean slope</dt>
+              <dd className="mono">{whole ? formatSlope(whole.meanSlopeDeg) : dash}</dd>
+            </div>
+            <div>
+              <dt>Est. time</dt>
+              <dd className="mono">{formatDuration(route.est_time_s)}</dd>
+            </div>
+            <div>
+              <dt>Elevation gain</dt>
+              <dd className="mono">{whole ? formatSignedElevation(whole.elevGainM, "+") : dash}</dd>
+            </div>
+            <div>
+              <dt>Elevation loss</dt>
+              <dd className="mono">{whole ? formatSignedElevation(whole.elevLossM, "−") : dash}</dd>
+            </div>
+          </dl>
+          <div className="doc__status">
+            <SafetyBadge level={route.safety} label={CARD_STATUS[route.safety]} />
+            <span>{route.safety_reason}</span>
           </div>
+        </section>
 
-          <div className="card__col">
-            <section aria-label="Summary">
-              <dl className="card__stats">
-                <div>
-                  <dt>Length</dt>
-                  <dd className="mono">{formatDistance(route.distance_m)}</dd>
-                </div>
-                <div>
-                  <dt>Max slope</dt>
-                  <dd className="mono">{formatSlope(route.max_slope_deg)}</dd>
-                </div>
-                <div>
-                  <dt>Est. time</dt>
-                  <dd className="mono">{formatDuration(route.est_time_s)}</dd>
-                </div>
-              </dl>
-              <div className="card__safety">
-                <SafetyBadge level={route.safety} />
-                <span>{route.safety_reason}</span>
-              </div>
-            </section>
+        <div className="doc__cols">
+          <section className="doc__section" aria-labelledby="doc-map">
+            <h3 id="doc-map" className="doc__h">2. Map</h3>
+            <RouteSketch route={route} />
+          </section>
 
-            <section aria-labelledby="card-stops">
-              <h3 id="card-stops" className="card__h">Stops</h3>
-              <table className="card__table">
+          <div className="doc__stack">
+            <section className="doc__section" aria-labelledby="doc-stops">
+              <h3 id="doc-stops" className="doc__h">3. Stops</h3>
+              <table className="doc__table">
                 <thead>
                   <tr>
                     <th scope="col">Stop</th>
@@ -126,10 +175,10 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {route.polyline[0] && (
+                  {start && (
                     <tr>
                       <th scope="row">S Start</th>
-                      <td className="mono">{formatCoordinates(route.polyline[0][1], route.polyline[0][0], 4)}</td>
+                      <td className="mono">{formatCoordinates(start[1], start[0], 4)}</td>
                       <td className="mono num">0 m</td>
                     </tr>
                   )}
@@ -146,9 +195,9 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
               </table>
             </section>
 
-            <section aria-labelledby="card-slopes">
-              <h3 id="card-slopes" className="card__h">Slope by leg</h3>
-              <table className="card__table">
+            <section className="doc__section" aria-labelledby="doc-legs">
+              <h3 id="doc-legs" className="doc__h">4. Slope by leg</h3>
+              <table className="doc__table">
                 <thead>
                   <tr>
                     <th scope="col">Leg</th>
@@ -169,10 +218,10 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
                       <td className="mono num">{formatSlope(l.stats.maxSlopeDeg)}</td>
                       <td className="mono num">{formatSlope(l.stats.meanSlopeDeg)}</td>
                       <td className="mono num">
-                        +{formatElevation(l.stats.elevGainM)} / −{formatElevation(l.stats.elevLossM)}
+                        {formatSignedElevation(l.stats.elevGainM, "+")} / {formatSignedElevation(l.stats.elevLossM, "−")}
                       </td>
                       <td>
-                        <span className={`card__class card__class--${l.cls}`}>
+                        <span className={`doc__class doc__class--${l.cls}`}>
                           <Icon name={LEVEL_ICON[l.cls]} size={10} /> {SLOPE_CLASS_LABEL[l.cls]}
                         </span>
                       </td>
@@ -180,13 +229,98 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
                   ))}
                 </tbody>
               </table>
-              <p className="card__note">
+              <p className="doc__note">
                 Classes: up to {SLOPE_LIMITS.cautionDeg}° within limits, up to {SLOPE_LIMITS.maxDeg}° steep, above that over limit.
               </p>
             </section>
           </div>
         </div>
 
+        <div className="doc__cols doc__cols--even">
+          <section className="doc__section" aria-labelledby="doc-margins">
+            <h3 id="doc-margins" className="doc__h">5. Safety margins</h3>
+            <table className="doc__table doc__table--kv">
+              <tbody>
+                <tr>
+                  <th scope="row">Farthest from start, straight line</th>
+                  <td className="mono">
+                    {margins ? formatDistance(margins.farthestM) : dash} of {formatDistance(MAX_DISTANCE_FROM_START_M)} limit
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Distance limit</th>
+                  <td>
+                    <span className={`doc__class doc__class--${overLimit ? "avoid" : "ok"}`}>
+                      <Icon name={overLimit ? "octagon" : "check"} size={10} /> {overLimit ? "Over limit" : "Within limit"}
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Walk back to start from there</th>
+                  <td className="mono">{walkBackS === null ? dash : formatDuration(walkBackS)}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p className="doc__note">
+              Walk back retraces the planned route at the route's own speed
+              {speedKmh === null ? "" : ` (${speedKmh.toFixed(1)} km/h)`}.
+            </p>
+          </section>
+
+          <section className="doc__section" aria-labelledby="doc-terrain">
+            <h3 id="doc-terrain" className="doc__h">6. Terrain data</h3>
+            <table className="doc__table doc__table--kv">
+              <tbody>
+                <tr>
+                  <th scope="row">Terrain model</th>
+                  <td>{site.dtmProductId ? `HiRISE DTM ${site.dtmProductId}` : (site.sources[0] ?? dash)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Grid cell</th>
+                  <td className="mono">{site.cellM === null ? dash : `${site.cellM} m`}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Slope window</th>
+                  <td className="mono">{site.slopeWindowM === null ? dash : `${site.slopeWindowM} m`}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p className="doc__note">{site.sources[0] ?? ""}</p>
+          </section>
+        </div>
+
+        <section className="doc__section" aria-labelledby="doc-assump">
+          <h3 id="doc-assump" className="doc__h">7. Assumptions and sources</h3>
+          {route.assumptions.length === 0 ? (
+            <p className="doc__muted">The route service returned no assumptions.</p>
+          ) : (
+            <table className="doc__table doc__table--assump">
+              <tbody>
+                {route.assumptions.map((a) => (
+                  <tr key={a.name}>
+                    <th scope="row">{a.name}</th>
+                    <td className="mono">{a.value}</td>
+                    <td>
+                      <SourceText text={a.source} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <ol className="doc__refs">
+            {REFERENCES.map((r) => (
+              <li key={r.n} value={r.n}>
+                [{r.n}] {r.citation} <span className="mono">{r.url}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <footer className="doc__foot">
+          <span>Planning aid only, not certified for operational use.</span>
+          <span>Page 1/1</span>
+        </footer>
       </article>
     </main>
   );

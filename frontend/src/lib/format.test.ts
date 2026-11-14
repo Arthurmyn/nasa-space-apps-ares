@@ -5,6 +5,9 @@ import {
   formatDistance,
   formatDuration,
   formatSigned,
+  documentId,
+  formatUtcStamp,
+  formatSignedElevation,
   formatSlope,
   formatUtcTime,
   stopLabel,
@@ -78,5 +81,34 @@ describe("formatSigned", () => {
     assert.equal(formatSigned(1200, formatDistance), `+${nb("1.20 km")}`);
     assert.equal(formatSigned(-180, formatDistance), `−${nb("180 m")}`);
     assert.equal(formatSigned(0, formatDistance), nb("0 m"));
+  });
+});
+
+describe("formatSignedElevation", () => {
+  it("shows the sign for a non-zero value", () => {
+    assert.equal(formatSignedElevation(12.4, "+"), "+12\u00a0m");
+    assert.equal(formatSignedElevation(12.4, "−"), "−12\u00a0m");
+  });
+
+  it("never prints a minus before zero", () => {
+    assert.equal(formatSignedElevation(0, "−"), "0\u00a0m");
+    assert.equal(formatSignedElevation(0.3, "−"), "0\u00a0m");
+  });
+});
+
+describe("documentId", () => {
+  it("builds the ID from the UTC time", () => {
+    assert.equal(documentId("2026-11-15T09:05:42Z"), "ARES-RC-20261115-0905");
+  });
+
+  it("returns null for a bad timestamp", () => {
+    assert.equal(documentId("not a date"), null);
+  });
+});
+
+describe("formatUtcStamp", () => {
+  it("prints date and minutes in UTC", () => {
+    assert.equal(formatUtcStamp("2026-11-15T09:05:42Z"), "2026-11-15 09:05 UTC");
+    assert.equal(formatUtcStamp("nope"), null);
   });
 });

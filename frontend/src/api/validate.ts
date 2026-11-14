@@ -255,6 +255,9 @@ export function parseSiteMeta(raw: unknown): SiteMeta {
     center: { lon: num(c.lon, "meta.center.lon"), lat: latitude(c.lat, "meta.center.lat") },
     bbox,
     sources: arr(o.sources ?? [], "meta.sources").map((s, i) => str(s, `meta.sources[${i}]`)),
+    dtm_product_id: strOrNull(o.dtm_product_id, "meta.dtm_product_id"),
+    cell_m: o.cell_m === undefined ? null : num(o.cell_m, "meta.cell_m"),
+    slope_window_m: o.slope_window_m === undefined ? null : num(o.slope_window_m, "meta.slope_window_m"),
   };
 }
 

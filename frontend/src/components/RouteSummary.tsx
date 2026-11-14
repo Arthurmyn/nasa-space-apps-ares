@@ -1,9 +1,11 @@
-import { useId, useState } from "react";
+import { useId } from "react";
 import type { RouteResponse } from "../api/types.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
 import { formatDistance, formatDuration, formatSigned, formatSlope } from "../lib/format.ts";
 import { usePlanner } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
+import { uiStore, useUi } from "../state/uiStore.ts";
+import { SourceText } from "./SourceText.tsx";
 import { Icon } from "./Icon.tsx";
 import { SafetyBadge } from "./SafetyBadge.tsx";
 
@@ -70,20 +72,8 @@ function CompareTable({ route }: { route: RouteResponse }) {
   );
 }
 
-const UNVERIFIED = /^TO VERIFY\b:?\s*/i;
-
-function SourceCell({ text }: { text: string }) {
-  // The data team marks sources that are not checked yet with "TO VERIFY"; say so on screen.
-  if (!UNVERIFIED.test(text)) return <>{text}</>;
-  return (
-    <>
-      <span className="tag tag--warn">Unverified</span> {text.replace(UNVERIFIED, "")}
-    </>
-  );
-}
-
 function HowComputed({ route }: { route: RouteResponse }) {
-  const [open, setOpen] = useState(false);
+  const { howComputedOpen: open } = useUi();
   const { site } = useSite();
   const regionId = useId();
   return (
@@ -93,7 +83,7 @@ function HowComputed({ route }: { route: RouteResponse }) {
         className="drawer__toggle"
         aria-expanded={open}
         aria-controls={regionId}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => uiStore.setHowComputedOpen(!open)}
       >
         <span>How this is computed</span>
         <Icon name="chevron" className={open ? "chevron chevron--open" : "chevron"} />
@@ -117,7 +107,7 @@ function HowComputed({ route }: { route: RouteResponse }) {
                   <th scope="row">{a.name}</th>
                   <td className="mono">{a.value}</td>
                   <td>
-                    <SourceCell text={a.source} />
+                    <SourceText text={a.source} />
                   </td>
                 </tr>
               ))}

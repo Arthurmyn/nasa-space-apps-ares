@@ -4,9 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapLibreMap } from "maplibre-gl";
 import { Icon, type IconName } from "../components/Icon.tsx";
 import { boundsOf, type Bounds } from "../lib/geo.ts";
+import { boundsOfBbox } from "../lib/siteGeo.ts";
 import { formatCoordinates } from "../lib/format.ts";
 import { useApp } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
+import { useUi } from "../state/uiStore.ts";
 import { buildStopEntries } from "../state/stopEntries.ts";
 import { viewportStore } from "../state/viewportStore.ts";
 import { CoordinateTicks, NorthArrow, ScaleBar, ZoomControls } from "./MapOverlays.tsx";
@@ -17,6 +19,9 @@ import { useHazardLabels, useHoverMarker, usePinMarkers } from "./useMarkers.ts"
 import { useMapInteractions } from "./useMapInteractions.ts";
 import { useRasterLayers } from "./useRasterLayers.ts";
 import { useRouteOverlay } from "./useRouteOverlay.ts";
+
+/** Margin around the site when the map first opens. */
+const INITIAL_PADDING_PX = 40;
 
 const KEYBOARD_HINT =
   "Map. Click to add points. Arrow keys move the selected stop, or pan when nothing is selected. Plus and minus zoom. Escape clears the selection.";
@@ -51,6 +56,7 @@ function MapStatus() {
 export default function MapView() {
   const { planner, layers } = useApp();
   const { site } = useSite();
+  const ui = useUi();
   const { state } = planner;
   const hostRef = useRef<HTMLDivElement>(null);
   const readoutRef = useRef<HTMLOutputElement>(null);
@@ -66,8 +72,9 @@ export default function MapView() {
       instance = new MapLibreMap({
         container: host,
         style: baseStyle(theme),
-        center: [site.lon, site.lat],
-        zoom: site.zoom,
+        // Open on the whole grid, with a margin so it does not touch the panels or controls.
+        bounds: boundsOfBbox(site.bbox),
+        fitBoundsOptions: { padding: INITIAL_PADDING_PX },
         minZoom: 4,
         maxZoom: 20,
         renderWorldCopies: false,
@@ -113,6 +120,13 @@ export default function MapView() {
 
   useRouteOverlay(map, { route, stale: planner.stale, compare: state.compare, slopeOn });
   useRasterLayers(map, layers, site);
+
+  // Folding a side panel changes the map's width; tell MapLibre once the layout has settled.
+  useEffect(() => {
+    if (!map) return;
+    const frame = requestAnimationFrame(() => map.resize());
+    return () => cancelAnimationFrame(frame);
+  }, [map, ui.leftCollapsed, ui.rightCollapsed]);
   usePinMarkers(map, entries, state.selectedId, { select: planner.select, move: planner.movePoint });
   useHazardLabels(map, route?.hazards ?? []);
   useHoverMarker(map, route && !planner.stale ? route : null);
@@ -123,6 +137,7 @@ export default function MapView() {
     onAdd: planner.addPoint,
     onMove: planner.movePoint,
     onSelect: planner.select,
+    onRemove: planner.removePoint,
     onCursor: (at) => {
       if (readoutRef.current) readoutRef.current.textContent = at ? formatCoordinates(at[1], at[0], 5) : "–";
     },

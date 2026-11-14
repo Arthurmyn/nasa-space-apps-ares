@@ -92,7 +92,29 @@ Mars Trek optical basemap, as read from its WMTS GetCapabilities (`https://trek.
 
 The app itself ships no scientific data. Layers (slope, optical, thermal, geology, radiation) are reported by the backend (`GET /layers`) and drawn from tiles in `tiles.ts`.
 
+### Site grid (Gale boxwork)
+
+Files in `frontend/public/data/gale-bx/` and `backend/data/gale-bx/`, made by `scripts/make_slope_grid.py` (format: `docs/DATA_CONTRACT.md`).
+
+| Item | Source | License | Where used |
+|------|--------|---------|------------|
+| Terrain grid, `hillshade.png`, `slope.png`, `elevation.bin`, `slope.bin` | HiRISE DTM `DTEEC_009149_1750_009294_1750_U01`, NASA/JPL/University of Arizona. Download: `https://www.uahirise.org/PDS/DTM/PSP/ORB_009100_009199/PSP_009149_1750_PSP_009294_1750/DTEEC_009149_1750_009294_1750_U01.IMG`. The grid is derived from it (cell 2 m, slope window 5 m) | NASA PDS data; terms of use not checked, TODO(team) confirm | Slope and Optical layers (image sources on the site bbox), route planning |
+| Science targets `bx-1` to `bx-6` | NASA/JPL Curiosity MSL waypoints, `https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json`; snapshot `docs/research/r0/rover_sols4534-4805.geojson` | NASA/JPL; terms not checked, TODO(team) confirm | "Science targets" group list (`GET /sites`) |
+
+The layers panel shows a short credit ("HiRISE DTM (NASA/JPL/University of Arizona) + Mars Trek (NASA/JPL)"). The full list, with file paths, is in `meta.sources` and under "How this is computed".
+
 With `VITE_USE_MOCK=true` the app uses synthetic sample data from `frontend/src/api/mock.ts` (a sine-wave terrain and generated hazards). It is not real Martian data and the UI labels it "Sample data".
+
+## Referenced documents
+
+Cited as [1] to [4] in the assumptions (`backend/data/gale-bx/assumptions.json`) and printed on the route card. They are links to public NASA and JPL pages, not files in this repository. Full list: `frontend/src/config/references.ts`.
+
+1. NASA EVA-EXP-0075, Exploration EVA System ConOps for Artemis Phase 1: https://www.nasa.gov/wp-content/uploads/2020/01/topic_1-_eva_lunar_surface_concept_of_operations.pdf
+2. NASA Moon to Mars Architecture 2024, Lunar Mobility Drivers and Needs: https://www.nasa.gov/wp-content/uploads/2024/06/acr24-lunar-mobility-drivers-and-needs.pdf
+3. Apollo 11 Lunar Surface Journal, Lunar gaits: https://www.nasa.gov/wp-content/uploads/static/history/alsj/a11/a11.gaits.html
+4. JPL PIA26017, Curiosity's difficult climb: https://www.jpl.nasa.gov/images/pia26017-a-map-of-curiositys-difficult-climb/
+
+The values attributed to them (a 20 deg EVA walking capability, a 2 km distance limit, Apollo walking speeds, the 23 deg slope at Gale) were supplied by the team and not re-checked against the documents. There is no official human-on-Mars slope standard; the 15 deg and 10 deg limits are ARES planning values.
 
 ## Constants
 

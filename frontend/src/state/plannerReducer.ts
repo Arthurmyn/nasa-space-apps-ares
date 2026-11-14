@@ -1,4 +1,5 @@
-import type { RouteRequest, RouteResponse } from "../api/types.ts";
+import type { RouteRequest, RouteResponse, StopImage } from "../api/types.ts";
+import { orderFromStart } from "../lib/presets.ts";
 import { MAX_STOPS, SLOPE_LIMITS } from "../config/route.ts";
 
 export interface PlanPoint {
@@ -8,12 +9,17 @@ export interface PlanPoint {
   lat: number;
   /** Name of a preset target, sent to the API and shown instead of "Stop A". */
   name?: string;
+  /** Science note and image of a preset target, shown before the route has answered. */
+  note?: string | null;
+  image?: StopImage | null;
 }
 
 export interface PresetStop {
   lon: number;
   lat: number;
   name: string;
+  note?: string | null;
+  image?: StopImage | null;
 }
 
 export type RouteStatus = "idle" | "loading" | "ready" | "error";
@@ -40,6 +46,8 @@ export type PlannerAction =
   | { type: "point/move"; id: string; lon: number; lat: number }
   | { type: "point/remove"; id: string }
   | { type: "stops/preset"; stops: readonly PresetStop[] }
+  | { type: "plan/load"; start: { lon: number; lat: number } | null; stops: ReadonlyArray<{ lon: number; lat: number }> }
+  | { type: "notice/set"; message: string }
   | { type: "select"; id: string | null }
   | { type: "compare/set"; value: boolean }
   | { type: "route/loading" }
@@ -114,12 +122,24 @@ export function plannerReducer(s: PlannerState, a: PlannerAction): PlannerState 
     case "stops/preset": {
       // Replace the stops with a preset group. The start is kept; without one, the user still
       // has to click a start, and the route appears as soon as they do.
-      const picked = a.stops.slice(0, MAX_STOPS);
-      const stops = picked.map((p, i): PlanPoint => ({ id: `stop-${s.nextStopNo + i}`, lon: p.lon, lat: p.lat, name: p.name }));
+      // With a start, visit the nearest target next so the walk does not double back.
+      const ordered = s.start ? orderFromStart(s.start, a.stops) : a.stops;
+      const picked = ordered.slice(0, MAX_STOPS);
+      const stops = picked.map(
+        (p, i): PlanPoint => ({ id: `stop-${s.nextStopNo + i}`, lon: p.lon, lat: p.lat, name: p.name, note: p.note ?? null, image: p.image ?? null }),
+      );
       const clipped = a.stops.length - picked.length;
       const notice = clipped > 0 ? `Showing the first ${MAX_STOPS} of ${a.stops.length} targets` : null;
       return { ...edited(s, { stops, nextStopNo: s.nextStopNo + stops.length, selectedId: stops[0]?.id ?? null }), notice };
     }
+    case "plan/load": {
+      // Restore a plan from the URL. Ids are numbered again, like a fresh session.
+      const start: PlanPoint | null = a.start ? { id: "start", lon: a.start.lon, lat: a.start.lat } : null;
+      const stops = a.stops.slice(0, MAX_STOPS).map((p, i): PlanPoint => ({ id: `stop-${i + 1}`, lon: p.lon, lat: p.lat }));
+      return edited(s, { start, stops, nextStopNo: stops.length + 1, selectedId: null });
+    }
+    case "notice/set":
+      return { ...s, notice: a.message };
     case "select":
       return s.selectedId === a.id ? s : { ...s, selectedId: a.id };
     case "compare/set":
