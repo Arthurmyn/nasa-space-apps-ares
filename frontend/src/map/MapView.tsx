@@ -3,10 +3,10 @@ import "./worker.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapLibreMap } from "maplibre-gl";
 import { Icon, type IconName } from "../components/Icon.tsx";
-import { SITE } from "../config/site.ts";
 import { boundsOf, type Bounds } from "../lib/geo.ts";
 import { formatCoordinates } from "../lib/format.ts";
 import { useApp } from "../state/PlannerContext.tsx";
+import { useSite } from "../state/SiteContext.tsx";
 import { buildStopEntries } from "../state/stopEntries.ts";
 import { viewportStore } from "../state/viewportStore.ts";
 import { CoordinateTicks, NorthArrow, ScaleBar, ZoomControls } from "./MapOverlays.tsx";
@@ -50,6 +50,7 @@ function MapStatus() {
 
 export default function MapView() {
   const { planner, layers } = useApp();
+  const { site } = useSite();
   const { state } = planner;
   const hostRef = useRef<HTMLDivElement>(null);
   const readoutRef = useRef<HTMLOutputElement>(null);
@@ -65,8 +66,8 @@ export default function MapView() {
       instance = new MapLibreMap({
         container: host,
         style: baseStyle(theme),
-        center: [SITE.lon, SITE.lat],
-        zoom: SITE.zoom,
+        center: [site.lon, site.lat],
+        zoom: site.zoom,
         minZoom: 4,
         maxZoom: 20,
         renderWorldCopies: false,
@@ -99,6 +100,7 @@ export default function MapView() {
       instance.remove();
       setMap(null);
     };
+    // The map is created once per site; a different site remounts the page.
   }, []);
 
   const entries = useMemo(() => buildStopEntries(state), [state]);
@@ -110,7 +112,7 @@ export default function MapView() {
   );
 
   useRouteOverlay(map, { route, stale: planner.stale, compare: state.compare, slopeOn });
-  useRasterLayers(map, layers);
+  useRasterLayers(map, layers, site);
   usePinMarkers(map, entries, state.selectedId, { select: planner.select, move: planner.movePoint });
   useHazardLabels(map, route?.hazards ?? []);
   useHoverMarker(map, route && !planner.stale ? route : null);

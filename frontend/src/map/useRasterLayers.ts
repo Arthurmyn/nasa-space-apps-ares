@@ -1,22 +1,26 @@
 import { useEffect } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import { LAYER_IDS, type LayerId } from "../api/types.ts";
-import { TILE_SOURCES } from "../config/tiles.ts";
+import { siteFileUrl } from "../api/siteFiles.ts";
+import type { SiteConfig } from "../config/site.ts";
+import { GRID_IMAGES, TILE_SOURCES } from "../config/tiles.ts";
+import { imageCorners } from "../lib/siteGeo.ts";
 import type { LayersModel } from "../state/PlannerContext.tsx";
 import { EQUIRECT_SCHEME, registerEquirectProtocol } from "./equirectProtocol.ts";
 import { LYR } from "./layers.ts";
 
 const tileId = (id: LayerId) => `ares-tiles-${id}`;
+const imageId = (id: LayerId) => `ares-image-${id}`;
 
 /** Draw order, bottom first. Optical is the base image; the rest are overlays. */
 const ORDER: readonly LayerId[] = ["optical", "geology", "thermal", "radiation", "slope"];
 
 /**
- * Add or remove one raster layer per data layer that is switched on, available, and has a
- * tile URL in src/config/tiles.ts. With no URL configured nothing is added and the map keeps
- * its plain dark background.
+ * Add or remove the raster layers of every data layer that is switched on and available:
+ * a tile layer when src/config/tiles.ts has a URL, and a grid image (hillshade, slope) placed
+ * on the site bbox. Both are drawn under the coordinate grid and the route.
  */
-export function useRasterLayers(map: MapLibreMap | null, layers: LayersModel): void {
+export function useRasterLayers(map: MapLibreMap | null, layers: LayersModel, site: SiteConfig): void {
   const { info, active, status } = layers;
 
   useEffect(() => {
@@ -42,11 +46,27 @@ export function useRasterLayers(map: MapLibreMap | null, layers: LayersModel): v
         map.removeLayer(tileId(id));
         map.removeSource(tileId(id));
       }
+
+      const image = GRID_IMAGES[id];
+      if (!image) continue;
+      const imageWanted = status === "ready" && active.has(id) && info[id]?.available === true;
+      const imagePresent = map.getLayer(imageId(id)) !== undefined;
+      if (imageWanted && !imagePresent) {
+        map.addSource(imageId(id), { type: "image", url: siteFileUrl(site.id, image.file), coordinates: imageCorners(site.bbox) });
+        map.addLayer(
+          { id: imageId(id), type: "raster", source: imageId(id), paint: { "raster-opacity": image.opacity, "raster-fade-duration": 0 } },
+          LYR.grid,
+        );
+      } else if (!imageWanted && imagePresent) {
+        map.removeLayer(imageId(id));
+        map.removeSource(imageId(id));
+      }
     }
 
     // Keep the stacking order stable regardless of toggle order.
     for (const id of ORDER) {
       if (map.getLayer(tileId(id))) map.moveLayer(tileId(id), LYR.grid);
+      if (map.getLayer(imageId(id))) map.moveLayer(imageId(id), LYR.grid);
     }
-  }, [map, info, active, status]);
+  }, [map, info, active, status, site]);
 }
