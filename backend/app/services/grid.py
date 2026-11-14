@@ -56,6 +56,7 @@ class Grid:
         ):
             raise ValueError("Invalid slope thresholds or walking speed")
         self.items = [Assumption.model_validate(item) for item in a["items"]]
+        self.layers = read_layer_files(directory, m)
         stops = read("stops")
         self.site = Site(id=m["site_id"], name=m["name"], **stops)
         for array in (self.elevation, self.slope, self.valid):
@@ -87,6 +88,37 @@ class Grid:
     def center_xy(self, index):
         row, col = divmod(index, self.width)
         return self.x_min + (col + 0.5) * self.cell, self.y_max - (row + 0.5) * self.cell
+
+
+# Layers that ship as an image plus a small JSON next to meta.json (docs/DATA_CONTRACT.md, 2b).
+IMAGE_LAYERS = {"thermal": "ares.thermal/v1"}
+
+
+def read_layer_files(directory: Path, meta: dict) -> dict[str, dict]:
+    """The JSON of every image layer whose file is present and matches this site's grid.
+
+    A layer file that is malformed, for another site or for another bbox is ignored with a log
+    line: the layer then stays "No data for this site" instead of drawing in the wrong place.
+    """
+    found: dict[str, dict] = {}
+    for layer, schema in IMAGE_LAYERS.items():
+        path = directory / f"{layer}.json"
+        if not path.exists():
+            continue
+        try:
+            info = json.loads(path.read_text(encoding="utf-8"))
+            if (
+                info["schema"] != schema
+                or info["layer"] != layer
+                or info["site_id"] != meta["site_id"]
+                or info["bbox"] != meta["bbox"]
+                or not isinstance(info["source"]["title"], str)
+            ):
+                raise ValueError("does not match this site")
+            found[layer] = info
+        except (OSError, ValueError, KeyError, TypeError):
+            logging.getLogger(__name__).exception("Ignoring layer file %s", path)
+    return found
 
 
 def load_grid(directory):
