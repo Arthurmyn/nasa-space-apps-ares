@@ -81,7 +81,7 @@ threshold and the 15° limit, these are ARES planning values, not an official
 standard for a human on Mars.
 
 A task for Alikhan before the science targets are used: check them against the
-primary sources and replace the temporary names `Curiosity sol N` and the notes
+primary sources and replace the neutral names `Boxwork traverse point, sol N` and the notes
 with confirmed science descriptions; if coordinates change, re-check the bbox,
 slope and connectivity with the tests. Until this check, the labels stay the
 actual sol numbers and references to the route snapshot.

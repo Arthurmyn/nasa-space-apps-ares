@@ -90,6 +90,14 @@ export function isHttpUrl(value: string): boolean {
   }
 }
 
+/**
+ * An <img src> may be an http(s) URL or a path on this site such as "/app/stops/sol4534.jpg".
+ * javascript:, data: and protocol-relative "//host" URLs are not allowed.
+ */
+export function isSafeImageUrl(value: string): boolean {
+  return isHttpUrl(value) || (/^\/(?!\/)/.test(value) && !value.includes("\\") && !/[\u0000-\u001f]/.test(value));
+}
+
 const SAFETY: readonly SafetyLevel[] = ["ok", "caution", "avoid"];
 const HAZARD_KINDS: readonly HazardKind[] = ["rough_terrain", "sand_trap", "steep_slope", "other"];
 
@@ -97,8 +105,8 @@ function stopImage(v: unknown, path: string): StopImage | null {
   if (v === null || v === undefined) return null;
   const i = obj(v, path);
   const url = str(i.url, `${path}.url`);
-  // Only http(s) may reach an <img src>; javascript:, data: and the like are dropped.
-  if (!isHttpUrl(url)) return null;
+  // Only http(s) URLs and same-site paths may reach an <img src>; javascript:, data: and the like are dropped.
+  if (!isSafeImageUrl(url)) return null;
   return { url, alt: str(i.alt, `${path}.alt`), credit: str(i.credit, `${path}.credit`) };
 }
 
