@@ -8,7 +8,9 @@ import {
   type RouteResponse,
 } from "./types.ts";
 
-const BASE = (import.meta.env.VITE_API_URL ?? "http://localhost:8000") + "/api/v1";
+// Dev: the backend on :8000. Production build: same origin, where Vercel routes /api/* to the
+// backend service. VITE_API_URL overrides both (an empty string also means same origin).
+const BASE = (import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "" : "http://localhost:8000")) + "/api/v1";
 
 /** "mock" only when VITE_USE_MOCK=true. The UI shows a "Sample data" badge in that case. */
 export const dataSource: "mock" | "live" = import.meta.env.VITE_USE_MOCK === "true" ? "mock" : "live";
