@@ -6,7 +6,7 @@ Hyperlocal route planner for a human Marswalk (NASA Space Apps 2026, "Interplane
 
 ```bash
 npm install
-npm run dev          # http://localhost:5173, talks to the backend at VITE_API_URL
+npm run dev          # http://localhost:5173/app/, talks to the backend at VITE_API_URL
 ```
 
 No backend yet? Use the built-in sample data:
@@ -22,6 +22,8 @@ Mock mode shows a **Sample data** badge in the top bar. The data is synthetic (a
 | `npm run lint` | Type check (app and tests, strict) |
 | `npm test` | Unit tests for pure functions, using Node's built-in test runner. Needs Node 22.18 or newer (it runs the `.ts` tests directly); tested on Node 24 |
 | `npm run build` | Type check, then production build |
+
+The planner is served under `/app/` (Vite `base`), and `npm run build` writes to `dist/app`. The landing page in [`../landing`](../landing) owns `/`; see the root `vercel.json`.
 
 ## Using the app
 
