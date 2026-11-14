@@ -1,9 +1,9 @@
-# NASA Space Apps — ARES
+# NASA Space Apps - ARES
 
-> Хакатон-проект. **Одна фраза о том, что мы делаем и для кого** — заполнить, когда утвердим идею.
+> Хакатон-проект. **Одна фраза о том, что мы делаем и для кого** - заполнить, когда утвердим идею.
 
-> **Перед началом любой работы прочитай [docs/context/](docs/context/)** — там лежат материалы и контекст по задачам проекта.
-> Это единый источник правды. Если контекст расходится с кодом или чатом — уточни у команды.
+> **Перед началом любой работы прочитай [docs/context/](docs/context/)** - там лежат материалы и контекст по задачам проекта.
+> Это единый источник правды. Если контекст расходится с кодом или чатом - уточни у команды.
 
 ## Проблема
 _Какую боль решаем? Кто пользователь?_
@@ -28,7 +28,7 @@ _Что делает продукт? Ключевые фичи (3–5 пункт
 | ML | Python, scikit-learn (→ PyTorch при необходимости), Jupyter | [`ml/`](ml/) |
 | Infra | Docker Compose, шаблоны GitHub | [`docker-compose.yml`](docker-compose.yml), [`.github/`](.github/) |
 
-Подробнее — [docs/architecture.md](docs/architecture.md), контракт API — [docs/api.md](docs/api.md).
+Подробнее - [docs/architecture.md](docs/architecture.md), контракт API - [docs/api.md](docs/api.md).
 
 ## Структура проекта
 
@@ -65,7 +65,7 @@ docker compose up --build
 
 ### Локально
 
-**ML** (сначала — чтобы у бэка была модель)
+**ML** (сначала - чтобы у бэка была модель)
 ```bash
 cd ml
 pip install -r requirements.txt
@@ -104,4 +104,4 @@ npm run dev
 См. [правила оформления и разделения задач](CONTRIBUTING.md#4-задачи-issues--доска), а также [CONTRIBUTING.md](CONTRIBUTING.md): ветки, коммиты, PR, ревью.
 
 ## Лицензия
-[MIT](LICENSE)
+[Apache License 2.0](LICENSE)

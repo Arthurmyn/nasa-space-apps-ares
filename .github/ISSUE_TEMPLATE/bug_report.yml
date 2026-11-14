@@ -37,6 +37,6 @@ body:
     id: priority
     attributes:
       label: Приоритет
-      options: ["P0 — блокирует демо", "P1 — нужно для MVP", "P2 — nice to have"]
+      options: ["P0 - блокирует демо", "P1 - нужно для MVP", "P2 - nice to have"]
     validations:
       required: true
