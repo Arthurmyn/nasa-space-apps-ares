@@ -134,8 +134,8 @@ function LookAhead({ route, hud }: { route: RouteResponse; hud: HudModel }) {
   );
 }
 
-/** Not driven by a live position feed: the position is set by the slider. See the banner. */
-export function HudView({ onBackToPlan }: { onBackToPlan: () => void }) {
+/** The 2D HUD, kept as the fallback when WebGL is not available. The position is set by the slider. */
+export function HudView2D({ onBackToPlan }: { onBackToPlan: () => void }) {
   const { state, stale } = usePlanner();
   const route = state.route;
   const total = useMemo(() => (route ? (profileExtent(route.profile)?.totalDist ?? 0) : 0), [route]);
