@@ -90,9 +90,6 @@ def build_grid(handoff, cell):
         "slope_window_m": WINDOW_M,
         "sources": [
             f"HiRISE DTM {handoff['dtm_product_id']}, NASA/JPL/University of Arizona",
-            "src-msl-traverse: NASA/JPL Curiosity MSL waypoints; "
-            "https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json; "
-            "snapshot: docs/research/r0/rover_sols4534-4805.geojson",
         ],
     }
     return Grid(meta, crs, affine, inside)
@@ -180,8 +177,28 @@ def encode_files(grid, z, caution_deg=10, limit_deg=15):
             "frontend/public/data/gale-bx/slope.png": png_bytes(colors)}
 
 
+def read_stop_sources(data_dir):
+    """Resolve only sources referenced by the current stops, without dataset-specific code."""
+    stops_path = data_dir / "stops.json"
+    if not stops_path.exists():
+        return []
+    stops = json.loads(stops_path.read_text(encoding="utf-8"))
+    source_ids = dict.fromkeys(stop["source_id"] for stop in stops["stops"])
+    if not source_ids:
+        return []
+    registry = json.loads((data_dir / "sources.json").read_text(encoding="utf-8"))
+    sources = []
+    for source_id in source_ids:
+        description = registry.get(source_id)
+        if not isinstance(description, str) or not description.strip():
+            raise ValueError(f"sources.json has no description for stop source {source_id}")
+        sources.append(f"{source_id}: {description}")
+    return sources
+
+
 def generate(handoff, output_root, cell=1.0, dtm=None, fake=False):
     output_root = Path(output_root)
+    stop_sources = [] if fake else read_stop_sources(output_root / "backend/data/gale-bx")
     assumptions_path = output_root / "backend/data/gale-bx/assumptions.json"
     if assumptions_path.exists():
         assumptions = json.loads(assumptions_path.read_text(encoding="utf-8"))
@@ -203,6 +220,7 @@ def generate(handoff, output_root, cell=1.0, dtm=None, fake=False):
             if dtm is None:
                 raise ValueError("DTM path is required")
             z = read_dtm(dtm, grid)
+            grid.meta["sources"].extend(stop_sources)
         files = encode_files(grid, z, caution_deg=caution_deg, limit_deg=limit_deg)
         # Include companion files such as stops.json and assumptions.json, if present.
         grid_bytes = sum(map(len, files.values()))
