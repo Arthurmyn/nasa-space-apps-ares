@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Orbit — See beyond now</title>
-  <meta name="description" content="Everything you need to discover, understand, and explore what is out there.">
-  <meta property="og:title" content="Orbit — See beyond now">
-  <meta property="og:description" content="Everything you need to discover, understand, and explore what is out there.">
+  <title>Voozduhandar: ARES, plan one walk on Mars</title>
+  <meta name="description" content="ARES combines NASA Mars data into one local view and proposes a candidate route between science stops, with time, climb and return-trip limits. Every number shows its source.">
+  <meta property="og:title" content="Voozduhandar: ARES, plan one walk on Mars">
+  <meta property="og:description" content="A candidate-route planner for a single human Mars walk. Every number shows its source and whether it is measured, modelled or assumed.">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/src/sections.css">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230b0705'/%3E%3Cpath d='M3 13l5-10 5 10' fill='none' stroke='%23d9582b' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="preload" href="/fonts/inter-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
   <script>
@@ -34,13 +35,14 @@
     @supports not (width: max(1px,1vw)){ :root{ --u: calc(100vw / 1563); } }
 
     *,*::before,*::after{ box-sizing:border-box; }
-    html,body{ height:100%; }
+    html{ scroll-behavior:smooth; }
+    @media (prefers-reduced-motion: reduce){ html{ scroll-behavior:auto; } }
     body{
       margin:0;
       background:#000;
       color:var(--ink);
       font-family:"InterVar","Inter","Helvetica Neue",Arial,system-ui,sans-serif;
-      overflow:hidden;
+      overflow-x:hidden;
       font-optical-sizing:none;
       font-feature-settings:"kern" 1,"calt" 1;
       -webkit-font-smoothing:antialiased;
@@ -73,7 +75,6 @@
       isolation:isolate;
     }
 
-    .ai-note{position:fixed;right:calc(16 * var(--u));bottom:calc(16 * var(--u));z-index:5;padding:6px 12px;border:1px solid rgba(255,255,255,.55);border-radius:999px;background:rgba(0,0,0,.6);color:#fff;font:500 12px/1 "Inter",system-ui,sans-serif;pointer-events:none}
     .sky{
       position:absolute;
       top:calc(-1.5 * var(--u));
@@ -98,12 +99,12 @@
     }
 
     .bar{
-      position:absolute;
+      position:fixed;
       left:calc(50% - 495.5 * var(--u));
       top:calc(7.5 * var(--u));
       width:calc(983.5 * var(--u));
       height:calc(36.2 * var(--u));
-      z-index:3;
+      z-index:20;
     }
 
     .brand{
@@ -124,7 +125,7 @@
       flex:none;
     }
     .brand span{
-      font-size:calc(17.5 * var(--u));
+      font-size:calc(21 * var(--u));
       font-weight:550;
       font-variation-settings:'opsz' 22;
       letter-spacing:0;
@@ -133,15 +134,15 @@
 
     .links{
       position:absolute;
-      left:calc(353.8 * var(--u));
+      left:calc(300 * var(--u));
       top:50%;
       transform:translateY(-50%);
       display:flex;
       align-items:center;
-      gap:calc(25.2 * var(--u));
+      gap:calc(22 * var(--u));
     }
     .links a{
-      font-size:calc(11.9 * var(--u));
+      font-size:calc(13.6 * var(--u));
       font-weight:450;
       font-variation-settings:'opsz' 15;
       letter-spacing:calc(-0.30 * var(--u));
@@ -193,17 +194,17 @@
     .bar .btn{
       height:calc(36.2 * var(--u));
       line-height:calc(36.2 * var(--u));
-      font-size:calc(11.9 * var(--u));
+      font-size:calc(13.4 * var(--u));
       font-weight:500;
       font-variation-settings:'opsz' 15;
       letter-spacing:calc(-0.38 * var(--u));
     }
     .bar .ghost{
-      width:calc(85.5 * var(--u));
+      width:calc(97 * var(--u));
     }
     .bar .solid{
-      width:calc(88.2 * var(--u));
-      font-size:calc(12.15 * var(--u));
+      width:calc(100 * var(--u));
+      font-size:calc(13.6 * var(--u));
       font-weight:550;
       letter-spacing:calc(-0.35 * var(--u));
     }
@@ -535,46 +536,7 @@
       src="/media/sky.mp4"
     ></video>
     <div class="veil" aria-hidden="true"></div>
-    <p class="ai-note">Background: AI-generated</p>
 
-    <header class="bar" data-open="false">
-      <a class="brand" href="#" aria-label="Orbit — home">
-        <svg viewBox="0 0 26.9 16.6" overflow="visible" fill="none" aria-hidden="true">
-          <ellipse cx="13.25" cy="8.4" rx="13.2" ry="2.9" transform="rotate(-25 13.25 8.4)" stroke="currentColor" stroke-width="1.25"/>
-          <circle cx="13.25" cy="8.4" r="8.8" fill="#000"/>
-          <circle cx="13.25" cy="8.4" r="8.1" fill="currentColor"/>
-          <ellipse cx="13.25" cy="8.4" rx="13.2" ry="2.9" transform="rotate(-25 13.25 8.4)" stroke="#000" stroke-width="0.9" stroke-dasharray="28.2 28.2"/>
-          <ellipse cx="13.25" cy="8.4" rx="13.2" ry="2.9" transform="rotate(-25 13.25 8.4)" stroke="currentColor" stroke-width="1.25" stroke-dasharray="28.2 28.2"/>
-        </svg>
-        <span>Orbit</span>
-      </a>
-
-      <nav class="links" aria-label="Primary">
-        <a href="#about">About</a>
-        <a href="#features">Features</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#contact">Contact</a>
-        <a href="#blog">Blog</a>
-      </nav>
-
-      <div class="actions">
-        <a class="btn ghost" href="/app/">Try for free</a>
-        <a class="btn solid" href="/app/">Get a demo</a>
-        <button class="menu" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu-sheet">
-          <svg viewBox="0 0 20 14" fill="none" aria-hidden="true">
-            <path d="M0 1h20M0 7h20M0 13h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-        </button>
-        <nav class="sheet" id="menu-sheet" aria-label="Menu">
-          <a href="#about">About</a>
-          <a href="#features">Features</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#contact">Contact</a>
-          <a href="#blog">Blog</a>
-          <a class="btn solid" href="/app/">Get a demo</a>
-        </nav>
-      </div>
-    </header>
 
     <div class="screen">
       <main class="hero">
@@ -599,6 +561,262 @@
         </div>
       </main>
     </div>
+  </div>
+
+  <div class="bar-bg" aria-hidden="true"></div>
+    <header class="bar" data-open="false">
+      <a class="brand" href="#" aria-label="Voozduhandar, back to top">
+        <svg viewBox="0 0 26.9 16.6" overflow="visible" fill="none" aria-hidden="true">
+          <ellipse cx="13.25" cy="8.4" rx="13.2" ry="2.9" transform="rotate(-25 13.25 8.4)" stroke="currentColor" stroke-width="1.25"/>
+          <circle cx="13.25" cy="8.4" r="8.8" fill="#000"/>
+          <circle cx="13.25" cy="8.4" r="8.1" fill="currentColor"/>
+          <ellipse cx="13.25" cy="8.4" rx="13.2" ry="2.9" transform="rotate(-25 13.25 8.4)" stroke="#000" stroke-width="0.9" stroke-dasharray="28.2 28.2"/>
+          <ellipse cx="13.25" cy="8.4" rx="13.2" ry="2.9" transform="rotate(-25 13.25 8.4)" stroke="currentColor" stroke-width="1.25" stroke-dasharray="28.2 28.2"/>
+        </svg>
+        <span>Voozduhandar</span>
+      </a>
+
+      <nav class="links" aria-label="Primary">
+        <a href="#about">About</a>
+        <a href="#features">Features</a>
+        <a href="#data">Data</a>
+        <a href="#team">Team</a>
+        <a href="#sources">Sources</a>
+      </nav>
+
+      <div class="actions">
+        <a class="btn ghost" href="/app/">Try for free</a>
+        <a class="btn solid" href="/app/">Get a demo</a>
+        <button class="menu" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu-sheet">
+          <svg viewBox="0 0 20 14" fill="none" aria-hidden="true">
+            <path d="M0 1h20M0 7h20M0 13h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <nav class="sheet" id="menu-sheet" aria-label="Menu">
+          <a href="#about">About</a>
+          <a href="#features">Features</a>
+          <a href="#data">Data</a>
+          <a href="#team">Team</a>
+          <a href="#sources">Sources</a>
+          <a class="btn solid" href="/app/">Get a demo</a>
+        </nav>
+      </div>
+    </header>
+
+  <div class="spacer" aria-hidden="true"></div>
+
+  <div class="sections">
+
+    <section id="about" aria-labelledby="about-title">
+      <div class="wrap">
+        <p class="eyebrow">About the project</p>
+        <h2 id="about-title">ARES plans one walk on Mars</h2>
+        <p class="lead">
+          ARES brings NASA Mars data into one local view and proposes a <strong>candidate route</strong> between science stops.
+          Time, climb and the limit for walking back sit next to it, and every number says where it came from.
+          It is our entry in the NASA Space Apps Challenge 2026, <em>Interplanetary Survival Guide: Martian Map</em>.
+        </p>
+        <ul class="facts" aria-label="Key facts">
+          <li><strong>1 site</strong><span>the boxwork on Mount Sharp, Gale crater</span></li>
+          <li><strong>Up to 6</strong><span>science stops per walk</span></li>
+          <li><strong>4 labels</strong><span>measured, model, assumption or proxy on every number</span></li>
+        </ul>
+        <div class="grid grid--3">
+          <article class="card"><h3>Fits the clock, not the way back</h3><p>A stop fits the EVA time budget but lies beyond the limit for walking back to the habitat.</p></article>
+          <article class="card"><h3>Gentle on one grid, steep on another</h3><p>A slope looks mild on a 463 m grid and turns steep on a 1 m terrain model.</p></article>
+          <article class="card"><h3>Layers that do not line up</h3><p>Misaligned layers create false hazards, or false &ldquo;safe&rdquo; corridors.</p></article>
+        </div>
+        <p class="note">The question ARES is built around: can the crew walk back from every point of the route? Existing public tools are made for browsing regions. ARES is made for one walk.</p>
+      </div>
+    </section>
+
+    <section id="features" class="alt" aria-labelledby="features-title">
+      <div class="wrap">
+        <p class="eyebrow">Features</p>
+        <h2 id="features-title">What the planner does</h2>
+        <p class="lead">Status is shown on every card. The planner runs on sample data today; real terrain data is the next step.</p>
+        <div class="grid grid--3">
+          <article class="card"><span class="status status--ok">Working</span><h3>Route on a map</h3><p>Click to set a start and stops, drag to move them. The route recomputes after each edit and the old one fades until the new one arrives.</p></article>
+          <article class="card"><span class="status status--ok">Working</span><h3>Slope classes and hazard zones</h3><p>Route segments are coded by slope, and hazard zones are hatched with a label. Colour is never the only signal: every status has an icon and text.</p></article>
+          <article class="card"><span class="status status--ok">Working</span><h3>Elevation profile</h3><p>Distance against elevation, coloured by slope class, with stop markers. Hover it and the position shows on the map, and the other way round.</p></article>
+          <article class="card"><span class="status status--ok">Working</span><h3>Compare an alternative</h3><p>Overlay a second route and read the difference in length, steepest slope and time.</p></article>
+          <article class="card"><span class="status status--ok">Working</span><h3>Printable route card</h3><p>A one-page A5 card with a route sketch, stop list, slope table by leg and the assumptions behind it.</p></article>
+          <article class="card"><span class="status status--plan">Preview</span><h3>HUD view</h3><p>Compass bar, next stop, slope and nearest hazard. It is a mockup: position comes from a slider, not a live feed.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" aria-labelledby="how-title">
+      <div class="wrap">
+        <p class="eyebrow">How it works</p>
+        <h2 id="how-title">From science stops to a checked candidate route</h2>
+        <ol class="grid grid--4 steps">
+          <li><h3>Choose stops</h3><p>Place up to six science targets. Each has an objective, its evidence, a confidence level and a rover image with credit.</p></li>
+          <li><h3>Combine the layers</h3><p>Orbital imagery, terrain model, slope and rover images in one window, with resolution and coverage shown for each.</p></li>
+          <li><h3>Get a candidate route</h3><p>An A* search on a 1 m grid from the habitat through your stops and back. If no route exists, ARES names the blocking constraint instead of drawing a straight line.</p></li>
+          <li><h3>Check the limits</h3><p>Each leg gets its 3-D distance, climb, time and a relative effort index, checked against the EVA time budget and the walk-back limit.</p></li>
+        </ol>
+        <p class="note">Unknown terrain is penalised, never treated as free to cross. Steps 3 and 4 are in progress; they are not in the prototype yet.</p>
+      </div>
+    </section>
+
+    <section id="data" class="alt" aria-labelledby="data-title">
+      <div class="wrap">
+        <p class="eyebrow">Data</p>
+        <h2 id="data-title">Real NASA layers, with their limits in plain view</h2>
+        <p class="lead">
+          Each layer shows its mission, instrument, product, resolution and coverage, marked native, coarse or missing.
+          A gap is never treated as safe ground.
+        </p>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Data layers table, scrollable">
+          <table>
+            <caption class="sr">Data layers, their sources, resolution and role</caption>
+            <thead><tr><th scope="col">Layer</th><th scope="col">Source</th><th scope="col">Resolution</th><th scope="col">Role</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Orthoimage</th><td>HiRISE</td><td class="mono">25 cm</td><td>Visual base</td></tr>
+              <tr><th scope="row">Elevation</th><td>HiRISE terrain model (DTM)</td><td class="mono">1 m</td><td>Slope, roughness, routing</td></tr>
+              <tr><th scope="row">Slope and roughness</th><td>Derived from the terrain model</td><td class="mono">1 m</td><td>Hazard mask</td></tr>
+              <tr><th scope="row">Thermal inertia</th><td>THEMIS</td><td class="mono">100 m</td><td>Context only, never a per-cell hazard</td></tr>
+              <tr><th scope="row">Rover images</th><td>Curiosity Mastcam and Navcam</td><td class="mono">–</td><td>First-person view per stop, with credit</td></tr>
+              <tr><th scope="row">Radiation</th><td>Curiosity RAD</td><td class="mono">point</td><td>Card only, not a map</td></tr>
+              <tr><th scope="row">Weather</th><td>Curiosity REMS</td><td class="mono">point</td><td>Historical climate card</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="split" style="margin-top:40px">
+          <div>
+            <h3>The site</h3>
+            <p class="muted" style="margin:10px 0 0">The area of interest is the boxwork on Mount Sharp in Gale crater (search frame 137&ndash;138&deg; E, 5.5&ndash;4.3&deg; S). Curiosity has surface radiation and weather records there, thousands of rover images and detailed orbital imagery. Boxwork ridges are 5&ndash;9 m wide and 1&ndash;2 m high, so the best path is not a straight line.</p>
+            <ul class="bullets">
+              <li><strong>Coverage check done.</strong> A HiRISE terrain model with 1 m pixels covers the boxwork area Curiosity drove through. The working area is still preliminary, about 0.6 by 0.9 km.</li>
+              <li><strong>Science question.</strong> Diagenesis along fractures in the sulfate-bearing layers, which record groundwater history.</li>
+            </ul>
+          </div>
+          <aside class="callout">
+            <h3>What we do not claim</h3>
+            <p>We do not claim that ridge and hollow chemistry differ: recent work found no chemical difference. Targets are framed as &ldquo;study diagenesis along fracture X&rdquo;.</p>
+            <p>No real-time weather or radiation. Climate figures are historical.</p>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section id="trust" aria-labelledby="trust-title">
+      <div class="wrap">
+        <p class="eyebrow">Trust</p>
+        <h2 id="trust-title">Every number shows where it came from</h2>
+        <p class="lead">Each number carries a value, a unit, a source and one of four labels. These are the starting values behind a route; planners can change them and the route is rebuilt.</p>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Default parameters table, scrollable">
+          <table>
+            <caption class="sr">Default parameters with their label and source</caption>
+            <thead><tr><th scope="col">Parameter</th><th scope="col">Default</th><th scope="col">Label</th><th scope="col">Source</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Walking speed</th><td class="mono">2 km/h</td><td><span class="status status--wip">assumption</span></td><td>Lunar ConOps EVA-EXP-0042 Rev B. 4 km/h only as a sensitivity case.</td></tr>
+              <tr><th scope="row">Hard slope limit</th><td class="mono">15&deg; (20&deg; option)</td><td><span class="status status--plan">proxy</span></td><td>Lunar analog, Pe&ntilde;a-Asensio 2024. Slopes on a 1 m grid look steeper than on 5 m.</td></tr>
+              <tr><th scope="row">Walk-back limit</th><td class="mono">1 h or 3.5 km</td><td><span class="status status--wip">assumption</span></td><td>ICES-2026-127. The lunar 10 km is kept only for comparison.</td></tr>
+              <tr><th scope="row">Longest EVA</th><td class="mono">8 h (4 h option)</td><td><span class="status status--wip">assumption</span></td><td>Reference architecture, Rucker and Hoffman 2020</td></tr>
+              <tr><th scope="row">Mars gravity</th><td class="mono">3.73 m/s&sup2;</td><td><span class="status status--ok">established</span></td><td>NASA NSSDC Mars fact sheet</td></tr>
+              <tr><th scope="row">Cosmic-ray dose at Gale</th><td class="mono">0.64 &plusmn; 0.12 mSv/day</td><td><span class="status status--ok">measured</span></td><td>Hassler et al. 2014, Science, Table 1</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <ul class="bullets">
+          <li>It is a <strong>candidate route</strong>, not a safety certification.</li>
+          <li>Effort is a <strong>relative index</strong>, not an oxygen or metabolism forecast.</li>
+          <li>Lunar or 1 g data applied to Mars is labelled proxy, and hypotheses are labelled as hypotheses.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="status" class="alt" aria-labelledby="status-title">
+      <div class="wrap">
+        <p class="eyebrow">Honest status</p>
+        <h2 id="status-title">What works today, and what does not yet</h2>
+        <div class="grid grid--3">
+          <article class="card">
+            <span class="status status--ok">Working</span>
+            <h3>Done</h3>
+            <ul class="bullets">
+              <li>Interactive planner UI on sample data</li>
+              <li>Terrain-model coverage check for the boxwork area</li>
+              <li>Printable route card, HUD mockup, route comparison</li>
+            </ul>
+          </article>
+          <article class="card">
+            <span class="status status--wip">In progress</span>
+            <h3>Next</h3>
+            <ul class="bullets">
+              <li>Slope grid and hillshade from the real terrain model</li>
+              <li>Route search on that grid, in the browser</li>
+              <li>Science stops with notes and credited rover images</li>
+              <li>A source and label on every number</li>
+            </ul>
+          </article>
+          <article class="card">
+            <span class="status status--plan">Planned</span>
+            <h3>If time allows</h3>
+            <ul class="bullets">
+              <li>EVA time budget, walk-back limit and point of no return</li>
+              <li>Sensitivity presets and uncertainty from terrain noise</li>
+              <li>Radiation and historical weather cards, export</li>
+            </ul>
+          </article>
+        </div>
+        <p class="note"><strong>SEXTANT</strong> (MIT) already did metabolic A* routing and a best path home. We do not present that as new. What ARES adds is data from several Mars missions on one site, a walk-back limited by consumables with a point-of-no-return marker, and a source label on every number.</p>
+      </div>
+    </section>
+
+    <section id="team" aria-labelledby="team-title">
+      <div class="wrap">
+        <p class="eyebrow">Team</p>
+        <h2 id="team-title">Four people, one site, 48 hours</h2>
+        <div class="grid grid--4">
+          <article class="card"><h3>Arthur</h3><p>Frontend, computer vision and integration.</p></article>
+          <article class="card"><h3>Aikyn</h3><p>Backend, terrain processing, routing and deployment.</p></article>
+          <article class="card"><h3>Alikhan</h3><p>Science, parameters, validation and texts.</p></article>
+          <article class="card"><h3>Berdibek</h3><p>Visual design, slides, sources, AI disclosure and QA.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-band" aria-labelledby="cta-title">
+      <div class="wrap">
+        <h2 id="cta-title">Try the planner</h2>
+        <p class="lead">Open the map, place a few stops and see a candidate route with its slope, climb and time.</p>
+        <a class="btn solid" href="/app/">Launch the app</a>
+      </div>
+    </section>
+
+    <footer class="footer" id="sources">
+      <div class="wrap">
+        <div class="footer__cols">
+          <div>
+            <h2>Sources</h2>
+            <ul>
+              <li><a href="https://www.spaceappschallenge.org/2026/" rel="noopener">NASA Space Apps Challenge 2026</a></li>
+              <li><a href="https://doi.org/10.1126/science.1244797" rel="noopener">Hassler et al. 2014, Science: radiation at Gale crater</a></li>
+              <li><a href="https://www.nasa.gov/wp-content/uploads/2017/02/eva-exp-0042_xeva_system_con_ops_rev_b_final_dtd_10192020_ref_doc.pdf" rel="noopener">xEVA ConOps EVA-EXP-0042 Rev B</a></li>
+              <li><a href="https://ntrs.nasa.gov/api/citations/20260003038/downloads/Final_ICES2026_Mars_Mass_1.pdf" rel="noopener">ICES-2026-127: Mars EVA assumptions</a></li>
+              <li><a href="https://boris.unibe.ch/194784" rel="noopener">Pe&ntilde;a-Asensio 2024: basis for the slope limit</a></li>
+              <li><a href="https://academic.oup.com/milmed/article/183/9-10/e357/5025891" rel="noopener">Looney et al. 2018, Military Medicine: effort model</a></li>
+              <li><a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html" rel="noopener">NASA NSSDC Mars fact sheet</a></li>
+              <li><a href="https://doi.org/10.17189/1520397" rel="noopener">MSL PLACES (Curiosity positions)</a></li>
+            </ul>
+          </div>
+          <div>
+            <h2>Project</h2>
+            <ul>
+              <li><a href="/app/">Launch the app</a></li>
+              <li><a href="https://github.com/Arthurmyn/nasa-space-apps-ares" rel="noopener">Source code on GitHub</a></li>
+            </ul>
+          </div>
+        </div>
+        <p class="footer__fine">
+          A hackathon project made for the NASA Space Apps Challenge 2026. It is not affiliated with or endorsed by NASA.
+          The background artwork on this page (video and still) is AI-generated. No cookies, no tracking, no login.
+        </p>
+      </div>
+    </footer>
   </div>
 
   <script>
@@ -719,5 +937,6 @@
       }
     })();
   </script>
+  <script type="module" src="/src/sections.ts"></script>
 </body>
 </html>
