@@ -11,6 +11,8 @@ import {
 } from "react";
 import { api } from "../api/client.ts";
 import { describeError } from "../api/errors.ts";
+import { ApiError } from "../api/types.ts";
+import { stopLabel } from "../lib/format.ts";
 import type { LayerId, LayerInfo } from "../api/types.ts";
 import { DEFAULT_ACTIVE_LAYERS } from "../config/layers.ts";
 import { NOTICE_MS, ROUTE_DEBOUNCE_MS } from "../config/route.ts";
@@ -132,8 +134,15 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       if (!ctrl.signal.aborted) dispatch({ type: "route/success", route, version: snapshot.planVersion });
     } catch (e) {
       if (ctrl.signal.aborted) return;
-      console.error("Route request failed", e);
-      dispatch({ type: "route/failure", message: describeError(e) });
+      // A 422 is an expected answer ("no route between these points"), not a fault.
+      const expected = e instanceof ApiError && e.status === 422;
+      (expected ? console.warn : console.error)("Route request failed", e);
+      const labelFor = (id: string) => {
+        if (id === "start") return "Start";
+        const i = snapshot.stops.findIndex((p) => p.id === id);
+        return i === -1 ? null : `Stop ${stopLabel(i)}`;
+      };
+      dispatch({ type: "route/failure", message: describeError(e, labelFor) });
     }
   }, []);
 
