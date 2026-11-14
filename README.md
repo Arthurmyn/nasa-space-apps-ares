@@ -31,7 +31,7 @@ From `backend/data/gale-bx/meta.json` and `sources.json`:
 - **Terrain:** HiRISE DTM `DTEEC_009149_1750_009294_1750_U01`, NASA/JPL/University of Arizona. The grid cell is 2 m and slopes are smoothed over a 5 m window.
 - **Imagery:** Viking MDIM 2.1 colour mosaic through NASA/JPL Mars Trek, used as the map basemap.
 - **Science stops:** Curiosity (MSL) waypoints, NASA/JPL, `https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json` (snapshot in `docs/research/r0/`).
-- **Thermal:** USGS Astrogeology "Gale Crater THEMIS Daytime IR ISIS", NASA/ASU/USGS (Mars Odyssey THEMIS). A single 2007 observation, 100 m per pixel, drawn as blocks; stretched 8-bit values, not calibrated temperature.
+- **Thermal:** USGS Astrogeology "Gale Crater THEMIS Daytime IR ISIS", NASA/JPL-Caltech/Arizona State University (Mars Odyssey THEMIS). A single 2007 observation, 100 m per pixel, drawn as blocks; stretched 8-bit values, not calibrated temperature.
 - **Radiation:** average galactic cosmic ray dose equivalent rate of 0.67 mSv per day at the Gale surface (August 2012 to June 2013), measured by Curiosity RAD: Hassler et al., Science 2013, https://doi.org/10.1126/science.1244797. The dose of a walk is this rate times the walking time; galactic cosmic rays only, not a forecast.
 - **Site context:** the "Why this site" text comes from NASA/JPL, "NASA's Curiosity Rover Sees Martian 'Spiderwebs' Up Close" (23 February 2026), reference [6].
 - **Slope and walking limits:** documents [1] to [5]; see `ASSETS.md` for links, licenses and where each source is used.

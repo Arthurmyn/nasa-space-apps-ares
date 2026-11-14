@@ -6,6 +6,7 @@ import {
   RADIATION_LABEL,
   RADIATION_NOTE,
 } from "../config/radiation.ts";
+import { REFERENCES } from "../config/references.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
 import { estimatedDoseMsv, formatDose } from "../lib/radiation.ts";
 import { formatDistance, formatDuration, formatSigned, formatSlope } from "../lib/format.ts";
@@ -131,6 +132,16 @@ function HowComputed({ route }: { route: RouteResponse }) {
             </ul>
           </>
         )}
+        <h3 className="drawer__subtitle">Design reference</h3>
+        <ul className="source-list">
+          {REFERENCES.filter((r) => r.design).map((r) => (
+            <li key={r.n}>
+              <a href={r.url} target="_blank" rel="noreferrer">
+                {r.citation}
+              </a>
+            </li>
+          ))}
+        </ul>
         {site.isTestData && <p className="muted drawer__foot">This grid is generated test data, not measured terrain.</p>}
         <p className="muted drawer__foot">
           Slope colours use app thresholds of {SLOPE_LIMITS.cautionDeg}° and {SLOPE_LIMITS.maxDeg}°.
