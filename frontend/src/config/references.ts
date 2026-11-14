@@ -1,4 +1,4 @@
-/** Documents cited by the assumptions in backend/data/gale-bx/assumptions.json as [1] to [4]. */
+/** Documents cited by the assumptions in backend/data/gale-bx/assumptions.json as [1] to [5]. */
 export interface Reference {
   n: number;
   citation: string;
@@ -25,5 +25,10 @@ export const REFERENCES: readonly Reference[] = [
     n: 4,
     citation: "JPL PIA26017, Curiosity's difficult climb.",
     url: "https://www.jpl.nasa.gov/images/pia26017-a-map-of-curiositys-difficult-climb/",
+  },
+  {
+    n: 5,
+    citation: "Hassler, D. M. et al., Mars' Surface Radiation Environment Measured with the Mars Science Laboratory's Curiosity Rover, Science 343 (6169), 1244797, 2014. Figure as quoted in the SwRI release.",
+    url: "https://doi.org/10.1126/science.1244797",
   },
 ];

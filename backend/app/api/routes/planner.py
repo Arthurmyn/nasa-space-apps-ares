@@ -18,20 +18,35 @@ def get_grid(request: Request) -> Grid:
 GridDependency = Annotated[Grid, Depends(get_grid)]
 
 
+RADIATION_REASON = "Single value for the whole site, see route summary"
+NO_DATA_REASON = "No data for this site"
+
+
+def layer_entry(grid: Grid, id: str) -> dict:
+    if id in ("slope", "optical"):
+        return {
+            "id": id,
+            "available": True,
+            "reason": None,
+            "source": "; ".join(grid.meta["sources"]),
+        }
+    if id in grid.layers:
+        source = grid.layers[id]["source"]
+        return {
+            "id": id,
+            "available": True,
+            "reason": None,
+            "source": f"{source['title']}, {source['credit']}, {source['page_url']}",
+        }
+    # Radiation is one measured number for the whole site, not a map: shown in the route summary.
+    reason = RADIATION_REASON if id == "radiation" else NO_DATA_REASON
+    return {"id": id, "available": False, "reason": reason, "source": None}
+
+
 @router.get("/layers", response_model=LayersResponse)
 def layers(grid: GridDependency):
-    source = "; ".join(grid.meta["sources"])
-    return {
-        "layers": [
-            {
-                "id": id,
-                "available": id in ("slope", "optical"),
-                "reason": None if id in ("slope", "optical") else "No data for this site",
-                "source": source if id in ("slope", "optical") else None,
-            }
-            for id in ("slope", "optical", "thermal", "geology", "radiation")
-        ],
-    }
+    ids = ("slope", "optical", "thermal", "geology", "radiation")
+    return {"layers": [layer_entry(grid, id) for id in ids]}
 
 
 @router.get("/sites", response_model=SitesResponse)

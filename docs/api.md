@@ -45,8 +45,8 @@ Which data layers exist for the site. An explicit `available: false` is authorit
 |-------|------|-------|
 | `layers[].id` | `"slope" \| "optical" \| "thermal" \| "geology" \| "radiation"` | Unknown ids make the whole response invalid |
 | `layers[].available` | boolean | |
-| `layers[].reason` | string \| null | Shown when not available. Default text: "No data for this site" |
-| `layers[].source` | string \| null | Dataset and provider, shown in the layer legend |
+| `layers[].reason` | string \| null | Shown when not available. Default text: "No data for this site"; `radiation` says "Single value for the whole site, see route summary" |
+| `layers[].source` | string \| null | Dataset and provider, shown in the layer legend. `thermal` is available when `backend/data/<site>/thermal.json` exists and matches the site's `meta.json` (`docs/DATA_CONTRACT.md`, 2b) |
 
 Layer imagery itself is not served by the API. Grid images are in `frontend/public/data/gale-bx/` per `DATA_CONTRACT.md`; tile sources and the per-site `SITE_GRID_IMAGES` inventory are configured in `frontend/src/config/tiles.ts`.
 

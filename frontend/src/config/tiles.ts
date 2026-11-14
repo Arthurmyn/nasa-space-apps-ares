@@ -69,6 +69,8 @@ export const TILE_SOURCES: Record<LayerId, TileSourceConfig> = {
 export interface GridImageConfig {
   file: string;
   opacity: number;
+  /** "nearest" keeps coarse source pixels as blocks instead of smoothing them into fake detail. */
+  resampling?: "nearest" | "linear";
 }
 
 /** Explicit inventory of bundled assets, scoped to the site that owns their bbox. */
@@ -76,6 +78,8 @@ export const SITE_GRID_IMAGES: Record<string, Partial<Record<LayerId, GridImageC
   "gale-bx": {
     optical: { file: "hillshade.png", opacity: 0.6 },
     slope: { file: "slope.png", opacity: 0.8 },
+    // THEMIS, 100 m per pixel: drawn as blocks (see scripts/make_thermal_layer.py).
+    thermal: { file: "thermal.png", opacity: 0.75, resampling: "nearest" },
   },
 };
 

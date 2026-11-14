@@ -56,7 +56,7 @@ export function useRasterLayers(map: MapLibreMap | null, layers: LayersModel, si
       if (imageWanted && !imagePresent) {
         map.addSource(imageId(id), { type: "image", url: siteFileUrl(site.id, image.file), coordinates: imageCorners(site.bbox) });
         map.addLayer(
-          { id: imageId(id), type: "raster", source: imageId(id), paint: { "raster-opacity": image.opacity, "raster-fade-duration": 0 } },
+          { id: imageId(id), type: "raster", source: imageId(id), paint: { "raster-opacity": image.opacity, "raster-fade-duration": 0, "raster-resampling": image.resampling ?? "linear" } },
           LYR.grid,
         );
       } else if (!imageWanted && imagePresent) {
