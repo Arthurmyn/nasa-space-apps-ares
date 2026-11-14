@@ -12,7 +12,6 @@ class Settings(BaseSettings):
 
     app_env: str = "development"
     cors_origins: str = "http://localhost:5173"
-    model_path: Path = ROOT_DIR / "ml" / "models" / "model.pkl"
 
     @property
     def cors_list(self) -> list[str]:
