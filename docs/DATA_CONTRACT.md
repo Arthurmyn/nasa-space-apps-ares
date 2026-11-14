@@ -89,7 +89,7 @@ The projection is local and equidistant: `x = R * radians(lon - lon0) * cos(radi
   ]
 }
 ```
-`image` is either null or `{ "url": "...", "alt": "...", "credit": "..." }` (like `StopImage` in `frontend/src/api/types.ts`).
+`image` is either null or `{ "url": "...", "alt": "...", "credit": "..." }` (like `StopImage` in `frontend/src/api/types.ts`). `url` is an http(s) URL or a path on the same site, for example `/app/stops/sol4534-navcam-left.jpg` (files in `frontend/public/stops/`; every image needs its entry in `ASSETS.md`). The frontend drops any other scheme.
 Target coordinates are inside the `bbox`. A group is what a person picks in the list ("Boxwork" and so on).
 `context` (optional, top level of `stops.json`): a short "Why this site" text of 2-4 sentences with its sources, `{ "title", "text", "sources": [ { "title", "url", "credit" } ] }`. Only facts from the pages listed in `sources`; we do not attach science claims to individual targets, and the targets stay plain waypoints. Every source must be in the list in `frontend/src/config/references.ts` (the card prints it as [6]). The API returns `context` inside `GET /sites`, and the UI shows it under the list of stops and on the card.
 `source_id` is resolved through `backend/data/gale-bx/sources.json` (an object: ID → a string with a description and a link). The generator adds to `meta.sources` only the sources of the current targets, as `"ID: description"` strings; when targets are replaced, the data changes, not the generator code. Without `stops.json` the registry is not needed. The shapes of `stops.json` and `meta.json` stay the same.
