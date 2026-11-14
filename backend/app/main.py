@@ -3,12 +3,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import health, planner
+from app.api.routes import health, planner, space_weather
 from app.core.config import settings
+from app.services.donki import AdvisoryCache
 from app.services.grid import DATA_ROOT, default_site_id, load_grids
 
 
-def create_app(data_dir=DATA_ROOT):
+def create_app(data_dir=DATA_ROOT, donki_cache=None):
     """`data_dir` is the folder that holds one folder per site, or a single site folder."""
 
     @asynccontextmanager
@@ -19,6 +20,7 @@ def create_app(data_dir=DATA_ROOT):
         application.state.grid_error = error
         # The default site, for code that predates several sites.
         application.state.grid = grids[default] if default else None
+        application.state.donki = donki_cache or AdvisoryCache()
         yield
 
     application = FastAPI(title="Ares API", version="0.3.0", lifespan=lifespan)
@@ -30,6 +32,7 @@ def create_app(data_dir=DATA_ROOT):
     )
     application.include_router(health.router, prefix="/api/v1")
     application.include_router(planner.router, prefix="/api/v1")
+    application.include_router(space_weather.router, prefix="/api/v1")
     return application
 
 

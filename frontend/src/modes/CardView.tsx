@@ -33,7 +33,7 @@ import { useSite, useSiteScienceContext } from "../state/SiteContext.tsx";
 
 /** Status words on the printed card; the planner screen uses longer ones. */
 const CARD_STATUS: Record<SafetyLevel, string> = {
-  ok: "Within limits",
+  ok: "Gentle, under 10°",
   caution: "Proceed with caution",
   avoid: "Over limit",
 };
@@ -84,7 +84,7 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
   const { legs, whole, margins, speedKmh, walkBackS } = model;
   const start = route.polyline[0];
   const overLimit = margins ? margins.farthestM > MAX_DISTANCE_FROM_START_M : false;
-  const mode = dataSource === "mock" ? "Sample data" : "Live API";
+  const mode = dataSource === "mock" ? "Sample data" : "API online";
 
   return (
     <main className="card-screen">
@@ -304,7 +304,12 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
               <div className="doc__context">
                 <h3 id="doc-context" className="doc__h">7. {context.title}</h3>
                 <p>
-                  {context.text} [6]
+                  {context.text}{" "}
+                  {context.sources
+                    .map((s) => REFERENCES.find((r) => r.url === s.url)?.n)
+                    .filter((n) => n !== undefined)
+                    .map((n) => `[${n}]`)
+                    .join(" ")}
                 </p>
               </div>
             )}

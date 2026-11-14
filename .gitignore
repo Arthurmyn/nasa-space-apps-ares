@@ -38,3 +38,16 @@ wandb/
 
 # Original planetary rasters and download cache (R0)
 data/r0/raw/
+
+# Team layer pipeline: local env, raw rasters and generated outputs
+ares_layers/.venv/
+ares_layers/__pycache__/
+ares_layers/AIKYN_README.md
+ares_layers/data/
+ares_layers/data_synthetic/
+ares_layers/out/
+ares_layers/out_synthetic/
+ares_layers/out_gdal/
+
+# Vercel CLI local state
+backend/.vercel/

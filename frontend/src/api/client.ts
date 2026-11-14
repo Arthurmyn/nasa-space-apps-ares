@@ -16,6 +16,9 @@ import {
 // backend (see deploy/Caddyfile). VITE_API_URL overrides both (an empty string also means same origin).
 const BASE = (import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "" : "http://localhost:8000")) + "/api/v1";
 
+/** Full URL of an API path such as "/donki". */
+export const apiUrl = (path: string): string => BASE + path;
+
 /**
  * "mock" only in a dev server started with VITE_USE_MOCK=true. A production build ignores the
  * variable, so the mock module is never reachable there. The UI shows "Sample data" for "mock".

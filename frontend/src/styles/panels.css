@@ -282,6 +282,36 @@
   border-top-style: dotted;
 }
 
+.legend__swatch--steep {
+  border-color: var(--class-avoid);
+  border-top-width: 5px;
+}
+
+/* Published value shown in place of a map image (thermal inertia, radiation). */
+.value-card {
+  display: grid;
+  gap: 4px;
+}
+
+.value-card__value {
+  margin: 0;
+  font-size: var(--fs-sm, 0.875rem);
+  color: var(--text);
+}
+
+.value-card__unit {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.value-card__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-xs);
+  color: var(--text);
+}
+
 .legend__note {
   display: flex;
   align-items: center;
@@ -837,4 +867,65 @@
 
 .site-context__sources a {
   color: var(--accent);
+}
+
+/* Site conditions: space weather (live) and model climatology. */
+.conditions__card {
+  display: grid;
+  gap: 6px;
+  padding: var(--space-2) 0;
+}
+
+.conditions__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--fs-sm, 0.875rem);
+}
+
+.conditions__badge {
+  font-size: 10px;
+}
+
+.conditions__label {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.conditions__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-xs);
+}
+
+.conditions__sub {
+  display: grid;
+  gap: 4px;
+}
+
+.conditions__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-xs);
+}
+
+.conditions__table th,
+.conditions__table td {
+  padding: 2px 4px;
+  text-align: left;
+  font-weight: normal;
+}
+
+.conditions__table thead th,
+.conditions__h {
+  color: var(--text-muted);
+}
+
+.disclaimer {
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
 }

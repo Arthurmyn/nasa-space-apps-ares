@@ -14,12 +14,13 @@ import { describeError } from "../api/errors.ts";
 import { ApiError } from "../api/types.ts";
 import { stopLabel } from "../lib/format.ts";
 import { decodePlan, encodePlan } from "../lib/planUrl.ts";
-import { clampToBbox, insideBbox } from "../lib/siteGeo.ts";
+import { checkStopPoint, clampToBbox, insideBbox } from "../lib/siteGeo.ts";
+import { siteFileUrl } from "../api/siteFiles.ts";
 import { useSite } from "./SiteContext.tsx";
 import type { LayerId, LayerInfo } from "../api/types.ts";
 import { DEFAULT_ACTIVE_LAYERS } from "../config/layers.ts";
 import { availableLayers } from "../config/layerAvailability.ts";
-import { NOTICE_MS, ROUTE_DEBOUNCE_MS } from "../config/route.ts";
+import { NOTICE_MS, ROUTE_DEBOUNCE_MS, SLOPE_LIMITS } from "../config/route.ts";
 import {
   buildRouteRequest,
   initialPlannerState,
@@ -129,6 +130,37 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
   const siteId = site.id;
   const bbox = site.bbox;
 
+  // slope.bin lets a click be checked before it becomes a stop (DTM gap, slope over the limit).
+  // Without it the backend still rejects such points when the route is computed.
+  const [slope, setSlope] = useState<Uint8Array | null>(null);
+  useEffect(() => {
+    setSlope(null);
+    const g = site.grid;
+    if (!g) return;
+    const ctrl = new AbortController();
+    fetch(siteFileUrl(site.id, "slope.bin"), { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((buf) => {
+        if (buf.byteLength === g.width * g.height) setSlope(new Uint8Array(buf));
+        else console.warn("slope.bin size does not match meta.json; stop check off");
+      })
+      .catch((e: unknown) => {
+        if (!ctrl.signal.aborted) console.warn("slope.bin unavailable; stop check off", e);
+      });
+    return () => ctrl.abort();
+  }, [site]);
+
+  /** Null when a stop may go at (lon, lat), otherwise the message to show. */
+  const blockReason = useCallback(
+    (lon: number, lat: number): string | null => {
+      if (!insideBbox(bbox, lon, lat)) return "That point is outside the terrain grid. Click inside the shaded area.";
+      if (!slope || !site.grid) return null;
+      const check = checkStopPoint(site.grid, { lon: site.lon, lat: site.lat }, slope, SLOPE_LIMITS.maxDeg, lon, lat);
+      return check.ok ? null : check.message;
+    },
+    [bbox, slope, site],
+  );
+
   // Restore a plan from the URL hash once, so a shared link opens on the same points.
   useEffect(() => {
     const plan = decodePlan(window.location.hash);
@@ -210,14 +242,16 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       view: routeView(state),
       stale: isStale(state),
       fetching: state.status === "loading",
-      addPoint: (lon, lat) =>
-        insideBbox(bbox, lon, lat)
-          ? dispatch({ type: "point/add", lon, lat })
-          : dispatch({ type: "notice/set", message: "That point is outside the terrain grid. Click inside the shaded area." }),
+      addPoint: (lon, lat) => {
+        const reason = blockReason(lon, lat);
+        dispatch(reason ? { type: "notice/set", message: reason } : { type: "point/add", lon, lat });
+      },
       setPresetStops: (stops) => dispatch({ type: "stops/preset", stops }),
       movePoint: (id, lon, lat) => {
         const [x, y] = clampToBbox(bbox, lon, lat);
-        dispatch({ type: "point/move", id, lon: x, lat: y });
+        // A drag that ends on a gap or a too-steep cell leaves the point where it was.
+        const reason = blockReason(x, y);
+        dispatch(reason ? { type: "notice/set", message: reason } : { type: "point/move", id, lon: x, lat: y });
       },
       removePoint: (id) => dispatch({ type: "point/remove", id }),
       select: (id) => dispatch({ type: "select", id }),
@@ -225,7 +259,7 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       recalculate: () => void fetchRoute(),
       reset: () => dispatch({ type: "reset" }),
     }),
-    [state, fetchRoute, bbox],
+    [state, fetchRoute, bbox, blockReason],
   );
 
   const layers = useLayersModel();

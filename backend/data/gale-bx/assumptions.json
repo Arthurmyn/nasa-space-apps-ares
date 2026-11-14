@@ -30,8 +30,8 @@
     },
     {
       "name": "Radiation dose rate",
-      "value": "0.67 mSv/day",
-      "source": "Average galactic cosmic ray dose equivalent rate at the Gale surface, Curiosity RAD, August 2012 to June 2013 [5]. Excludes solar particle events."
+      "value": "0.64 mSv/day",
+      "source": "Published mean, not live: 0.64 ± 0.12 mSv/day dose equivalent, galactic cosmic rays only, Curiosity RAD at Gale, August 2012 to June 2013 near solar maximum [5]. Excludes solar particle events; 2026 values are likely higher."
     }
   ]
 }
