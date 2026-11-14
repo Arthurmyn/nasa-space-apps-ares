@@ -9,6 +9,7 @@ import "./styles/panels.css";
 import "./styles/map.css";
 import "./styles/profile.css";
 import "./styles/card.css";
+import "./styles/hud.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
