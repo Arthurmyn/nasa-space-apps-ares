@@ -15,13 +15,12 @@ function StopChip({ entry, selected }: { entry: StopEntry; selected: boolean }) 
         type="button"
         className={`chip${selected ? " chip--selected" : ""}`}
         aria-pressed={selected}
-        aria-label={dist ? `${entry.title}, ${dist} along route` : entry.title}
         onClick={() => p.select(selected ? null : entry.id)}
       >
-        <span className={`pin pin--${entry.kind}`} aria-hidden="true">
-          {entry.label}
-        </span>
+        {/* Accessible name = visible text ("A 1.19 km") plus a spoken suffix. */}
+        <span className={`pin pin--${entry.kind}`}>{entry.label}</span>
         <span className="chip__text mono">{entry.kind === "start" ? "Start" : (dist ?? "–")}</span>
+        {dist && <span className="sr-only">along route</span>}
       </button>
     </li>
   );
