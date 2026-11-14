@@ -6,6 +6,7 @@ from math import hypot, inf, sqrt
 
 from app.schemas.route import Assumption, ProfilePoint, RouteRequest, RouteResponse, RouteStop
 from app.services.grid import Grid
+from app.services.hazards import hazard_zones
 
 
 def astar(grid: Grid, start: int, goal: int, weights: list[float]):
@@ -188,7 +189,7 @@ def route(grid: Grid, request: RouteRequest):
         stops=stops,
         profile=profile,
         assumptions=assumptions,
-        hazards=[],
+        hazards=hazard_zones(grid, limit, geometry),
         alternative=None,
         navigation={"vertex_dist_m": vertex_dist_m, "heading_segments": heading_segments},
         supports_alternatives=False,
