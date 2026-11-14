@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -7,6 +8,7 @@ from app.services.grid import Grid
 from app.services.routing import route
 
 router = APIRouter(tags=["planner"])
+logger = logging.getLogger(__name__)
 
 
 def get_grid(request: Request) -> Grid:
@@ -59,4 +61,7 @@ def plan_route(body: RouteRequest, grid: GridDependency):
     try:
         return route(grid, body)
     except ValueError as exc:
+        # Logged so a failed route on the server can be told apart (outside grid, unreachable, ...).
+        # Warning level: uvicorn does not set up INFO for application loggers.
+        logger.warning("Route rejected: %s", exc)
         raise HTTPException(status_code=422, detail=str(exc)) from exc

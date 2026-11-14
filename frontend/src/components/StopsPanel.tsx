@@ -1,5 +1,7 @@
 import { useId, useMemo } from "react";
 import { MAX_STOPS } from "../config/route.ts";
+import { siteCentre } from "../config/site.ts";
+import { insideBbox } from "../lib/siteGeo.ts";
 import type { SiteEntry } from "../api/types.ts";
 import { formatDistance } from "../lib/format.ts";
 import { groupTargets } from "../lib/presets.ts";
@@ -80,8 +82,11 @@ export function StopsPanel() {
   const atMax = stopCount >= MAX_STOPS;
   const addLabel = !p.state.start ? "Set start at map centre" : atMax ? `Maximum ${MAX_STOPS} stops` : "Add stop at map centre";
 
+  const { site } = useSite();
   const addAtCentre = () => {
-    const [lon, lat] = viewportStore.getCentre();
+    // The map may be scrolled off the grid; then use the site centre instead of failing silently.
+    let [lon, lat] = viewportStore.getCentre();
+    if (!insideBbox(site.bbox, lon, lat)) [lon, lat] = siteCentre(site);
     p.addPoint(lon, lat);
   };
 
