@@ -779,3 +779,45 @@
   justify-self: start;
   margin-left: 0;
 }
+
+/* ---- Radiation dose in the route summary ---- */
+.dose {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.dose__value {
+  font-size: var(--fs-stat);
+  font-weight: 600;
+}
+
+.dose__note {
+  margin: 0;
+}
+
+.dose__note a {
+  color: var(--accent);
+}
+
+/* ---- Thermal legend ---- */
+.thermal-legend {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-2) 0;
+}
+
+.thermal-legend__bar {
+  height: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+}
+
+.thermal-legend__scale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}

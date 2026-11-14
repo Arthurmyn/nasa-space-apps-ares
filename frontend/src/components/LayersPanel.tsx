@@ -6,6 +6,7 @@ import { SLOPE_CLASS_LABEL } from "../lib/slope.ts";
 import { useLayers, type LayersModel } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
 import { Icon } from "./Icon.tsx";
+import { ThermalLegend } from "./ThermalLegend.tsx";
 
 interface RowState {
   disabled: boolean;
@@ -62,6 +63,7 @@ function LayerLegend({ meta, source }: { meta: LayerMeta; source: string | null 
   return (
     <div className="layer-row__legend">
       {meta.id === "slope" && <SlopeLegend />}
+      {meta.id === "thermal" && <ThermalLegend />}
       {meta.isEstimate && <p className="legend__note">Estimate. Modelled, not measured.</p>}
       {(LAYER_SOURCE_LABEL[meta.id] ?? source) && <SourceNote source={LAYER_SOURCE_LABEL[meta.id] ?? source ?? ""} />}
       {!layerHasImagery(meta.id, site.id) && (

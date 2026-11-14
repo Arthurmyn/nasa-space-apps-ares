@@ -17,12 +17,23 @@ backend/data/gale-bx/
   stops.json       цели для списка выбора (п. 5)
   assumptions.json допущения и источники (п. 6)
   sources.json     справочник источников целей: { "source_id": "описание и ссылка" }
+  thermal.json     копия описания теплового слоя (п. 2b); если файла нет, слой недоступен
 frontend/public/data/gale-bx/
   meta.json        копия (скрипт копирует сам)
   hillshade.png    серая подложка рельефа, RGBA, размер width x height
   slope.png        цветной слой уклонов, RGBA с прозрачностью, размер width x height
+  thermal.png      тепловой слой THEMIS, RGBA, размер width x height, bbox из meta.json (п. 2b)
+  thermal.json     описание теплового слоя: источник, размер пикселя, диапазон значений, цвета
 ```
 Размер: все файлы вместе до 3 000 000 байт. Из них 100 000 байт зарезервировано под сопутствующие JSON: сама сетка (meta.json ×2, elevation.bin, slope.bin, hillshade.png, slope.png) — не более 2 900 000 байт. При превышении любого лимита скрипт берёт ячейку 2 м (`--cell 2`); если лимит всё ещё превышен, завершается с ошибкой до записи.
+### 2b. Тепловой слой (THEMIS)
+Делает `scripts/make_thermal_layer.py` из куба USGS Astropedia «Gale Crater THEMIS Daytime IR ISIS» (ссылка и кредит в `ASSETS.md` и в `thermal.json`). Это **один снимок** Mars Odyssey THEMIS (продукт `I24545011RDR`, канал 9, 12,57 мкм), собственный пиксель 100 м, на участок приходится около 70 пикселей. Значения хранятся как растянутые 8-битные числа, это не калиброванная температура. Пиксель со значением 0 (ignore value команды THEMIS) прозрачен.
+- `thermal.png`: каждый пиксель сетки участка берёт значение ближайшего пикселя THEMIS (без интерполяции), цвета по шкале из `thermal.json`.
+- `thermal.json` (`schema: "ares.thermal/v1"`): `source` (название, URL, кредит, лицензия, product_id, время съёмки, sha256 куба), `native_pixel_m`, `value.site_dn_min/max`, `colormap.stops`, `bbox` (равен bbox из `meta.json`), `notes`. Копия лежит в `backend/data/` и во `frontend/public/data/`.
+- Бэкенд считает слой `thermal` доступным, только если `thermal.json` есть, схема верна, а `site_id` и `bbox` совпадают с `meta.json`. Иначе слой остаётся «No data for this site».
+- Радиация не слой, а одно число на весь участок: `GET /layers` отдаёт `radiation` как `available: false` с причиной «Single value for the whole site, see route summary». Число (0,67 мЗв/сут) и ссылка [5] лежат в `assumptions.json` (`Radiation dose rate`) и в `frontend/src/config/radiation.ts`.
+- Геология: опубликованных GIS-границ геологических единиц для участка найдено не было, слой `geology` остаётся «No data for this site». Заметки целей содержат только проверенные данные путевой точки (сол и координаты).
+
 Фронт на Vercel обслуживает `frontend/public/data/...` по адресу `/app/data/gale-bx/...`.
 Бэкенд читает `backend/data/` (в пределах своей папки, иначе Vercel его не увидит).
 
@@ -99,7 +110,7 @@ frontend/public/data/gale-bx/
 
 ## 7. API (бэкенд)
 Базовый путь `/api/v1`. Формы ответов уже описаны в `docs/api.md` (раздел Frontend proposal) и `frontend/src/api/types.ts`. Не менять.
-- `GET /api/v1/layers`: слои `slope`, `optical` (hillshade) доступны, остальные `available: false` с причиной.
+- `GET /api/v1/layers`: слои `slope`, `optical` (hillshade) доступны всегда; `thermal` доступен, если есть валидный `thermal.json` (п. 2b); `radiation` недоступен с причиной «Single value for the whole site, see route summary»; остальные `available: false` с причиной «No data for this site».
 - `GET /api/v1/sites`: `{ "sites": [ { "id", "name", "groups": [...], "stops": [...] } ] }` из `meta.json` и `stops.json` (новый эндпоинт, фронту нужен для списка выбора).
 - `POST /api/v1/route`: A* по `slope.bin`, 8 соседей. Ячейка с уклоном выше `slope_limit_deg` непроходима. Цена шага = длина * (1 + (slope/limit)^2). Остановки по порядку: start, stop-1, stop-2, ...
   - Если пути нет: HTTP 422 и `{ "detail": "<понятная причина, какой отрезок и почему>" }`.

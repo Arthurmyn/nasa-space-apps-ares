@@ -100,6 +100,9 @@ Files in `frontend/public/data/gale-bx/` and `backend/data/gale-bx/`, made by `s
 |------|--------|---------|------------|
 | Terrain grid, `hillshade.png`, `slope.png`, `elevation.bin`, `slope.bin` | HiRISE DTM `DTEEC_009149_1750_009294_1750_U01`, NASA/JPL/University of Arizona. Download: `https://www.uahirise.org/PDS/DTM/PSP/ORB_009100_009199/PSP_009149_1750_PSP_009294_1750/DTEEC_009149_1750_009294_1750_U01.IMG`. The grid is derived from it (cell 2 m, slope window 5 m) | NASA PDS data; terms of use not checked, TODO(team) confirm | Slope and Optical layers (image sources on the site bbox), route planning |
 | Science targets `bx-1` to `bx-6` | NASA/JPL Curiosity MSL waypoints, `https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json`; snapshot `docs/research/r0/rover_sols4534-4805.geojson` | NASA/JPL; terms not checked, TODO(team) confirm | "Science targets" group list (`GET /sites`) |
+| Thermal layer, `thermal.png` and `thermal.json` | Gale Crater THEMIS Daytime IR ISIS, USGS Astrogeology Science Center, from Mars Odyssey THEMIS (NASA/ASU). Page: `https://astrogeology.usgs.gov/search/map/gale_crater_themis_daytime_ir_isis`; file: `https://astrogeology.usgs.gov/ckan/dataset/0e7eae1a-a29c-4ea6-8eee-8ebce2deb079/resource/374f1c54-b81e-47ce-8b6f-f4b7daa40163/download/gale_crater_themis_dayir_isis.cub` (3,201,705 bytes, sha256 `8c256fe8e85ebec53c33fb9ea258efd7548b519439a468e54750caf617bdcd91`). Team page with the instructions (ignore value 0): `https://themis.mars.asu.edu/landingsites`. Converted by `scripts/make_thermal_layer.py` | Public domain (US Government work), credit NASA/ASU/USGS | Thermal layer (image source on the site bbox) and its legend |
+
+The thermal data is a single THEMIS observation (product `I24545011RDR`, band 9 at 12.57 um, started 2007-06-27 08:41:52 UTC), pixel size 100 m, stretched 8-bit values 88 to 187 inside the site (about 70 THEMIS pixels), not calibrated temperature. NASA Mars Trek was checked first: its catalog endpoint (`https://api.nasa.gov/mars-wmts/catalog`) did not answer from the build machine (timeout), so no Trek THEMIS layer was used.
 
 The layers panel shows a short credit ("HiRISE DTM (NASA/JPL/University of Arizona) + Mars Trek (NASA/JPL)"). The full list, with file paths, is in `meta.sources` and under "How this is computed".
 
@@ -107,19 +110,21 @@ With `VITE_USE_MOCK=true` the app uses synthetic sample data from `frontend/src/
 
 ## Referenced documents
 
-Cited as [1] to [4] in the assumptions (`backend/data/gale-bx/assumptions.json`) and printed on the route card. They are links to public NASA and JPL pages, not files in this repository. Full list: `frontend/src/config/references.ts`.
+Cited as [1] to [5] in the assumptions (`backend/data/gale-bx/assumptions.json`) and printed on the route card. They are links to public NASA and JPL pages, not files in this repository. Full list: `frontend/src/config/references.ts`.
 
 1. NASA EVA-EXP-0075, Exploration EVA System ConOps for Artemis Phase 1: https://www.nasa.gov/wp-content/uploads/2020/01/topic_1-_eva_lunar_surface_concept_of_operations.pdf
 2. NASA Moon to Mars Architecture 2024, Lunar Mobility Drivers and Needs: https://www.nasa.gov/wp-content/uploads/2024/06/acr24-lunar-mobility-drivers-and-needs.pdf
 3. Apollo 11 Lunar Surface Journal, Lunar gaits: https://www.nasa.gov/wp-content/uploads/static/history/alsj/a11/a11.gaits.html
 4. JPL PIA26017, Curiosity's difficult climb: https://www.jpl.nasa.gov/images/pia26017-a-map-of-curiositys-difficult-climb/
+5. Hassler, D. M. et al., Mars' Surface Radiation Environment Measured with the Mars Science Laboratory's Curiosity Rover, Science 343 (6169), 1244797, online 9 Dec 2013, print 24 Jan 2014: https://doi.org/10.1126/science.1244797 (DOI and bibliographic data checked in Crossref). The figure of 0.67 mSv per day (average galactic cosmic ray dose equivalent rate on the Martian surface, August 2012 to June 2013) was checked in the SwRI release quoting the RAD principal investigator: https://www.swri.org/press-release/swri-scientists-publish-first-radiation-measurements-surface-mars. The paper itself was not read.
 
-The values attributed to them (a 20 deg EVA walking capability, a 2 km distance limit, Apollo walking speeds, the 23 deg slope at Gale) were supplied by the team and not re-checked against the documents. There is no official human-on-Mars slope standard; the 15 deg and 10 deg limits are ARES planning values.
+The values attributed to [1] to [4] (a 20 deg EVA walking capability, a 2 km distance limit, Apollo walking speeds, the 23 deg slope at Gale) were supplied by the team and not re-checked against the documents. There is no official human-on-Mars slope standard; the 15 deg and 10 deg limits are ARES planning values.
 
 ## Constants
 
 | Constant | Value | Source | Where |
 |----------|-------|--------|-------|
 | Mars mean radius | 3389.5 km | IAU Working Group on Cartographic Coordinates and Rotational Elements (WGCCRE) reports | `frontend/src/lib/geo.ts`: scale bar, grid spacing, distances |
+| GCR dose equivalent rate at the Gale surface | 0.67 mSv per day (August 2012 to June 2013) | Reference [5], Curiosity RAD; checked in the SwRI release | `frontend/src/config/radiation.ts`: estimated dose in the route summary and on the card |
 
-Slope thresholds (`SLOPE_LIMITS` in `frontend/src/config/route.ts`) are placeholders, not sourced values. See "Placeholders" in `frontend/README.md`.
+Slope thresholds (`SLOPE_LIMITS` in `frontend/src/config/route.ts`) are ARES planning values equal to `assumptions.json`; the sources and the lunar-versus-Mars caveat are listed under "Referenced documents".

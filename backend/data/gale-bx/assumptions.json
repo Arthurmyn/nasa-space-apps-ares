@@ -27,6 +27,11 @@
       "name": "Note",
       "value": "No Mars slope standard",
       "source": "No official human-on-Mars slope standard was found; the NASA values above are lunar and Artemis values. The Gale crater rover team routed Curiosity around a 23 deg slope via terrain under 15 deg [4]."
+    },
+    {
+      "name": "Radiation dose rate",
+      "value": "0.67 mSv/day",
+      "source": "Average galactic cosmic ray dose equivalent rate at the Gale surface, Curiosity RAD, August 2012 to June 2013 [5]. Excludes solar particle events."
     }
   ]
 }
