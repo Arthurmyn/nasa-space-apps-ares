@@ -23,7 +23,7 @@ from shapely.geometry import Point, mapping, shape
 from shapely.ops import transform, unary_union
 
 from scripts.r0_handoff import make_handoff
-from scripts.r0_sources import MANIFEST, load_inputs
+from scripts.r0_sources import MANIFEST, load_inputs, sha256
 
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt  # noqa: E402
@@ -208,6 +208,8 @@ def run(
     *,
     manifest: Path = MANIFEST,
     verify_inputs: bool = False,
+    planning_points: Path | None = None,
+    aoi_buffer_m: float = 100,
 ) -> dict:
     handoff_path = handoff_path or output / "gale_bx_handoff.json"
     evidence = Path(
@@ -251,9 +253,31 @@ def run(
         )
     selected = select_candidate(results)
     center, handoff, aoi = None, None, None
+    extra_points = []
+    if planning_points:
+        collection = json.loads(planning_points.read_text(encoding="utf-8"))
+        if collection.get("type") != "FeatureCollection":
+            raise ValueError("--planning-points must contain a GeoJSON FeatureCollection of Points")
+        extra_points = collection["features"]
+        source_records.append(
+            {
+                "file": planning_points.name,
+                "role": "planning-points",
+                "sha256": sha256(planning_points),
+                "bytes": planning_points.stat().st_size,
+            }
+        )
+        (output / "planning_points.geojson").write_bytes(planning_points.read_bytes())
     if selected:
         chosen = next(r for r in results if r["product_id"] == selected)
-        handoff = make_handoff(native_geometries[selected], chosen, waypoints, evidence)
+        handoff = make_handoff(
+            native_geometries[selected],
+            chosen,
+            waypoints,
+            evidence,
+            planning_points=extra_points,
+            buffer_m=aoi_buffer_m,
+        )
         center = handoff["aoi_proposal"]["centre_lonlat_E"]
         aoi = handoff["aoi_proposal"]["aoi_geojson"]
     checked_at = datetime.now(timezone.utc).isoformat()  # noqa: UP017 (Python 3.10 supported)
@@ -298,16 +322,37 @@ def run(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--download", action="store_true", help="Fetch ~752 MB of NASA/PDS inputs")
+    parser.add_argument(
+        "--download",
+        action="store_true",
+        help="Fetch ~751 MB of pinned inputs; repair invalid cached rasters",
+    )
     parser.add_argument("--raw", type=Path, default=Path("data/r0/raw"))
     parser.add_argument("--output", type=Path, default=Path("docs/research/r0"))
     parser.add_argument(
         "--handoff", type=Path, help="R0 handoff path; default: OUTPUT/gale_bx_handoff.json"
     )
     parser.add_argument("--verify-inputs", action="store_true", help="Rehash all cached rasters")
+    parser.add_argument(
+        "--planning-points",
+        type=Path,
+        help="Mars GeoJSON Points for all finalized R6 targets and D9 habitat",
+    )
+    parser.add_argument(
+        "--aoi-buffer-m",
+        type=float,
+        default=100,
+        help="AOI margin around rover and planning points in native DTM meters",
+    )
     args = parser.parse_args()
     result = run(
-        args.raw, args.output, args.handoff, args.download, verify_inputs=args.verify_inputs
+        args.raw,
+        args.output,
+        args.handoff,
+        args.download,
+        verify_inputs=args.verify_inputs,
+        planning_points=args.planning_points,
+        aoi_buffer_m=args.aoi_buffer_m,
     )
     print(json.dumps({k: result[k] for k in ("decision", "selected_dtm", "center_lon_lat")}))
     if result["selected_dtm"] is None:

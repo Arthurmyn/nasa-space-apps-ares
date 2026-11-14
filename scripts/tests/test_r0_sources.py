@@ -1,5 +1,6 @@
 import gzip
 import hashlib
+import json
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -94,3 +95,42 @@ def test_receipt_for_different_pin_is_not_accepted(tmp_path):
     r0_sources.validate_cached(path, digest)
     with pytest.raises(ValueError, match="SHA-256"):
         r0_sources.validate_cached(path, "0" * 64)
+
+
+def test_corrupt_cache_error_explains_recovery(tmp_path):
+    path = tmp_path / "raster.IMG"
+    path.write_bytes(b"corrupt")
+    with pytest.raises(ValueError) as error:
+        r0_sources.validate_cached(path, "0" * 64)
+    message = str(error.value)
+    assert "--download --verify-inputs" in message
+    assert str(path) in message
+    assert str(r0_sources.receipt_path(path)) in message
+
+
+def test_download_repairs_corrupt_cache_with_pinned_bytes(gzip_source, tmp_path):
+    url, payload = gzip_source
+    path = tmp_path / "raster.IMG"
+    path.write_bytes(b"corrupt")
+    digest = hashlib.sha256(payload).hexdigest()
+    manifest = tmp_path / "inputs.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "inputs": [
+                    {
+                        "role": "raster",
+                        "file": path.name,
+                        "product_id": "A",
+                        "url": url,
+                        "bytes": len(payload),
+                        "sha256": digest,
+                    }
+                ]
+            }
+        )
+    )
+    inputs, records = r0_sources.load_inputs(tmp_path, manifest, fetch=True, force=True)
+    assert inputs["A"].read_bytes() == payload
+    assert records[0]["sha256"] == digest
+    assert r0_sources.validate_cached(path, digest) == digest
