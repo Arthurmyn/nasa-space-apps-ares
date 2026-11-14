@@ -1,4 +1,4 @@
-/** Documents cited by the assumptions in backend/data/gale-bx/assumptions.json as [1] to [5]. */
+/** Documents cited by the assumptions in backend/data/gale-bx/assumptions.json as [1] to [5]; [6] is the source of the site context text. */
 export interface Reference {
   n: number;
   citation: string;
@@ -30,5 +30,10 @@ export const REFERENCES: readonly Reference[] = [
     n: 5,
     citation: "Hassler, D. M. et al., Mars' Surface Radiation Environment Measured with the Mars Science Laboratory's Curiosity Rover, Science 343 (6169), 1244797, 2014. Figure as quoted in the SwRI release.",
     url: "https://doi.org/10.1126/science.1244797",
+  },
+  {
+    n: 6,
+    citation: "NASA's Curiosity Rover Sees Martian 'Spiderwebs' Up Close, NASA/JPL-Caltech, Jet Propulsion Laboratory, 23 February 2026.",
+    url: "https://nasa.gov/missions/mars-science-laboratory/curiosity-rover/nasas-curiosity-rover-sees-martian-spiderwebs-up-close",
   },
 ];

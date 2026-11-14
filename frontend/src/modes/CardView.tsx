@@ -29,7 +29,7 @@ import { sectionStats } from "../lib/profile.ts";
 import { routeSpeedMps, safetyMargins, walkBackTimeS } from "../lib/safety.ts";
 import { SLOPE_CLASS_LABEL } from "../lib/slope.ts";
 import { usePlanner } from "../state/PlannerContext.tsx";
-import { useSite } from "../state/SiteContext.tsx";
+import { useSite, useSiteScienceContext } from "../state/SiteContext.tsx";
 
 /** Status words on the printed card; the planner screen uses longer ones. */
 const CARD_STATUS: Record<SafetyLevel, string> = {
@@ -44,6 +44,7 @@ const dash = "–";
 export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
   const { state, stale } = usePlanner();
   const { site } = useSite();
+  const context = useSiteScienceContext();
   const route = state.route;
 
   const model = useMemo(() => {
@@ -287,7 +288,7 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
               <tbody>
                 <tr>
                   <th scope="row">Terrain model</th>
-                  <td>{site.dtmProductId ? `HiRISE DTM ${site.dtmProductId}` : (site.sources[0] ?? dash)}</td>
+                  <td>{site.sources[0] ?? (site.dtmProductId ? `HiRISE DTM ${site.dtmProductId}` : dash)}</td>
                 </tr>
                 <tr>
                   <th scope="row">Grid cell</th>
@@ -299,12 +300,19 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
                 </tr>
               </tbody>
             </table>
-            <p className="doc__note">{site.sources[0] ?? ""}</p>
+            {context && (
+              <div className="doc__context">
+                <h3 id="doc-context" className="doc__h">7. {context.title}</h3>
+                <p>
+                  {context.text} [6]
+                </p>
+              </div>
+            )}
           </section>
         </div>
 
         <section className="doc__section" aria-labelledby="doc-assump">
-          <h3 id="doc-assump" className="doc__h">7. Assumptions and sources</h3>
+          <h3 id="doc-assump" className="doc__h">8. Assumptions and sources</h3>
           {route.assumptions.length === 0 ? (
             <p className="doc__muted">The route service returned no assumptions.</p>
           ) : (
