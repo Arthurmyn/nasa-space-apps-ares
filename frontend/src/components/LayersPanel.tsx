@@ -1,7 +1,7 @@
 import type { LayerId, LayerInfo } from "../api/types.ts";
 import { LAYER_META, NO_DATA_REASON, type LayerMeta } from "../config/layers.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
-import { TILE_SOURCES } from "../config/tiles.ts";
+import { layerHasImagery } from "../config/tiles.ts";
 import { SLOPE_CLASS_LABEL } from "../lib/slope.ts";
 import { useLayers, type LayersModel } from "../state/PlannerContext.tsx";
 import { Icon } from "./Icon.tsx";
@@ -39,15 +39,14 @@ function SlopeLegend() {
 }
 
 function LayerLegend({ meta, source }: { meta: LayerMeta; source: string | null }) {
-  const tiles = TILE_SOURCES[meta.id];
   return (
     <div className="layer-row__legend">
       {meta.id === "slope" && <SlopeLegend />}
       {meta.isEstimate && <p className="legend__note">Estimate. Modelled, not measured.</p>}
       {source && <p className="legend__note">Source: {source}</p>}
-      {tiles.url === null && (
+      {!layerHasImagery(meta.id) && (
         <p className="legend__note legend__note--warn">
-          <Icon name="info" size={12} /> Tiles not configured
+          <Icon name="info" size={12} /> No imagery for this layer yet
         </p>
       )}
     </div>
