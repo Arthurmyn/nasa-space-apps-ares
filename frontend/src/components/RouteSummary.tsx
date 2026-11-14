@@ -232,13 +232,13 @@ export function MobileSummary({ onOpen }: { onOpen: () => void }) {
     <button
       type="button"
       className={`mobile-summary${stale ? " mobile-summary--stale" : ""}`}
-      aria-label="Open route details"
       onClick={onOpen}
     >
       <SafetyBadge level={route.safety} />
       <span className="mono">{formatDistance(route.distance_m)}</span>
       <span className="mono">{formatDuration(route.est_time_s)}</span>
       {stale && <span className="tag tag--warn">Out of date</span>}
+      <span className="sr-only">Open route details</span>
       <Icon name="chevron" className="mobile-summary__chev" />
     </button>
   );
