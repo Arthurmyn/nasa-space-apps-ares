@@ -247,6 +247,7 @@ export async function mockSites(signal?: AbortSignal): Promise<SitesResponse> {
         id: "gale-bx",
         name: "Sample site",
         groups: [{ id: "sample", name: "Sample group", stop_ids: ["s1", "s2", "s3"] }],
+        context: null,
         stops: [at("s1", -120, 90), at("s2", 40, -60), at("s3", 160, 110)],
       },
     ],
