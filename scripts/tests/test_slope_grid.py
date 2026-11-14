@@ -1,3 +1,4 @@
+import io
 import json
 import math
 import subprocess
@@ -27,6 +28,18 @@ def test_fake_terrain_connects_west_and_east_at_fifteen_degrees(cell):
     west = set(components[:, 0]) - {0}
     east = set(components[:, -1]) - {0}
     assert west & east, "The ravine must have a crossing or a gentle route around it"
+
+
+def test_northwest_hillshade_lights_west_facing_plane_more_than_east():
+    grid = build_grid(json.loads(HANDOFF.read_text()), 4)
+    _, cols = np.indices(grid.inside.shape)
+    west_facing = (cols * 4 * 0.2).astype("f4")
+    brightness = []
+    for z in [west_facing, -west_facing]:
+        png = encode_files(grid, z)["frontend/public/data/gale-bx/hillshade.png"]
+        with Image.open(io.BytesIO(png)) as im:
+            brightness.append(np.asarray(im)[10:-10, 10:-10, 0].mean())
+    assert brightness[0] > brightness[1]
 
 
 def test_fake_cli_and_contract_coordinates(tmp_path):
