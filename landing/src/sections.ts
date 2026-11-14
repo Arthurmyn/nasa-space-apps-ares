@@ -83,3 +83,9 @@ if (demo && "IntersectionObserver" in window) {
     { threshold: [0, 0.6] },
   ).observe(demo);
 }
+
+// ---- Planets drift only while the call-to-action block is on screen ----
+const band = document.querySelector<HTMLElement>(".cta-band");
+if (band && "IntersectionObserver" in window) {
+  new IntersectionObserver(([entry]) => band.classList.toggle("is-live", !!entry?.isIntersecting), { threshold: 0.05 }).observe(band);
+}

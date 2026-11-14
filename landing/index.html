@@ -841,6 +841,64 @@
     </section>
 
     <section class="cta-band" aria-labelledby="cta-title">
+      <div class="planets" aria-hidden="true">
+        <span class="planet planet--mars">
+          <svg viewBox="0 0 100 100" focusable="false">
+            <defs>
+              <radialGradient id="pg-mars" cx="0.32" cy="0.28" r="0.85"><stop offset="0" stop-color="#ffc9a0"/><stop offset="0.42" stop-color="#e2642f"/><stop offset="1" stop-color="#4a1707"/></radialGradient>
+              <radialGradient id="pg-mars-shade" cx="0.28" cy="0.25" r="0.95"><stop offset="0.55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.55"/></radialGradient>
+              <clipPath id="pc-mars"><circle cx="50" cy="50" r="44"/></clipPath>
+            </defs>
+            <circle cx="50" cy="50" r="44" fill="url(#pg-mars)"/>
+            <g clip-path="url(#pc-mars)" fill="#7a2a0e" opacity="0.38"><ellipse cx="38" cy="58" rx="13" ry="6"/><ellipse cx="66" cy="38" rx="9" ry="4"/><ellipse cx="60" cy="68" rx="7" ry="3.5"/><circle cx="30" cy="36" r="4"/></g>
+            <path d="M24 22C34 12 52 10 66 17" fill="none" stroke="#fff" stroke-opacity="0.35" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="50" cy="50" r="44" fill="url(#pg-mars-shade)"/>
+          </svg>
+        </span>
+        <span class="planet planet--ringed">
+          <svg viewBox="0 0 160 120" focusable="false">
+            <defs>
+              <radialGradient id="pg-ring" cx="0.32" cy="0.28" r="0.85"><stop offset="0" stop-color="#e6e0ff"/><stop offset="0.45" stop-color="#9b8cff"/><stop offset="1" stop-color="#2c2273"/></radialGradient>
+              <radialGradient id="pg-ring-shade" cx="0.28" cy="0.25" r="0.95"><stop offset="0.55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.5"/></radialGradient>
+              <linearGradient id="pg-ring-band" x1="0" x2="1"><stop offset="0" stop-color="#c9c0ff" stop-opacity="0.15"/><stop offset="0.5" stop-color="#f1eeff" stop-opacity="0.9"/><stop offset="1" stop-color="#c9c0ff" stop-opacity="0.15"/></linearGradient>
+              <clipPath id="pc-ring"><circle cx="80" cy="60" r="38"/></clipPath>
+              <clipPath id="pc-ring-back"><rect x="0" y="0" width="160" height="60"/></clipPath>
+              <clipPath id="pc-ring-front"><rect x="0" y="60" width="160" height="60"/></clipPath>
+            </defs>
+            <g transform="rotate(-18 80 60)">
+              <ellipse cx="80" cy="60" rx="70" ry="17" fill="none" stroke="url(#pg-ring-band)" stroke-width="7" clip-path="url(#pc-ring-back)"/>
+            </g>
+            <circle cx="80" cy="60" r="38" fill="url(#pg-ring)"/>
+            <g clip-path="url(#pc-ring)" fill="none" stroke="#fff" stroke-opacity="0.16" stroke-width="3"><path d="M40 48Q80 40 120 50"/><path d="M42 62Q80 56 118 64"/><path d="M46 76Q80 72 114 78"/></g>
+            <circle cx="80" cy="60" r="38" fill="url(#pg-ring-shade)"/>
+            <g transform="rotate(-18 80 60)">
+              <ellipse cx="80" cy="60" rx="70" ry="17" fill="none" stroke="url(#pg-ring-band)" stroke-width="7" clip-path="url(#pc-ring-front)"/>
+            </g>
+          </svg>
+        </span>
+        <span class="planet planet--moon">
+          <svg viewBox="0 0 100 100" focusable="false">
+            <defs>
+              <radialGradient id="pg-moon" cx="0.32" cy="0.28" r="0.85"><stop offset="0" stop-color="#f4f4f7"/><stop offset="0.5" stop-color="#9a9aa6"/><stop offset="1" stop-color="#26262e"/></radialGradient>
+              <clipPath id="pc-moon"><circle cx="50" cy="50" r="42"/></clipPath>
+            </defs>
+            <circle cx="50" cy="50" r="42" fill="url(#pg-moon)"/>
+            <g clip-path="url(#pc-moon)" fill="#000" opacity="0.2"><circle cx="38" cy="40" r="8"/><circle cx="62" cy="58" r="11"/><circle cx="44" cy="68" r="5"/><circle cx="68" cy="34" r="4"/></g>
+          </svg>
+        </span>
+        <span class="planet planet--mint">
+          <svg viewBox="0 0 100 100" focusable="false">
+            <defs>
+              <radialGradient id="pg-mint" cx="0.32" cy="0.28" r="0.85"><stop offset="0" stop-color="#e3fff6"/><stop offset="0.45" stop-color="#7fe6c8"/><stop offset="1" stop-color="#14503f"/></radialGradient>
+              <radialGradient id="pg-mint-shade" cx="0.28" cy="0.25" r="0.95"><stop offset="0.55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.5"/></radialGradient>
+              <clipPath id="pc-mint"><circle cx="50" cy="50" r="42"/></clipPath>
+            </defs>
+            <circle cx="50" cy="50" r="42" fill="url(#pg-mint)"/>
+            <g clip-path="url(#pc-mint)" fill="none" stroke="#0f4a3a" stroke-opacity="0.28" stroke-width="5" stroke-linecap="round"><path d="M12 40Q40 28 88 44"/><path d="M10 58Q50 48 90 62"/></g>
+            <circle cx="50" cy="50" r="42" fill="url(#pg-mint-shade)"/>
+          </svg>
+        </span>
+      </div>
       <div class="wrap">
         <h2 id="cta-title">Try the planner</h2>
         <p class="lead">Open the map, place a few stops and see a candidate route with its slope, climb and time.</p>
