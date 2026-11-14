@@ -1,3 +1,5 @@
+> Historical: written on 14 Nov 2026 before routing and data landed; see README and ASSETS.md for the current state.
+
 # ARES: repository audit
 
 Written by the assistant that built the frontend and landing in this repo (conflict of interest: it audits its own work). Evidence is cited; anything not verified is marked **Unverified** or **Unknown**.
