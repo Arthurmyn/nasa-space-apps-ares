@@ -1,31 +1,31 @@
-## Что сделано
-<!-- Кратко: что и зачем. -->
+## What was done
+<!-- Briefly: what and why. -->
 
 Closes #
 
-## Область
+## Area
 - [ ] Frontend
 - [ ] Backend
 - [ ] ML
 - [ ] Infra / Docs
 
-## Тип изменения
-- [ ] ✨ Фича
-- [ ] 🐛 Фикс
-- [ ] ♻️ Рефакторинг
-- [ ] 📝 Документация / конфиг
+## Type of change
+- [ ] ✨ Feature
+- [ ] 🐛 Fix
+- [ ] ♻️ Refactoring
+- [ ] 📝 Documentation / config
 
-## Как проверить
-<!-- Шаги, чтобы ревьюер мог воспроизвести. -->
+## How to check
+<!-- Steps so the reviewer can reproduce. -->
 1.
 2.
 
-## Скриншоты / метрики
-<!-- UI - скрин или гифка. ML - метрики до/после. -->
+## Screenshots / metrics
+<!-- UI: a screenshot or a GIF. ML: metrics before and after. -->
 
-## Чеклист
-- [ ] Ветка подтянута со свежего `main`
-- [ ] Запускается локально
-- [ ] Линтер/тесты проходят
-- [ ] Если менялся API - обновлён `docs/api.md`
-- [ ] Нет секретов, датасетов и весов в коммите
+## Checklist
+- [ ] The branch is up to date with the latest `main`
+- [ ] It runs locally
+- [ ] Linter and tests pass
+- [ ] If the API changed, `docs/api.md` is updated
+- [ ] No secrets, datasets or weights in the commit
