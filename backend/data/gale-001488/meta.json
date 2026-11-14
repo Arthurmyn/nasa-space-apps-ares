@@ -1,0 +1,31 @@
+{
+  "schema": "ares.grid/v1",
+  "site_id": "gale-001488",
+  "name": "Gale crater: HiRISE DTM 001488 area",
+  "preliminary": true,
+  "dtm_product_id": "DTEEC_001488_1750_001752_1750_U02",
+  "is_test_data": false,
+  "width": 317,
+  "height": 431,
+  "cell_m": 2.0,
+  "mars_radius_m": 3396190,
+  "center": {
+    "lon": 137.30608349510442,
+    "lat": -4.899660305064863
+  },
+  "bbox": {
+    "lon_min": 137.3007328315885,
+    "lon_max": 137.3114680235793,
+    "lat_min": -4.906914665153852,
+    "lat_max": -4.892372203766158
+  },
+  "x_min_m": -316.0,
+  "y_max_m": 432.0,
+  "elevation_nodata": "NaN",
+  "slope_unit_deg": 0.5,
+  "slope_nodata": 255,
+  "slope_window_m": 5,
+  "sources": [
+    "HiRISE DTM DTEEC_001488_1750_001752_1750_U02, NASA/JPL/University of Arizona"
+  ]
+}
