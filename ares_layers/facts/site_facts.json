@@ -1,0 +1,100 @@
+{
+  "_about": "ARES verified facts for the web app (NASA Space Apps 2026). Every value has a source and a status. ✅ verified against primary source; ⚠️ supported, show with caveat; ❌ do not show as fact. Compiled 15 Nov 2026.",
+  "site": {
+    "name": "Mount Sharp boxwork, Gale crater (GALE-BX)",
+    "aoi": {"lat_min": -4.8113, "lat_max": -4.7802, "lon_min_e": 137.3762, "lon_max_e": 137.3984,
+            "convention": "planetocentric latitude, east-positive longitude, Mars sphere R = 3396190 m",
+            "status": "✅", "source": "Team AOI from Curiosity drive positions (MSL Analyst's Notebook); 100 % on valid DTM pixels (checked 14 Nov 2026)"},
+    "drill_stops": [
+      {"name": "Nevado Sajama", "lat": -4.808007, "lon_e": 137.381004, "elev_m": -3609.3, "sol_target": 4713, "note": "ridge drill site"},
+      {"name": "Yareta", "lat": -4.807908, "lon_e": 137.381119, "elev_m": -3610.2},
+      {"name": "NS2", "lat": -4.808005, "lon_e": 137.380992, "elev_m": -3609.3}
+    ],
+    "drill_stops_status": "✅ positions = rover positions from MSL Analyst's Notebook 'Drive locs'; elevations from HiRISE DTM DTEEC_009149 (MOLA areoid)",
+    "campaign_sols": {"boxwork_entry": 4534, "drill_station_parked": [4687, 4804], "drilling_approx": [4709, 4722], "final_exit_approx": [4846, 4848],
+                      "status": "⚠️", "source": "GSA 2025 abstract Siebach et al. (entry); MSL mission blog (drilling, exit 'Bye-Bye Boxwork', planning 27 Mar 2026)"},
+    "elevation_context": {"value_m": -3620, "tolerance_m": 100, "meaning": "approx. groundwater level inferred for boxwork formation, NOT a surface elevation",
+                          "source": "Siebach & Grotzinger 2014, JGR Planets, doi:10.1002/2013JE004508", "status": "⚠️ coarse context only"}
+  },
+  "layers": {
+    "slope": {
+      "product": "HiRISE DTM DTEEC_009149_1750_009294_1750_U01 (1.0117 m/px)",
+      "url": "https://www.uahirise.org/PDS/DTM/PSP/ORB_009100_009199/PSP_009149_1750_PSP_009294_1750/DTEEC_009149_1750_009294_1750_U01.IMG",
+      "method": "block-average to ~5.06 m, Horn (1981) slope, degrees",
+      "why_5m": "1 m slope noise from DTM height error alone: mean ~6 deg, p95 ~12 deg (sigma_z 0.2 m, Monte Carlo); 5 m: ~0.25-1.2 deg. Thresholds were derived on 5 m lunar data.",
+      "classes_deg": [10, 15, 20],
+      "thresholds": {
+        "15": {"source": "Peña-Asensio et al. 2024, Acta Astronautica 214:324-342, doi:10.1016/j.actaastro.2023.10.010", "status": "⚠️ lunar analog (LOLA 5 m/px)"},
+        "20": {"source": "NASA EVA-EXP-0075 (NTRS 20200001071), slide 6: lunar suit design case", "status": "⚠️ lunar design case"},
+        "10": {"source": "none", "status": "❌ display break only, never call it a limit"}
+      },
+      "label": "Slope from HiRISE DTM (MRO), ~5 m baseline. Thresholds are lunar analogs, not Mars suit limits.",
+      "credit": "NASA/JPL-Caltech/UArizona", "status": "✅ data; ⚠️ thresholds"
+    },
+    "optical": {
+      "product": "PSP_009149_1750_RED_A_01_ORTHO.JP2 (0.25 m, 388 MB) or PSP_009149_1750_RED_C_01_ORTHO.JP2 (~1 m, 34 MB)",
+      "url_dir": "https://www.uahirise.org/PDS/DTM/PSP/ORB_009100_009199/PSP_009149_1750_PSP_009294_1750/",
+      "label": "HiRISE orthoimage PSP_009149_1750 (MRO), same stereo pair as the DTM, acquired 9 Jul 2008.",
+      "credit": "NASA/JPL-Caltech/UArizona", "status": "✅ listing verified; open with gdalinfo to confirm"
+    },
+    "thermal": {
+      "product": "USGS THEMIS quantitative thermal inertia mosaic, tile 30S120E, 100 m/px (Fergason et al. 2006 method)",
+      "url_inferred": "http://astropedia.astrogeology.usgs.gov/download/Mars/Odyssey/THEMIS-Global-Thermal-Inertia-Mosaic/Quantitative-32-Bit/THEMIS_TI_Mosaic_Quant_30S120E_100mpp.cub",
+      "url_status": "⚠️ inferred from the verified 30S060E name; check with curl -I",
+      "published_value": {"unit": "layered sulfate (contains the boxwork)", "ti": "355 ± 38", "units": "J m^-2 K^-1 s^-1/2",
+                          "source": "Fraeman et al. 2016, JGR Planets 121(9):1713-1736, doi:10.1002/2016JE005095, Table 2", "status": "✅"},
+      "label": "Thermal inertia (NOT surface temperature), THEMIS/Mars Odyssey, 100 m/px, ~20 % absolute accuracy. Context only, coarser than the route grid.",
+      "credit": "NASA/JPL-Caltech/ASU; USGS Astrogeology; Fergason et al. 2006"
+    },
+    "geology": {
+      "status": "⚠️ team interpretation",
+      "fact": "No public vector map of the boxwork boundary exists.",
+      "label": "Boxwork boundary: team interpretation from HiRISE ortho and rover contact crossings (sols 4534, ~4832-4848). Not an official geologic map.",
+      "science_notes": [
+        {"text": "Ridges 1-2 m tall; X-ray analysis found clay in the ridge sample and carbonate in the hollow sample.", "source": "NASA news, 23 Feb 2026", "status": "⚠️ secondary (news)"},
+        {"text": "Nevado Sajama (ridge) and Valle de la Luna (hollow) drill sites ~10 m apart, ~2 m height difference.", "source": "MSL mission blog, sols 4709-4715", "status": "⚠️ blog"}
+      ]
+    },
+    "radiation": {
+      "dose_equivalent_mSv_per_day": "0.64 ± 0.12",
+      "absorbed_mGy_per_day": "0.21 ± 0.04",
+      "quality_factor": "3.05 ± 0.26",
+      "eva_dose_mSv": {"4h": "0.107 ± 0.020", "8h": "0.213 ± 0.040"},
+      "source": "Hassler et al. 2014, Science 343, doi:10.1126/science.1244797, Table 1 (GCR only, MSL/RAD 2012-13, ~300 sols, solar maximum)",
+      "independent_check": "0.21 mGy/day × 3.05 = 0.640 ± 0.134 mSv/day",
+      "label": "Radiation dose (published mean, not live): 0.64 ± 0.12 mSv/day, GCR only, MSL/RAD 2012-13 at solar maximum. 2026 values are likely higher.",
+      "status": "✅"
+    },
+    "space_weather": {
+      "endpoint": "https://ccmc.gsfc.nasa.gov/DONKI/WS/get/{FLR|CME|SEP}?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD",
+      "verified": "15 Nov 2026: FLR and CME return JSON, no API key",
+      "label": "Space weather advisory (live, NASA CCMC DONKI). Solar events observed from Earth orbit. Not a radiation dose at Mars.",
+      "mars_arrival_label": "CME arrival at Mars (model forecast, NASA CCMC WSA-ENLIL). Model, not a measurement or a radiation dose.",
+      "physics_note": "Hassler 2014 Fig. 1: ICMEs caused Forbush decreases (lower GCR dose); one SEP on sol 242 raised it. A CME arrival means 'conditions change', not 'more dangerous'.",
+      "credit": "NASA CCMC DONKI; instruments SOHO LASCO (ESA/NASA), STEREO-A (NASA), GOES CCOR-1 (NOAA), SDO (NASA)",
+      "status": "✅ live"
+    },
+    "weather": {
+      "source": "Mars Climate Database v6.2, climatology average solar scenario, LMD/OU/IAA/ESA/CNES (www-mars.lmd.jussieu.fr/mcd_python/)",
+      "query": {"ls_deg": 22.3, "lat": -4.8, "lon_e": 137.38, "alt_m_above_surface": 10, "retrieved_utc": "2026-11-14T21:05"},
+      "values": {
+        "surface_temperature_K": {"min": 182.7, "min_h": 5, "max": 271.7, "max_h": 13},
+        "air_temperature_10m_K": {"min": 189.2, "min_h": 5, "max": 238.5, "max_h": 15},
+        "surface_pressure_Pa": {"min": 780.0, "min_h": 17, "max": 832.9, "max_h": 7},
+        "we_wind_ms": {"min": -20.2, "min_h": 21, "max": 3.2, "max_h": 13, "note": "W-E component only; total speed needs S-N component"}
+      },
+      "plausibility": "consistent with published REMS ranges (ground max 250-290 K, min 170-210 K; pressure diurnal ±50 Pa)",
+      "label": "Model climatology for today's season (Mars Climate Database v6.2). Not a forecast, not a measurement.",
+      "status": "⚠️ model, plausibility-checked"
+    },
+    "mars_date": {"method": "Allison & McEwen 2000 (Mars24), reproduces paper example to 5e-5 deg", "label": "Mars date (computed): Ls, MY", "status": "✅"}
+  },
+  "do_not_claim": [
+    "real-time weather or radiation dose on Mars",
+    "10 deg as a slope limit",
+    "slope thresholds as Mars-validated suit limits",
+    "route is safe / guaranteed",
+    "Curiosity is at the boxwork now (it left ~sol 4846-4848, March 2026)",
+    "thermal inertia = surface temperature"
+  ]
+}
