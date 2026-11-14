@@ -33,3 +33,5 @@ ml/models/*
 !ml/**/.gitkeep
 mlruns/
 wandb/
+
+.claude/
