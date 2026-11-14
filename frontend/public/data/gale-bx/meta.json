@@ -26,6 +26,7 @@
   "slope_nodata": 255,
   "slope_window_m": 5,
   "sources": [
-    "HiRISE DTM DTEEC_009149_1750_009294_1750_U01, NASA/JPL/University of Arizona"
+    "HiRISE DTM DTEEC_009149_1750_009294_1750_U01, NASA/JPL/University of Arizona",
+    "src-msl-traverse: NASA/JPL Curiosity MSL waypoints; https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json; snapshot: docs/research/r0/rover_sols4534-4805.geojson"
   ]
 }
