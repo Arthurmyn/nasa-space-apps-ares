@@ -16,56 +16,80 @@
   "stops": [
     {
       "id": "bx-1",
-      "name": "Curiosity sol 4534",
+      "name": "Boxwork traverse point, sol 4534",
       "lon": 137.3864361,
       "lat": -4.79761763,
-      "note": "Curiosity waypoint at sol 4534, 4.7976° S, 137.3864° E.",
-      "image": null,
+      "note": "Curiosity waypoint at sol 4534, 4.7976° S, 137.3864° E. The photo is a Navcam frame from the same sol; the rover may have moved during the sol.",
+      "image": {
+        "url": "/app/stops/sol4534-navcam-left.jpg",
+        "alt": "Rocky terrain sloping away toward distant hills under a pale sky, seen by the Navcam",
+        "credit": "NASA/JPL-Caltech, Mars Science Laboratory, sol 4534, Navcam Left B"
+      },
       "source_id": "src-msl-traverse"
     },
     {
       "id": "bx-2",
-      "name": "Curiosity sol 4554",
+      "name": "Boxwork traverse point, sol 4554",
       "lon": 137.3834371,
       "lat": -4.79971414,
-      "note": "Curiosity waypoint at sol 4554, 4.7997° S, 137.3834° E.",
-      "image": null,
+      "note": "Curiosity waypoint at sol 4554, 4.7997° S, 137.3834° E. The photo is a Navcam frame from the same sol; the rover may have moved during the sol.",
+      "image": {
+        "url": "/app/stops/sol4554-navcam-left.jpg",
+        "alt": "Dark rocky ground with rover wheel tracks and a ridge on the horizon",
+        "credit": "NASA/JPL-Caltech, Mars Science Laboratory, sol 4554, Navcam Left B"
+      },
       "source_id": "src-msl-traverse"
     },
     {
       "id": "bx-3",
-      "name": "Curiosity sol 4585",
+      "name": "Boxwork traverse point, sol 4585",
       "lon": 137.381053,
       "lat": -4.80256772,
-      "note": "Curiosity waypoint at sol 4585, 4.8026° S, 137.3811° E.",
-      "image": null,
+      "note": "Curiosity waypoint at sol 4585, 4.8026° S, 137.3811° E. The photo is a Navcam frame from the same sol; the rover may have moved during the sol.",
+      "image": {
+        "url": "/app/stops/sol4585-navcam-left.jpg",
+        "alt": "Rubble-strewn plain with a dark sand ripple field and low hills on the horizon",
+        "credit": "NASA/JPL-Caltech, Mars Science Laboratory, sol 4585, Navcam Left B"
+      },
       "source_id": "src-msl-traverse"
     },
     {
       "id": "bx-4",
-      "name": "Curiosity sol 4609",
+      "name": "Boxwork traverse point, sol 4609",
       "lon": 137.3793204,
       "lat": -4.80474015,
-      "note": "Curiosity waypoint at sol 4609, 4.8047° S, 137.3793° E.",
-      "image": null,
+      "note": "Curiosity waypoint at sol 4609, 4.8047° S, 137.3793° E. The photo is a Navcam frame from the same sol; the rover may have moved during the sol.",
+      "image": {
+        "url": "/app/stops/sol4609-navcam-right.jpg",
+        "alt": "Layered pale bedrock in the foreground and a dark mound with distant hills behind it",
+        "credit": "NASA/JPL-Caltech, Mars Science Laboratory, sol 4609, Navcam Right B"
+      },
       "source_id": "src-msl-traverse"
     },
     {
       "id": "bx-5",
-      "name": "Curiosity sol 4655",
+      "name": "Boxwork traverse point, sol 4655",
       "lon": 137.3798956,
       "lat": -4.80716832,
-      "note": "Curiosity waypoint at sol 4655, 4.8072° S, 137.3799° E.",
-      "image": null,
+      "note": "Curiosity waypoint at sol 4655, 4.8072° S, 137.3799° E. The photo is a Navcam frame from the same sol; the rover may have moved during the sol.",
+      "image": {
+        "url": "/app/stops/sol4655-navcam-right.jpg",
+        "alt": "Bright fractured bedrock stretching toward a dome-shaped hill and a hazy horizon",
+        "credit": "NASA/JPL-Caltech, Mars Science Laboratory, sol 4655, Navcam Right B"
+      },
       "source_id": "src-msl-traverse"
     },
     {
       "id": "bx-6",
-      "name": "Curiosity sol 4805",
+      "name": "Boxwork traverse point, sol 4805",
       "lon": 137.38142,
       "lat": -4.8078367,
-      "note": "Curiosity waypoint at sol 4805, 4.8078° S, 137.3814° E.",
-      "image": null,
+      "note": "Curiosity waypoint at sol 4805, 4.8078° S, 137.3814° E. The photo is a Navcam frame from the same sol; the rover may have moved during the sol.",
+      "image": {
+        "url": "/app/stops/sol4805-navcam-right.jpg",
+        "alt": "Pale fractured bedrock rimming a shallow hollow, with low buttes on the horizon",
+        "credit": "NASA/JPL-Caltech, Mars Science Laboratory, sol 4805, Navcam Right B"
+      },
       "source_id": "src-msl-traverse"
     }
   ],

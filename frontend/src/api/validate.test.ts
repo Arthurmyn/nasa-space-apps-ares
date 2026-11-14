@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { describeError } from "./errors.ts";
 import { ApiError } from "./types.ts";
-import { parseLayersResponse, parseRouteResponse, parseSiteMeta, parseSitesResponse } from "./validate.ts";
+import { isSafeImageUrl, parseLayersResponse, parseRouteResponse, parseSiteMeta, parseSitesResponse } from "./validate.ts";
 
 const valid = () => ({
   computed_at: "2030-01-01T00:00:00Z",
@@ -243,5 +243,23 @@ describe("site context in the sites response", () => {
 
   it("a site without a context has null", () => {
     assert.equal(parseSitesResponse(site(undefined)).sites[0]?.context, null);
+  });
+});
+
+describe("isSafeImageUrl", () => {
+  it("accepts http(s) URLs and same-site paths", () => {
+    assert.equal(isSafeImageUrl("https://example.org/a.jpg"), true);
+    assert.equal(isSafeImageUrl("/app/stops/sol4534-navcam-left.jpg"), true);
+  });
+
+  it("rejects script, data, protocol-relative and relative-to-nothing values", () => {
+    for (const bad of ["javascript:alert(1)", "data:image/png;base64,AAAA", "//evil.example/a.jpg", "stops/a.jpg", "/\\evil", ""]) {
+      assert.equal(isSafeImageUrl(bad), false, bad);
+    }
+  });
+
+  it("a stop with a same-site image path keeps its image", () => {
+    const route = { ...valid(), stops: [{ id: "s", name: null, lon: 1, lat: 2, dist_m: 5, note: null, image: { url: "/app/stops/x.jpg", alt: "a", credit: "c" } }] };
+    assert.equal(parseRouteResponse(route).stops[0]?.image?.url, "/app/stops/x.jpg");
   });
 });
