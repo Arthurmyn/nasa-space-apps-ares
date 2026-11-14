@@ -3,6 +3,9 @@ export const MAX_STOPS = 5;
 /** Wait after the last edit before asking the API for a new route. */
 export const ROUTE_DEBOUNCE_MS = 600;
 
+/** How long a short notice stays on screen. */
+export const NOTICE_MS = 5000;
+
 /** Abort a route request that takes longer than this. */
 export const REQUEST_TIMEOUT_MS = 20_000;
 

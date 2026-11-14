@@ -20,12 +20,6 @@ export function classifySlope(slopeDeg: number, limits: SlopeLimits): SlopeClass
   return "avoid";
 }
 
-const SEVERITY: Record<SlopeClass, number> = { ok: 0, caution: 1, avoid: 2 };
-
-export function worstClass(a: SlopeClass, b: SlopeClass): SlopeClass {
-  return SEVERITY[a] >= SEVERITY[b] ? a : b;
-}
-
 /** Labels for a single slope reading. */
 export const SLOPE_CLASS_LABEL: Record<SlopeClass, string> = {
   ok: "Within limits",
