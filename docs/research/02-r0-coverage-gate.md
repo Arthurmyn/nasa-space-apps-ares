@@ -1,86 +1,86 @@
-# R0 - ворота покрытия AOI
+# R0 - AOI coverage gate
 
-Дата: 14 ноября 2026. Дедлайн решения: **день 1, 12:00**.
-Владельцы: Alikhan + Aikyn.
-Статус: **R0 проверен локально для issue #3: выбран DTM 009149, 65/65 позиций покрыты.**
-Артефакты и воспроизводимый запуск - в разделе 0. Разделы 1–6 ниже сохранены как
-исходный план исследования; их гипотезы и незакрытые пункты не являются итоговым решением.
+Date: 14 November 2026. Decision deadline: **day 1, 12:00**.
+Owners: Alikhan + Aikyn.
+Status: **R0 checked locally for issue #3: DTM 009149 chosen, 65/65 positions covered.**
+The artifacts and the reproducible run are in section 0. Sections 1-6 below are kept as
+the original research plan; their hypotheses and open items are not the final decision.
 
-Пометки: **[факт]** - проверено запросом к источнику; **[вывод]** - интерпретация; **[проверить]** - нужно подтвердить.
+Marks: **[fact]** - checked by a query to the source; **[inference]** - interpretation; **[to check]** - needs confirmation.
 
 ---
 
-## 0. Итог проверки issue #3 - 14 ноября 2026
+## 0. Result of the check for issue #3 - 14 November 2026
 
-**Решение: GALE-BX на `DTEEC_009149_1750_009294_1750_U01`.** Используем участок
-кампании Curiosity, перенос на удалённый боксворк не нужен.
+**Decision: GALE-BX on `DTEEC_009149_1750_009294_1750_U01`.** We use the Curiosity
+campaign site; moving to a remote boxwork is not needed.
 
-| Проверка | DTM 001488 U02 | DTM 009149 U01 |
+| Check | DTM 001488 U02 | DTM 009149 U01 |
 |---|---:|---:|
-| Валидных пикселей | 67 903 999 | 72 772 639 |
-| Позиции Curiosity внутри валидного контура | **0 / 65** | **65 / 65** |
-| Диапазон покрытых sols | нет | 4534–4805 |
-| Шаг сетки, м | 1.0117467945795 | 1.0117467945795 |
-| Радиус сферы из PDS/GDAL, м | 3 396 190 | 3 396 190 |
+| Valid pixels | 67,903,999 | 72,772,639 |
+| Curiosity positions inside the valid outline | **0 / 65** | **65 / 65** |
+| Range of covered sols | none | 4534-4805 |
+| Grid step, m | 1.0117467945795 | 1.0117467945795 |
+| Sphere radius from PDS/GDAL, m | 3,396,190 | 3,396,190 |
 
-**[факт]** Оба полных PDS3 `.IMG` скачаны и открыты Rasterio/GDAL. Полигон построен
-на исходном разрешении из маски валидных конечных значений; NoData, внутренние
-отверстия и отдельные островки сохранены. Bbox и уменьшенная маска не использовались.
-Части маски объединяются на целочисленной пиксельной сетке до проекции, чтобы исключить
-ложные швы между блоками чтения.
+**[fact]** Both full PDS3 `.IMG` files were downloaded and opened with Rasterio/GDAL. The polygon was built
+at the native resolution from the mask of valid finite values; NoData, interior
+holes and separate islands were kept. A bbox and a downsampled mask were not used.
+The parts of the mask are merged on the integer pixel grid before projection, to avoid
+false seams between read blocks.
 
-**[факт]** В NASA `MSL_waypoints.json` отобраны все 65 доступных позиций с
-`4534 <= sol <= 4805`, включая обе крайние даты. Это позиции остановок/проездов,
-а не ежедневная временная сетка: пропущенные sols не интерполировались.
+**[fact]** From the NASA `MSL_waypoints.json`, all 65 available positions with
+`4534 <= sol <= 4805` were selected, including both end dates. These are stop/drive
+positions, not a daily time grid: missing sols were not interpolated.
 
-**CRS.** В PDS-метках обоих DTM указаны `PLANETOCENTRIC`, `EAST`, equirectangular
-и одинаковые радиусы осей. Метаданные GDAL, полные WKT и радиусы сохранены в отчёте.
-Для MMGIS выполнена численная сверка с формулами **PLACES SIS §4.4.2.4, с.33–34**:
-`lat = northing / 3396190`, `lon = easting / 3396190` (радианы → градусы).
-Максимальный остаток по всем 65 точкам - **0.003154 м**, порог отказа - 0.05 м.
-Это подтверждает использование планетоцентрической широты в данной выгрузке;
-сверка наземных ориентиров V1 остаётся отдельной задачей.
-GeoJSON здесь содержит **марсианские** lon/lat; назначать ему EPSG:4326 нельзя.
+**CRS.** The PDS labels of both DTMs state `PLANETOCENTRIC`, `EAST`, equirectangular
+and identical axis radii. The GDAL metadata, the full WKT and the radii are saved in the report.
+For MMGIS, a numeric check was made against the formulas of **PLACES SIS §4.4.2.4, pp. 33-34**:
+`lat = northing / 3396190`, `lon = easting / 3396190` (radians → degrees).
+The maximum residual over all 65 points is **0.003154 m**, the rejection threshold is 0.05 m.
+This confirms the use of planetocentric latitude in this export;
+checking against V1 ground landmarks remains a separate task.
+The GeoJSON here holds **Martian** lon/lat; EPSG:4326 must not be assigned to it.
 
-**Предложенная AOI для #6:** оболочка позиций кампании с буфером 100 м в родной
-метрической проекции, пересечённая с валидным контуром выбранного DTM. Буфер -
-явное допущение с `source_tag`/`label`, а не радиус безопасного маршрута.
-Центр площади полученного полигона - **`[137.3827764, -4.803166845]`**
-(°E, планетоцентрическая широта), внутри валидных данных. Прежняя медианная
-позиция ровера заменена центром геометрии AOI. Полигон покрывает все 65 позиций.
+**Proposed AOI for #6:** the hull of the campaign positions with a 100 m buffer in the native
+metric projection, intersected with the valid outline of the chosen DTM. The buffer is
+an explicit assumption with a `source_tag`/`label`, not a safe-route radius.
+The area centre of the resulting polygon is **`[137.3827764, -4.803166845]`**
+(°E, planetocentric latitude), inside valid data. The previous median
+rover position was replaced by the centre of the AOI geometry. The polygon covers all 65 positions.
 
-**Эта граница предварительная:** размер около 1.2 × 1.6 км описывает кампанию ровера,
-но не гарантирует охват будущих научных целей и хабитата. В handoff явно указаны
+**This boundary is preliminary:** its size of about 1.2 × 1.6 km describes the rover campaign
+but does not guarantee coverage of future science targets and the habitat. The handoff explicitly states
 `planning_ready: false`, `required_extent_inputs: ["R6 science targets", "D9 habitat"]`
-и требование пересчитать границу перед включением `/plan`. После R6/D9 нужно передать
-**все** утверждённые цели и habitat как GeoJSON FeatureCollection из Point-фич
-с марсианскими `[lon_E, lat_planetocentric]`, сохранив происхождение в properties:
+and the requirement to recompute the boundary before turning on `/plan`. After R6/D9, **all**
+approved targets and the habitat must be supplied as a GeoJSON FeatureCollection of Point features
+with Martian `[lon_E, lat_planetocentric]`, keeping the provenance in properties:
 
 ```bash
 python -m scripts.r0_coverage --planning-points data/planning/final_points.geojson --aoi-buffer-m 250
 ```
 
-Здесь 250 м - пример явно выбранного запаса, не научно подтверждённый норматив.
-Скрипт строит общую оболочку позиций ровера, целей и habitat, добавляет заданный запас,
-пересчитывает центр и локальный CRS, сохраняет копию входных planning points и их SHA-256.
-Точка вне валидного DTM вызывает отказ с объяснением: её нельзя молча обрезать границей.
-Далее R1/Q6 должны проверить покрытие, артефакты, уклоны и пригодность habitat;
-готовность `/plan` подтверждается в runtime Region Config задачи #6. Флаг R0 теперь
-показывает отдельное проверяемое состояние: есть ли запись проверки **данной** AOI
-с **данными** точками и DTM, пригодная для импорта в #6.
+Here 250 m is an example of an explicitly chosen margin, not a scientifically confirmed norm.
+The script builds a common hull of the rover positions, targets and habitat, adds the given margin,
+recomputes the centre and the local CRS, and saves a copy of the input planning points and their SHA-256.
+A point outside the valid DTM causes a refusal with an explanation: it cannot be silently clipped by the boundary.
+After that, R1/Q6 must check coverage, artifacts, slopes and the suitability of the habitat;
+the readiness of `/plan` is confirmed in the runtime Region Config of task #6. The R0 flag now
+shows a separate checkable state: whether there is a review record for **this** AOI
+with **these** points and DTM, suitable for import into #6.
 
-Чтобы получить `planning_ready: true`, сначала запустите расчёт с окончательными
-точками; в их properties должны присутствовать роли `habitat` и `target`. После
-проверки R6/D9 и terrain QA оформите `data/planning/approval.json` по форме ниже.
-Хеши берутся из `aoi_proposal` полученного handoff; имя проверившего, дата и ссылки
-на реальные результаты QA должны быть заполнены по фактической проверке:
+To get `planning_ready: true`, first run the calculation with the final
+points; their properties must contain the roles `habitat` and `target`. After the
+R6/D9 check and terrain QA, prepare `data/planning/approval.json` in the form below.
+The hashes are taken from the `aoi_proposal` of the resulting handoff; the reviewer's name, the date and the links
+to real QA results must be filled in according to the actual check:
 
 ```json
 {
   "schema": "ares.r0-planning-approval/v1",
-  "reviewer": "<проверивший>",
+  "reviewer": "<reviewer>",
   "reviewed_on": "2026-11-14",
-  "evidence": ["<ссылка на результаты R6/D9 и terrain QA>"],
+  "evidence": ["<link to the R6/D9 and terrain QA results>"],
   "extent_sha256": "<aoi_proposal.extent_sha256>",
   "planning_points_sha256": "<aoi_proposal.planning_points_sha256>",
   "checks": {
@@ -95,38 +95,38 @@ python -m scripts.r0_coverage --planning-points data/planning/final_points.geojs
 python -m scripts.r0_coverage --planning-points data/planning/final_points.geojson --aoi-buffer-m 250 --planning-approval data/planning/approval.json
 ```
 
-Принятая запись проверки сохраняется в handoff и `OUTPUT/planning_approval.json`.
-`extent_sha256` привязан к геометрии, буферу, рабочему/родному CRS, шагу сетки,
-ID и SHA-256 DTM, а также хешу файла точек. Изменение этих входов делает старое
-подтверждение неприменимым: потребуется новая проверка. Без файла проверки флаг
-остаётся false. Это запись предоставленного ревью, не автоматическая сертификация
-рельефа и не разрешение на реальную EVA. В текущем handoff подтверждения нет:
-R6/D9 и terrain QA ещё не завершены.
+The accepted review record is saved in the handoff and in `OUTPUT/planning_approval.json`.
+`extent_sha256` is tied to the geometry, the buffer, the working/native CRS, the grid step,
+the ID and SHA-256 of the DTM, and the hash of the points file. Changing these inputs makes the old
+approval inapplicable: a new review is required. Without the review file, the flag
+stays false. This is a record of the review provided, not an automatic certification
+of the terrain and not permission for a real EVA. The current handoff has no approval:
+R6/D9 and terrain QA are not finished yet.
 
-Данные передаются в [`gale_bx_handoff.json`](r0/gale_bx_handoff.json) с явным
-форматом `ares.r0-handoff/v1`: `aoi_proposal` содержит `aoi_geojson`, `centre_lonlat_E`
-и `crs_proj`; отдельно записаны `dtm_product_id`, `native_dtm` и `coverage_evidence`.
-Рабочая проекция - локальная eqc с **`lat_ts`, `lat_0`, `lon_0` на центре AOI**,
-радиусом 3396190 м из продукта и стандартным `+no_defs`. Исходная проекция DTM
-с `lat_ts=0` остаётся только в `native_dtm` и метаданных источника.
+The data is passed in [`gale_bx_handoff.json`](r0/gale_bx_handoff.json) with the explicit
+format `ares.r0-handoff/v1`: `aoi_proposal` holds `aoi_geojson`, `centre_lonlat_E`
+and `crs_proj`; `dtm_product_id`, `native_dtm` and `coverage_evidence` are recorded separately.
+The working projection is a local eqc with **`lat_ts`, `lat_0`, `lon_0` at the AOI centre**,
+a radius of 3396190 m from the product and the standard `+no_defs`. The original DTM projection
+with `lat_ts=0` stays only in `native_dtm` and in the source metadata.
 
-Handoff имеет собственный формат и не загружается как runtime Region Config.
-Неполная заготовка `backend/data/gale_bx.json` удалена: она могла не пройти будущую
-Pydantic-модель #6 (`targets` должен ссылаться на файл; слои/параметры требуют
-собственного контракта). В #6 следует явно перенести проверенные поля из handoff,
-создав полноценный Region Config по спецификации и заполнив habitat, слои, цели
-и параметры. Скрипт R0 больше не читает и не перезаписывает runtime-конфиг.
+The handoff has its own format and is not loaded as a runtime Region Config.
+The incomplete draft `backend/data/gale_bx.json` was removed: it might not pass the future
+Pydantic model of #6 (`targets` must refer to a file; layers/parameters need
+their own contract). In #6 the verified fields from the handoff should be moved explicitly,
+creating a full Region Config per the specification and filling in the habitat, layers, targets
+and parameters. The R0 script no longer reads or overwrites the runtime config.
 
-Артефакты:
+Artifacts:
 
-- [Наложение контуров и позиций](r0/r0_overlay.png).
-- [Машинный отчёт с URL, SHA-256 входов, CRS и результатами](r0/r0_result.json).
-- [Отдельный handoff для Region Config в #6](r0/gale_bx_handoff.json).
-- [Выборка позиций sols 4534–4805](r0/rover_sols4534-4805.geojson).
-- [Валидный контур 001488](r0/DTEEC_001488_1750_001752_1750_U02_footprint.geojson).
-- [Валидный контур 009149](r0/DTEEC_009149_1750_009294_1750_U01_footprint.geojson).
+- [Overlay of outlines and positions](r0/r0_overlay.png).
+- [Machine report with URLs, input SHA-256s, CRS and results](r0/r0_result.json).
+- [Separate handoff for the Region Config in #6](r0/gale_bx_handoff.json).
+- [Sample of positions, sols 4534-4805](r0/rover_sols4534-4805.geojson).
+- [Valid outline of 001488](r0/DTEEC_001488_1750_001752_1750_U02_footprint.geojson).
+- [Valid outline of 009149](r0/DTEEC_009149_1750_009294_1750_U01_footprint.geojson).
 
-Воспроизведение из корня репозитория (Python 3.10+, отдельные GIS-зависимости):
+Reproduction from the repository root (Python 3.10+, separate GIS dependencies):
 
 ```bash
 python -m pip install -r scripts/requirements-r0.txt
@@ -135,198 +135,198 @@ python -m pytest scripts/tests -q
 python -m ruff check scripts/r0_*.py scripts/tests
 ```
 
-Первый запуск скачивает ~751 МБ растров в игнорируемый `data/r0/raw/`. Повторный
-запуск без `--download` работает офлайн. Ожидаемые размеры и **закреплённые SHA-256**
-заданы в [`scripts/r0_inputs.json`](../../scripts/r0_inputs.json). Позиции берутся
-из версионируемого снимка [`r0_waypoints.geojson`](../../scripts/data/r0_waypoints.geojson),
-а не из меняющегося многолетнего каталога NASA. Исходная выгрузка, из которой получена
-выборка: SHA-256 `5a32324f4b8ba22ebdfac50a503e195f47ccdc876ad4c15b19e29dc7cef15a09`,
-665124 байта, проверена 14 ноября 2026. Её повторная загрузка для воспроизведения не нужна.
-Изменение закреплённых входов требует явного изменения манифеста в Git.
+The first run downloads ~751 MB of rasters into the ignored `data/r0/raw/`. A repeated
+run without `--download` works offline. The expected sizes and the **pinned SHA-256s**
+are set in [`scripts/r0_inputs.json`](../../scripts/r0_inputs.json). The positions come
+from the versioned snapshot [`r0_waypoints.geojson`](../../scripts/data/r0_waypoints.geojson),
+not from the changing multi-year NASA catalog. The original export from which the sample was
+taken: SHA-256 `5a32324f4b8ba22ebdfac50a503e195f47ccdc876ad4c15b19e29dc7cef15a09`,
+665,124 bytes, checked on 14 November 2026. Downloading it again for reproduction is not needed.
+Changing the pinned inputs requires an explicit change of the manifest in Git.
 
-В `provenance` записи снимка в манифесте сохранены дата выгрузки **2026-11-14**
-(точное время не записывалось), SHA-256/размер полного исходника, включительный
-фильтр `sol ∈ [4534, 4805]`, стабильная сортировка по sol и формат сериализации.
-Полные properties и geometry выбранных фич сохранены без интерполяции.
-Команда пересоздания из манифеста работает и на свежем checkout: она сама получает
-каталог NASA и сохраняет совпавшую выборку. После первого запуска сохранённый
-каталог доступен для офлайн-пересоздания:
+In the `provenance` of the snapshot record in the manifest, the download date **2026-11-14**
+(the exact time was not recorded), the SHA-256/size of the full source, the inclusive
+filter `sol ∈ [4534, 4805]`, the stable sort by sol and the serialization format are stored.
+The full properties and geometry of the selected features are kept without interpolation.
+The recreate command from the manifest also works on a fresh checkout: it fetches the NASA
+catalog itself and saves the matching sample. After the first run the saved
+catalog is available for offline recreation:
 
 ```bash
 python -m scripts.r0_snapshot --download --output data/r0/raw/r0_waypoints_recreated.geojson
 python -m scripts.r0_snapshot --source data/r0/raw/MSL_waypoints_verify.json --output data/r0/raw/r0_waypoints_recreated.geojson
 ```
 
-Первая команда скачивает **текущий** NASA-каталог, повторяет тот же отбор и сравнивает
-полученные байты с закреплённым снимком. Обновления вне кампании не меняют выборку;
-изменение выбранных фич даёт ошибку с ожидаемым и фактическим хешем, не заменяя снимок.
-Полный хеш текущей выгрузки также печатается для сравнения с первоначальным источником.
-Проверены оба режима: 65 позиций и снимок совпали побайтно; текущая полная выгрузка
-NASA также совпала с первоначальной по SHA-256.
+The first command downloads the **current** NASA catalog, repeats the same selection and compares
+the resulting bytes with the pinned snapshot. Updates outside the campaign do not change the sample;
+a change of the selected features gives an error with the expected and the actual hash, without replacing the snapshot.
+The full hash of the current export is also printed for comparison with the original source.
+Both modes were checked: the 65 positions and the snapshot matched byte for byte; the current full export of
+NASA also matched the original one by SHA-256.
 
-`r0_snapshot.py` и общий отбор в `r0_waypoints.py` используют только стандартную
-библиотеку Python: для скачивания и проверки JSON не нужны requests, NumPy,
-Rasterio/GDAL, Shapely или Matplotlib. Это проверено запуском CLI с `python -S`,
-когда установленные site-packages недоступны.
+`r0_snapshot.py` and the shared selection in `r0_waypoints.py` use only the Python standard
+library: downloading and checking the JSON needs no requests, NumPy,
+Rasterio/GDAL, Shapely or Matplotlib. This was checked by running the CLI with `python -S`,
+when installed site-packages are unavailable.
 
-Хеш новых загрузок считается по распакованному потоку один раз. `Content-Length`
-проверяется только для несжатых ответов; для gzip проверяются закреплённые размер
-и SHA-256 **распакованных** байтов. Несовпадение не заменяет принятый файл.
-Для кеша сохраняется `.verified.json` с проверенным хешем, размером, inode,
-mtime/ctime в наносекундах. Неизменённый локальный кеш повторно не перечитывается
-для хеширования; изменение метаданных или закреплённого хеша требует новой проверки.
-Снимок waypoints мал и хешируется при каждом запуске. Записи проверки кеша рассчитаны
-на обычное локальное хранение; после переноса из недоверенного хранилища можно
-принудительно проверить все байты: `python -m scripts.r0_coverage --verify-inputs`.
+The hash of new downloads is computed once over the decompressed stream. `Content-Length`
+is checked only for uncompressed responses; for gzip, the pinned size
+and SHA-256 of the **decompressed** bytes are checked. A mismatch does not replace the accepted file.
+For the cache, `.verified.json` is saved with the verified hash, size, inode,
+mtime/ctime in nanoseconds. An unchanged local cache is not re-read
+for hashing; a change of the metadata or of the pinned hash requires a new check.
+The waypoints snapshot is small and is hashed on every run. The cache check records are meant
+for ordinary local storage; after moving from untrusted storage, all bytes can be
+checked by force: `python -m scripts.r0_coverage --verify-inputs`.
 
-При повреждении кеша сообщение содержит путь растра, путь его `.verified.json`
-и команду восстановления: `python -m scripts.r0_coverage --download --verify-inputs`
-(добавьте тот же `--raw`, если кеш в другом каталоге). В этом режиме повреждённый
-файл скачивается заново и заменяется только после проверки закреплённых размера
-и SHA-256. Альтернатива: удалить указанный растр **и** его `.verified.json`, затем
-повторить запуск с `--download`. Если архив сам отдаёт другие байты, автоматическое
-восстановление завершится отдельной `SourceMismatchError` и не изменит пины.
-Локальная ошибка кеша имеет тип `CacheIntegrityError`; полный ответ сервера,
-не совпавший с пином, - это другой случай. Он может означать переиздание продукта
-или отличие переданного содержимого; сам по себе он не доказывает повреждение кеша.
+If the cache is damaged, the message contains the raster path, the path of its `.verified.json`
+and the recovery command: `python -m scripts.r0_coverage --download --verify-inputs`
+(add the same `--raw` if the cache is in another directory). In this mode a damaged
+file is downloaded again and replaced only after the pinned size
+and SHA-256 are verified. An alternative: delete the named raster **and** its `.verified.json`, then
+repeat the run with `--download`. If the archive itself serves other bytes, the automatic
+recovery ends with a separate `SourceMismatchError` and does not change the pins.
+A local cache error has the type `CacheIntegrityError`; a full server response
+that does not match the pin is a different case. It may mean a reissue of the product
+or a difference in the transferred content; by itself it does not prove cache damage.
 
-После такого ответа сохраняется `RASTER.IMG.source-mismatch.json` с URL,
-ожидаемыми и фактическими хешами/размерами. Следующие запуски с тем же URL и пином
-**не скачивают сотни мегабайт повторно**. После разбора причины можно явно
-повторить попытку: `python -m scripts.r0_coverage --download --retry-source`.
-Изменённый после ревью URL/пин также разрешает новую загрузку; успешная проверка
-удаляет запись отказа. Сетевые ошибки и неполная передача не блокируются таким
-образом - только полностью полученный ответ, не совпавший с закреплённым входом.
+After such a response, `RASTER.IMG.source-mismatch.json` is saved with the URL,
+the expected and actual hashes/sizes. Later runs with the same URL and pin
+**do not download hundreds of megabytes again**. After the cause is investigated, you can explicitly
+retry: `python -m scripts.r0_coverage --download --retry-source`.
+A URL/pin changed after review also allows a new download; a successful check
+removes the refusal record. Network errors and incomplete transfers are not blocked in this
+way - only a fully received response that does not match the pinned input.
 
-Параметры `--raw`, `--output`, `--handoff` задают другие пути. По умолчанию handoff
-находится рядом с отчётом: `OUTPUT/gale_bx_handoff.json`. `coverage_evidence` - путь
-**относительно каталога handoff**, даже при абсолютном `--output`; локальные абсолютные
-пути машины не записываются. При отсутствии полностью покрывающего DTM отчёт содержит
-`unresolved`, центр - `null`, код завершения CLI - 2; частичное покрытие не принимается.
-Уже принятый handoff при этом сохраняется, runtime-конфиг не затрагивается.
-При успешном обычном запуске без `--planning-points` старый экспорт
-`OUTPUT/planning_points.geojson` удаляется, а `planning_points_count` становится 0.
-Без `--planning-approval` также удаляется старый экспорт проверки и сбрасывается
-`planning_ready`. Исходные файлы пользователя вне каталога экспорта сохраняются;
-при отказе старые принятые входы handoff не удаляются.
+The parameters `--raw`, `--output`, `--handoff` set other paths. By default the handoff
+is next to the report: `OUTPUT/gale_bx_handoff.json`. `coverage_evidence` is a path
+**relative to the handoff directory**, even with an absolute `--output`; local absolute
+machine paths are not recorded. If there is no fully covering DTM, the report contains
+`unresolved`, the centre is `null`, and the CLI exit code is 2; partial coverage is not accepted.
+An already accepted handoff is kept in this case, and the runtime config is not touched.
+On a successful regular run without `--planning-points`, the old export
+`OUTPUT/planning_points.geojson` is deleted and `planning_points_count` becomes 0.
+Without `--planning-approval`, the old review export is also deleted and
+`planning_ready` is reset. The user's source files outside the export directory are kept;
+on a refusal, the old accepted handoff inputs are not deleted.
 
-После ревью добавлены проверки gzip на локальном HTTP-сервере, закреплённых входов,
-изменённого и неизменённого кеша, принудительного аудита, отказа без затирания данных,
-абсолютного пути вывода, третьего DTM, невалидных sols вне кампании и метрической
-масштабности локальной проекции. Дополнительно проверены рецепт снимка, отказ при
-изменении кампании, автоматическое восстановление кеша и расширение AOI на цели
-вне трассы. Также проверены очистка устаревших экспортов, переход готовности в true
-с привязанным ревью, отклонение устаревшего ревью, блокировка повторных загрузок
-изменившегося источника и работа проверки JSON без site-packages. Всего **34 теста**.
+After review, checks were added for gzip on a local HTTP server, pinned inputs,
+a changed and an unchanged cache, a forced audit, a refusal without overwriting data,
+an absolute output path, a third DTM, invalid sols outside the campaign and the metric
+scale of the local projection. Also checked: the snapshot recipe, the refusal on
+a change of the campaign, automatic cache recovery and the AOI expansion to targets
+off the route. Also checked: cleanup of stale exports, the readiness switching to true
+with a bound review, rejection of a stale review, blocking repeated downloads of
+a changed source and the JSON check working without site-packages. In total **34 tests**.
 
-R0 подтверждает **геометрическое покрытие доступных позиций и предложенной AOI**. Проверки артефактов
-DTM, уклонов, точности совмещения и пригодности места хабитата остаются для R1/Q6.
-Это не полная аттестация L4. Проверять MSL DEM, CTX fill и Siebach fallback для
-этого решения не потребовалось: отдельный стерео-DTM 009149 покрывает всю выборку.
+R0 confirms the **geometric coverage of the available positions and of the proposed AOI**. Checks of DTM
+artifacts, slopes, registration accuracy and the suitability of the habitat site remain for R1/Q6.
+This is not a full L4 attestation. Checking the MSL DEM, the CTX fill and the Siebach fallback was not needed
+for this decision: the separate stereo DTM 009149 covers the whole sample.
 
-Первичные источники:
+Primary sources:
 
-- [HiRISE: основной DTM 001488](https://www.uahirise.org/dtm/dtm.php?ID=PSP_001488_1750).
-- [HiRISE: выбранный DTM 009149](https://www.uahirise.org/dtm/dtm.php?ID=PSP_009149_1750).
-- [NASA MMGIS: полный список waypoints](https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json).
-- [PLACES SIS: координатные формулы](https://planetarydata.jpl.nasa.gov/img/data/msl/msl_places/document/PLACES_PDS_SIS.pdf).
+- [HiRISE: main DTM 001488](https://www.uahirise.org/dtm/dtm.php?ID=PSP_001488_1750).
+- [HiRISE: chosen DTM 009149](https://www.uahirise.org/dtm/dtm.php?ID=PSP_009149_1750).
+- [NASA MMGIS: full list of waypoints](https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json).
+- [PLACES SIS: coordinate formulas](https://planetarydata.jpl.nasa.gov/img/data/msl/msl_places/document/PLACES_PDS_SIS.pdf).
 
 ---
 
-## 1. Что такое R0 и зачем он первый
+## 1. What R0 is and why it comes first
 
-Формулировка из контекста:
+The wording from the context:
 
 > AOI coverage gate - first task, before route code. DTM footprint (`gdalinfo` / USGS STAC) overlaid with Curiosity positions sols 4534+. Overlap → GALE-BX confirmed; no overlap → search STAC for another DTM; else use the DTM's own boxwork and say so on the slide. Decision by Day 1, 12:00.
 
-Вопрос один: **покрывает ли наша модель рельефа 1 м тот участок боксворка, где Curiosity работает в 2025–26 (sol 4534 и дальше)?**
+There is one question: **does our 1 m terrain model cover the boxwork site where Curiosity works in 2025-26 (sol 4534 onwards)?**
 
-Почему всё остальное ждёт R0:
-- R1 (стек слоёв) - без известного DTM нечего обрезать и показывать.
-- Q6 (место хабитата) - хабитат ставится в покрытую зону.
-- R3 (маршрут) - A* работает по сетке DTM.
-- Демо по чеклисту начинается с доказательства R0.
+Why everything else waits for R0:
+- R1 (the layer stack) - without a known DTM there is nothing to clip and show.
+- Q6 (the habitat location) - the habitat is placed in a covered zone.
+- R3 (the route) - A* works on the DTM grid.
+- The demo by the checklist starts with the proof of R0.
 
-Если пропустить R0 и начать писать маршрут, можно потратить день на рельеф, который не совпадает с местом, о котором будет питч.
-
----
-
-## 2. Входные данные
-
-### 2.1. Модель рельефа (что накладываем)
-
-| Кандидат | Откуда | Статус |
-|---|---|---|
-| **A.** HiRISE DTM `DTEEC_001488_1750_001752_1750_U02` | Указан в контексте как основной | Контур не получен. z от −4485.57 до −2977.08 м (из контекста) |
-| **B.** «MRO HiRISE, Gale Crater DEM», `Gale_DEM_SMG_1m` | Каталог Mars Trek | **[факт]** Рамка 137.1224711…137.7298129°E, −4.9254743…−4.2489631°. ~5.8 ГБ, создан 2020-06-25 |
-| **C.** Другие HiRISE DTM горы Шарп | USGS STAC / сайт HiRISE (uahirise.org/dtm) | Не искали |
-| **D.** MSL 1 m DEM mosaic | Указан в контексте как «Optional fill» | **[вывод]** Вероятно, это и есть кандидат B. Сеть 1 м, но часть может быть дозаполнена CTX/HRSC |
-
-**[вывод] про кандидат A.** Имена HiRISE-снимков вида `PSP_001488_1750` / `PSP_001752_1750` относятся к начальной научной фазе MRO (2006–07). Тогда Гейл снимали в основном для выбора места посадки MSL. Есть заметный шанс, что этот DTM покрывает район посадки (Bradbury), а не участок на склоне горы Шарп, где ровер сейчас. Это гипотеза, её и проверяет R0.
-
-### 2.2. Позиции ровера (с чем сравниваем)
-
-| Источник | Что даёт | Статус |
-|---|---|---|
-| MSL PLACES, doi:10.17189/1520397 | Официальные локализации в PDS | Основной по контексту. Не скачивали |
-| `https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints_current.json` | Одна последняя точка | **[факт]** sol 5073, lon 137.388886, lat −4.82602331. Поля: RMC, site, drive, sol, easting, northing, elev_geoid, lon, lat, roll, pitch, yaw, yaw_rad, tilt, dist_m, dist_total_m, dist_km, dist_mi, drive_type |
-| `https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json` | Вероятно, все путевые точки с sol | Не запрашивали **[проверить]** |
-| `https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_traverse.json` | Линия пути, ~1.36 МБ GeoJSON | **[факт]** Существует. Признаки: FeatureCollection, у фич свойство `Length` (м), геометрия LineString/MultiLineString, координаты `[lon, lat, elevation]`. **Номеров sol в свойствах не видно**, поэтому выделить «sol 4534+» по нему напрямую нельзя |
-
-**[вывод]** Для фильтра по sol нужен либо `MSL_waypoints.json` (если в нём есть поле `sol` для всех точек), либо PLACES. `MSL_traverse.json` годится как картинка пути и для проверки «линия внутри покрытия».
+If R0 is skipped and route writing starts, a day can be spent on terrain that does not match the place the pitch will be about.
 
 ---
 
-## 3. План проверки по шагам
+## 2. Input data
 
-### Шаг 1. Получить контур кандидата A
+### 2.1. Terrain model (what we overlay)
 
-Варианты по убыванию скорости:
+| Candidate | From where | Status |
+|---|---|---|
+| **A.** HiRISE DTM `DTEEC_001488_1750_001752_1750_U02` | Named in the context as the main one | Outline not obtained. z from −4485.57 to −2977.08 m (from the context) |
+| **B.** "MRO HiRISE, Gale Crater DEM", `Gale_DEM_SMG_1m` | The Mars Trek catalog | **[fact]** Frame 137.1224711…137.7298129°E, −4.9254743…−4.2489631°. ~5.8 GB, created 2020-06-25 |
+| **C.** Other HiRISE DTMs of Mount Sharp | USGS STAC / the HiRISE site (uahirise.org/dtm) | Not searched |
+| **D.** MSL 1 m DEM mosaic | Named in the context as "Optional fill" | **[inference]** Probably the same as candidate B. A 1 m grid, but part may be filled in by CTX/HRSC |
 
-1. **PDS-метка `.LBL`** рядом с DTM на сайте HiRISE. Нужные поля:
+**[inference] about candidate A.** HiRISE image names like `PSP_001488_1750` / `PSP_001752_1750` belong to the primary science phase of MRO (2006-07). At that time Gale was imaged mostly to choose the MSL landing site. There is a noticeable chance that this DTM covers the landing area (Bradbury), not the site on the slope of Mount Sharp where the rover is now. This is a hypothesis, and R0 checks it.
+
+### 2.2. Rover positions (what we compare with)
+
+| Source | What it gives | Status |
+|---|---|---|
+| MSL PLACES, doi:10.17189/1520397 | Official localizations in PDS | The main one per the context. Not downloaded |
+| `https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints_current.json` | One latest point | **[fact]** sol 5073, lon 137.388886, lat −4.82602331. Fields: RMC, site, drive, sol, easting, northing, elev_geoid, lon, lat, roll, pitch, yaw, yaw_rad, tilt, dist_m, dist_total_m, dist_km, dist_mi, drive_type |
+| `https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json` | Probably all waypoints with sol | Not requested **[to check]** |
+| `https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_traverse.json` | The path line, ~1.36 MB GeoJSON | **[fact]** Exists. Features: FeatureCollection, the features have a `Length` property (m), LineString/MultiLineString geometry, coordinates `[lon, lat, elevation]`. **Sol numbers are not visible in the properties**, so "sol 4534+" cannot be selected from it directly |
+
+**[inference]** For a filter by sol, we need either `MSL_waypoints.json` (if it has a `sol` field for all points), or PLACES. `MSL_traverse.json` is good as a picture of the path and for checking "the line is inside the coverage".
+
+---
+
+## 3. Step-by-step check plan
+
+### Step 1. Get the outline of candidate A
+
+Options in decreasing order of speed:
+
+1. The **PDS label `.LBL`** next to the DTM on the HiRISE site. The needed fields:
    - `MINIMUM_LATITUDE`, `MAXIMUM_LATITUDE`;
    - `EASTERNMOST_LONGITUDE`, `WESTERNMOST_LONGITUDE`;
-   - `A_AXIS_RADIUS` / `B_AXIS_RADIUS` / `C_AXIS_RADIUS` (радиус - читать из метки, правило контекста);
-   - `MAP_PROJECTION_TYPE` (обычно EQUIRECTANGULAR), `CENTER_LATITUDE`;
-   - `COORDINATE_SYSTEM_NAME` (ожидаем PLANETOCENTRIC).
-2. **GDAL** по самому `.IMG`:
+   - `A_AXIS_RADIUS` / `B_AXIS_RADIUS` / `C_AXIS_RADIUS` (the radius - read from the label, a rule of the context);
+   - `MAP_PROJECTION_TYPE` (usually EQUIRECTANGULAR), `CENTER_LATITUDE`;
+   - `COORDINATE_SYSTEM_NAME` (we expect PLANETOCENTRIC).
+2. **GDAL** on the `.IMG` itself:
    ```bash
    gdalinfo -json DTEEC_001488_1750_001752_1750_U02.IMG
    ```
-   Смотреть `wgs84Extent` (на Марсе это просто lon/lat контур), `coordinateSystem`, `noDataValue`.
-3. **USGS STAC** (stac.astrogeology.usgs.gov): найти коллекцию HiRISE DTM, затем элемент по ID и взять `geometry`. Плюс: это реальный многоугольник, а не рамка.
+   Look at `wgs84Extent` (on Mars it is just a lon/lat outline), `coordinateSystem`, `noDataValue`.
+3. **USGS STAC** (stac.astrogeology.usgs.gov): find the HiRISE DTM collection, then the item by ID and take its `geometry`. A plus: it is a real polygon, not a frame.
 
-Важно: рамка (bbox) ≠ покрытие. DTM HiRISE - узкая полоса, часто наклонная, и внутри рамки много nodata. Для честного R0 нужен **контур валидных пикселей**: `gdal_polygonize` по маске `!= nodata`, либо геометрия из STAC.
+Important: a frame (bbox) ≠ coverage. A HiRISE DTM is a narrow strip, often tilted, and inside the frame there is a lot of nodata. For an honest R0 we need the **outline of valid pixels**: `gdal_polygonize` on the mask `!= nodata`, or the geometry from STAC.
 
-### Шаг 2. Получить контур кандидата B (Trek)
+### Step 2. Get the outline of candidate B (Trek)
 
-Каталог Trek отдаёт только рамку. Для реального контура:
-- скачать уменьшенную версию / тайлы с `https://trek.nasa.gov/tiles/Mars/EQ/Gale_DEM_SMG_1m/` **[проверить формат URL]** и построить маску покрытия;
-- или найти ту же мозаику в PDS / USGS и взять её метку.
+The Trek catalog gives only a frame. For a real outline:
+- download a reduced version / the tiles from `https://trek.nasa.gov/tiles/Mars/EQ/Gale_DEM_SMG_1m/` **[check the URL format]** and build a coverage mask;
+- or find the same mosaic in PDS / USGS and take its label.
 
-Отдельно выяснить, есть ли в этой мозаике дозаполнение CTX/HRSC. Если есть - UI обязан писать «1 m grid ≠ 1 m data» (правило контекста).
+Separately find out whether this mosaic has CTX/HRSC gap filling. If it does, the UI must say "1 m grid ≠ 1 m data" (a rule of the context).
 
-### Шаг 3. Получить позиции ровера с sol 4534
+### Step 3. Get the rover positions from sol 4534
 
-1. Попробовать `MSL_waypoints.json`; отфильтровать `sol >= 4534`.
-2. Если поля `sol` нет или файл недоступен - PLACES (PDS Geosciences).
-3. Сохранить выборку в `data/r0/rover_sol4534plus.geojson` с полем `source_url` и датой загрузки.
+1. Try `MSL_waypoints.json`; filter `sol >= 4534`.
+2. If there is no `sol` field or the file is unavailable - PLACES (PDS Geosciences).
+3. Save the sample in `data/r0/rover_sol4534plus.geojson` with a `source_url` field and the download date.
 
-### Шаг 4. Проверить систему координат
+### Step 4. Check the coordinate system
 
-До любого наложения:
-- DTM HiRISE: обычно планетоцентрические широты, восточная долгота 0–360, сфера с радиусом из метки.
-- MMGIS / PLACES: **[проверить]** какая широта (ocentric/ographic) и какая долгота.
-- Каталог Trek: `proj=urn:ogc:def:crs:EPSG::104905`. Это ESRI-код для Mars 2000; **[проверить]**, сфера это или эллипсоид. Контекст рекомендует ESRI:104971 `Mars_2000_(Sphere)` или `IAU_2015:49900`.
+Before any overlay:
+- HiRISE DTM: usually planetocentric latitudes, east longitude 0-360, a sphere with the radius from the label.
+- MMGIS / PLACES: **[to check]** which latitude (ocentric/ographic) and which longitude.
+- The Trek catalog: `proj=urn:ogc:def:crs:EPSG::104905`. This is the ESRI code for Mars 2000; **[to check]** whether it is a sphere or an ellipsoid. The context recommends ESRI:104971 `Mars_2000_(Sphere)` or `IAU_2015:49900`.
 
-Почему это важно: контекст предупреждает, что планетографические CRS сдвигают точки до ~10 км. Это больше всей нашей зоны.
+Why this matters: the context warns that planetographic CRSs shift points by up to ~10 km. That is more than our whole zone.
 
-### Шаг 5. Наложение
+### Step 5. Overlay
 
-Python, минимум:
+Python, the minimum:
 
 ```python
-# Набросок. Пути и поля уточнить по реальным файлам.
+# A sketch. Clarify paths and fields against the real files.
 import json, shapely.geometry as sg
 footprint = sg.shape(json.load(open("dtm_footprint.geojson"))["features"][0]["geometry"])
 pts = [f for f in json.load(open("rover_sol4534plus.geojson"))["features"]]
@@ -340,71 +340,71 @@ result = {
 }
 ```
 
-Или QGIS: слой контура + слой точек, CRS проекта `IAU_2015:49900`, «Select by location».
+Or QGIS: an outline layer + a points layer, the project CRS `IAU_2015:49900`, "Select by location".
 
-### Шаг 6. Решение
+### Step 6. Decision
 
-| Результат | Решение | Что пишем |
+| Result | Decision | What we write |
 |---|---|---|
-| Точки 2025–26 внутри валидного контура A | `GALE-BX` подтверждена на A | «DTM A covers N of M rover positions sols X–Y» |
-| A не покрывает, B покрывает (и это HiRISE, не CTX) | `GALE-BX` на B | То же + пометка о происхождении мозаики |
-| B покрывает, но только CTX-заполнением | `GALE-BX` на B с флагом «1 m grid ≠ 1 m data» | Явно на слайде и в UI |
-| Ни A, ни B, ни STAC | Используем боксворк, который виден на A | Слайд: «not the 2025–26 rover site» |
+| The 2025-26 points are inside the valid outline of A | `GALE-BX` confirmed on A | "DTM A covers N of M rover positions sols X-Y" |
+| A does not cover, B covers (and it is HiRISE, not CTX) | `GALE-BX` on B | The same + a note on the origin of the mosaic |
+| B covers, but only with CTX fill | `GALE-BX` on B with the flag "1 m grid ≠ 1 m data" | Explicitly on the slide and in the UI |
+| Neither A, nor B, nor STAC | We use the boxwork that is visible on A | Slide: "not the 2025-26 rover site" |
 
-### Шаг 7. Доказательство для демо
+### Step 7. Proof for the demo
 
-Сохранить в `data/r0/`:
-- `r0_result.json` - ID продукта, контур (источник), число точек, сколько внутри, диапазон sol, CRS обоих слоёв, время проверки, итоговое решение;
-- `r0_overlay.png` - картинка: контур DTM + точки ровера + рамка AOI;
-- ссылки на все исходные URL.
+Save in `data/r0/`:
+- `r0_result.json` - the product ID, the outline (source), the number of points, how many are inside, the sol range, the CRS of both layers, the check time, the final decision;
+- `r0_overlay.png` - a picture: the DTM outline + the rover points + the AOI frame;
+- links to all source URLs.
 
-Это закрывает первый пункт чеклиста перед демо: «Demo starts in GALE-BX and shows the R0 coverage proof».
-
----
-
-## 4. Что уже известно (на момент написания)
-
-**[факт]** Последняя позиция Curiosity: sol 5073, **137.388886°E, −4.82602331°** (MMGIS, `MSL_waypoints_current.json`).
-
-**[факт]** Рамка `Gale_DEM_SMG_1m` (Trek): 137.1224711…137.7298129°E, −4.9254743…−4.2489631°.
-
-Сравнение:
-- 137.3889 лежит внутри 137.1225…137.7298 - да;
-- −4.8260 лежит внутри −4.9255…−4.2490 - да, примерно в 0.1° (~6 км) от южного края.
-
-**[факт]** Та же точка лежит внутри узкой запасной рамки поиска из контекста (137.2–137.6°E, −5.1…−4.6°).
-
-**[вывод]** Ровер, скорее всего, находится в зоне кандидата B. Это **не** закрывает R0, потому что:
-1. это рамка, а не контур валидных пикселей;
-2. проверена одна точка (sol 5073), а не весь участок с sol 4534;
-3. не сверены системы широт MMGIS и Trek;
-4. кандидат A (основной DTM из контекста) не проверен вообще;
-5. неизвестно, HiRISE ли это в районе ровера или заполнение CTX.
-
-**[вывод]** Ровер сейчас на sol 5073, а контекст говорит о «sol 4534+» и бурении Nevado Sajama на sol 4718. За ~540 солов ровер мог пройти несколько километров. Нужно проверить, что **весь** участок 2025–26 попадает в покрытие, а не только последняя точка. Для демо важнее всего точки бурения (Altadena, Valle de la Luna, Nevado Sajama) - их координаты стоит найти отдельно.
+This closes the first item of the pre-demo checklist: "Demo starts in GALE-BX and shows the R0 coverage proof".
 
 ---
 
-## 5. Риски
+## 4. What is already known (at the time of writing)
 
-| Риск | Вероятность | Что делаем |
+**[fact]** Curiosity's latest position: sol 5073, **137.388886°E, −4.82602331°** (MMGIS, `MSL_waypoints_current.json`).
+
+**[fact]** The frame of `Gale_DEM_SMG_1m` (Trek): 137.1224711…137.7298129°E, −4.9254743…−4.2489631°.
+
+Comparison:
+- 137.3889 lies inside 137.1225…137.7298 - yes;
+- −4.8260 lies inside −4.9255…−4.2490 - yes, about 0.1° (~6 km) from the southern edge.
+
+**[fact]** The same point lies inside the narrow fallback search frame from the context (137.2-137.6°E, −5.1…−4.6°).
+
+**[inference]** The rover is most likely in the zone of candidate B. This does **not** close R0, because:
+1. this is a frame, not an outline of valid pixels;
+2. one point (sol 5073) was checked, not the whole site from sol 4534;
+3. the latitude systems of MMGIS and Trek were not compared;
+4. candidate A (the main DTM from the context) was not checked at all;
+5. it is unknown whether this is HiRISE near the rover or CTX fill.
+
+**[inference]** The rover is now at sol 5073, while the context speaks of "sol 4534+" and the Nevado Sajama drilling at sol 4718. Over ~540 sols the rover could have driven several kilometres. We need to check that the **whole** 2025-26 site falls inside the coverage, not only the last point. For the demo, the most important are the drilling points (Altadena, Valle de la Luna, Nevado Sajama) - their coordinates should be found separately.
+
+---
+
+## 5. Risks
+
+| Risk | Probability | What we do |
 |---|---|---|
-| A не покрывает участок ровера | Заметная (см. 2.1) | Переходим на B или другой DTM из STAC |
-| B - 5.8 ГБ, долго качать | Высокая | Качать только окно AOI (через тайлы/COG/`gdal_translate -projwin` по удалённому файлу, если сервер поддерживает range-запросы) |
-| B содержит CTX-заполнение у ровера | Средняя | Флаг в UI; уклоны там помечать как coarse |
-| Разные системы широт | Средняя | Шаг 4 обязателен, сверить на известной точке (например, место посадки Bradbury) |
-| Не успеваем к 12:00 | Средняя | Решение по наилучшим данным + честная пометка на слайде, как разрешает сам R0 |
+| A does not cover the rover's site | Noticeable (see 2.1) | We switch to B or another DTM from STAC |
+| B is 5.8 GB, slow to download | High | Download only the AOI window (through tiles/COG/`gdal_translate -projwin` on the remote file, if the server supports range requests) |
+| B contains CTX fill near the rover | Medium | A flag in the UI; mark slopes there as coarse |
+| Different latitude systems | Medium | Step 4 is mandatory; check on a known point (for example the Bradbury landing site) |
+| We miss 12:00 | Medium | A decision on the best data + an honest note on the slide, as R0 itself allows |
 
 ---
 
-## 6. Чеклист R0
+## 6. R0 checklist
 
-- [ ] Контур валидных пикселей DTM A (метка / gdalinfo / STAC)
-- [ ] Контур или маска покрытия DEM B (Trek)
-- [ ] Поиск в STAC других HiRISE DTM в рамке 137.2–137.6°E, −5.1…−4.6°
-- [ ] Позиции ровера sol ≥ 4534 с полем sol
-- [ ] Системы координат всех источников записаны и сверены
-- [ ] Наложение, подсчёт точек внутри
-- [ ] Координаты точек бурения Altadena, Valle de la Luna, Nevado Sajama проверены на покрытие
-- [ ] `r0_result.json` + `r0_overlay.png` сохранены
-- [ ] Решение записано и сообщено команде до 12:00
+- [ ] The valid-pixel outline of DTM A (label / gdalinfo / STAC)
+- [ ] The outline or coverage mask of DEM B (Trek)
+- [ ] A STAC search for other HiRISE DTMs in the frame 137.2-137.6°E, −5.1…−4.6°
+- [ ] Rover positions sol ≥ 4534 with a sol field
+- [ ] The coordinate systems of all sources are recorded and compared
+- [ ] The overlay, counting the points inside
+- [ ] The coordinates of the drilling points Altadena, Valle de la Luna, Nevado Sajama are checked for coverage
+- [ ] `r0_result.json` + `r0_overlay.png` are saved
+- [ ] The decision is recorded and told to the team before 12:00

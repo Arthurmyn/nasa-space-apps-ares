@@ -1,4 +1,4 @@
-"""Публичный интерфейс ML для бэкенда. Сигнатуры не менять без согласования с backend."""
+"""Public ML interface for the backend. Do not change signatures without agreeing with the backend team."""
 
 from pathlib import Path
 from typing import Any

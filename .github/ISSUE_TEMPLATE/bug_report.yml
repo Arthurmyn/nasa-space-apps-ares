@@ -1,19 +1,19 @@
-name: 🐛 Баг
-description: Что-то работает не так
+name: 🐛 Bug
+description: Something does not work as it should
 title: "[Bug]: "
 labels: ["type:bug"]
 body:
   - type: dropdown
     id: area
     attributes:
-      label: Область
+      label: Area
       options: [Frontend, Backend, ML, Infra]
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
-      label: Шаги воспроизведения
+      label: Steps to reproduce
       value: |
         1.
         2.
@@ -23,20 +23,20 @@ body:
   - type: textarea
     id: expected
     attributes:
-      label: Ожидалось
+      label: Expected
     validations:
       required: true
   - type: textarea
     id: actual
     attributes:
-      label: Фактически (ошибка, лог, скрин)
+      label: Actual (error, log, screenshot)
       render: shell
     validations:
       required: true
   - type: dropdown
     id: priority
     attributes:
-      label: Приоритет
-      options: ["P0 - блокирует демо", "P1 - нужно для MVP", "P2 - nice to have"]
+      label: Priority
+      options: ["P0 - blocks the demo", "P1 - needed for the MVP", "P2 - nice to have"]
     validations:
       required: true

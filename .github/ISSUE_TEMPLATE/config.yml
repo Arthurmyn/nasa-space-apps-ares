@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 📖 Как работать в проекте
+  - name: 📖 How we work in this project
     url: https://github.com/Arthurmyn/nasa-space-apps-ares/blob/main/CONTRIBUTING.md
-    about: Ветки, коммиты, PR - прочитай перед началом
+    about: Branches, commits, PRs - read before you start

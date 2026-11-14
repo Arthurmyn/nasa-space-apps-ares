@@ -1,31 +1,31 @@
-# Как работать в проекте
+# How we work in this project
 
-Хакатон = мало времени. Правила минимальны, но экономят часы на мерж-конфликтах.
+A hackathon means little time. The rules are minimal, but they save hours of merge conflicts.
 
-## 1. Ветки (Branching Strategy)
+## 1. Branches (Branching Strategy)
 
-Одна задача - одна ветка. Изменения мержим через PR в `main`.
+One task, one branch. Changes are merged into `main` through a PR.
 
-| Ветка | Назначение | Кто мержит |
-|-------|-----------|------------|
-| `main` | Рабочая версия для демо/жюри. Напрямую не пушим. | PR + 1 approve |
-| `feature/<область>-<кратко>` | Новая функциональность | Автор → PR в `main` |
-| `fix/<область>-<кратко>` | Исправление бага | Автор → PR в `main` |
-| `hotfix/<кратко>` | Срочный фикс прямо перед демо | PR в `main` |
-| `docs/…`, `chore/…` | Документация, конфиги | PR в `main` |
+| Branch | Purpose | Who merges |
+|--------|---------|------------|
+| `main` | Working version for the demo and the judges. We do not push to it directly. | PR + 1 approval |
+| `feature/<area>-<short>` | New functionality | Author → PR into `main` |
+| `fix/<area>-<short>` | Bug fix | Author → PR into `main` |
+| `hotfix/<short>` | Urgent fix right before the demo | PR into `main` |
+| `docs/…`, `chore/…` | Documentation, configs | PR into `main` |
 
-Области: `fe`, `be`, `ml`, `infra`. Примеры: `feature/fe-upload-page`, `fix/be-cors`, `feature/ml-baseline`.
+Areas: `fe`, `be`, `ml`, `infra`. Examples: `feature/fe-upload-page`, `fix/be-cors`, `feature/ml-baseline`.
 
 ```bash
 git checkout main && git pull
 git checkout -b feature/be-predict-endpoint
-# ... работа ...
-git pull --rebase origin main       # подтянуть свежий main перед PR
+# ... work ...
+git pull --rebase origin main       # pull the latest main before the PR
 git push -u origin feature/be-predict-endpoint
-# открыть PR в main
+# open a PR into main
 ```
 
-## 2. Коммиты
+## 2. Commits
 
 [Conventional Commits](https://www.conventionalcommits.org/):
 
@@ -37,72 +37,72 @@ docs: update README quick start
 chore(infra): add docker-compose
 ```
 
-Типы: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`. Scope: `fe`, `be`, `ml`, `infra`.
+Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`. Scope: `fe`, `be`, `ml`, `infra`.
 
 ## 3. Pull Requests
 
-- Один PR - одна задача, желательно < 400 строк.
-- В описании - ссылка на issue: `Closes #12` (карточка на доске закроется сама).
-- Заполни шаблон PR (подставляется автоматически).
-- Минимум **1 approve** перед мержем в `main`.
-- Мерж - **Squash and merge**.
+- One PR, one task, preferably under 400 lines.
+- Link the issue in the description: `Closes #12` (the board card closes by itself).
+- Fill in the PR template (it is added automatically).
+- At least **1 approval** before merging into `main`.
+- Merge with **Squash and merge**.
 
-## 4. Задачи (Issues + доска)
+## 4. Tasks (issues and board)
 
-- Любая работа начинается с issue (шаблоны: Feature / Bug / Task).
-- Назначь себя, поставь лейблы `area:*` и `priority:*`.
-- Двигай карточку: `Backlog → To Do → In Progress → Review → Done`.
-- Подробнее - [docs/project-board.md](docs/project-board.md).
+- Any work starts with an issue (templates: Feature / Bug / Task).
+- Assign yourself and add the `area:*` and `priority:*` labels.
+- Move the card: `Backlog → To Do → In Progress → Review → Done`.
+- More in [docs/project-board.md](docs/project-board.md).
 
-### Как оформить issue
+### How to write an issue
 
-До начала работы создай issue по подходящему шаблону: **Feature** - новая возможность, **Bug** - ошибка, **Task** - техническая или организационная задача.
+Before you start, create an issue from the matching template: **Feature** for a new capability, **Bug** for an error, **Task** for a technical or organizational task.
 
-В issue укажи:
+In the issue, state:
 
-- **Цель и контекст:** какую проблему решаем, зачем это нужно; приложи ссылки на материалы из `docs/context/`, если они есть.
-- **Результат:** что конкретно должно появиться или измениться; обозначь границы задачи.
-- **Подзадачи:** чек-лист конкретных шагов, необходимых для результата.
-- **Критерии готовности:** проверяемые условия, по которым можно принять работу. Например: «при отправке пустого файла пользователь видит сообщение об ошибке».
-- **Зависимости:** ссылки на связанные issues и то, что нужно получить до начала работы.
+- **Goal and context:** which problem we solve and why it is needed; attach links to the materials in `docs/context/`, if there are any.
+- **Result:** what exactly must appear or change; set the boundaries of the task.
+- **Subtasks:** a checklist of the concrete steps needed for the result.
+- **Definition of done:** checkable conditions for accepting the work. For example: "when an empty file is submitted, the user sees an error message".
+- **Dependencies:** links to related issues and to what must be obtained before work starts.
 
-Заголовок должен описывать конкретное действие и результат: «Добавить проверку формата загружаемого файла» вместо «Сделать фронт».
+The title must describe a concrete action and result: "Add a format check for uploaded files" instead of "Do the front end".
 
-### Как разделить большую задачу
+### How to split a big task
 
-Одна issue - один понятный результат, который можно отдельно проверить и принять. Если части работы имеют разных исполнителей или могут выполняться и приниматься независимо, создай для них отдельные issues. Мелкие шаги одного исполнителя оставь чек-листом внутри issue.
+One issue, one clear result that can be checked and accepted on its own. If parts of the work have different assignees, or can be done and accepted independently, create separate issues for them. Keep small steps of a single assignee as a checklist inside the issue.
 
-Для большой задачи создай родительскую issue с общей целью и ссылками на дочерние задачи. В каждой дочерней укажи связь с родительской и зависимости от других задач.
+For a big task, create a parent issue with the overall goal and links to the child tasks. In each child, state the link to the parent and the dependencies on other tasks.
 
-Например, «Добавить загрузку файла и показ результата» можно разделить на:
+For example, "Add file upload and result display" can be split into:
 
-- Backend: принять файл, проверить формат и вернуть результат.
-- Frontend: добавить форму загрузки и показать результат или ошибку.
-- Интеграция: проверить полный сценарий загрузки после готовности frontend и backend.
+- Backend: accept the file, check the format and return the result.
+- Frontend: add an upload form and show the result or an error.
+- Integration: check the full upload scenario once the frontend and backend are ready.
 
-Перед началом реализации назначь исполнителя, поставь лейблы `area:*` и `priority:*`, согласуй результат и критерии готовности. В PR добавь `Closes #<номер issue>`; для родительской задачи - закрой её, когда выполнены все дочерние задачи и проверен общий результат.
+Before implementation starts, assign an owner, add the `area:*` and `priority:*` labels, and agree on the result and the definition of done. Add `Closes #<issue number>` to the PR; close a parent task when all its child tasks are done and the overall result is checked.
 
-## 5. Контракт API
+## 5. API contract
 
-Фронт и бэк договариваются **заранее** через [docs/api.md](docs/api.md) и Pydantic-схемы в `backend/app/schemas/`. Меняешь контракт - обнови доку и предупреди в чате. Пока бэк не готов, фронт работает на моках.
+Frontend and backend agree **in advance** through [docs/api.md](docs/api.md) and the Pydantic schemas in `backend/app/schemas/`. If you change the contract, update the docs and tell the team in the chat. Until the backend is ready, the frontend works on mocks.
 
-## 6. Код-стайл
+## 6. Code style
 
-| Где | Инструмент |
-|-----|-----------|
+| Where | Tool |
+|-------|------|
 | Python (backend, ml) | `ruff check .` + `ruff format .`, type hints |
 | TypeScript (frontend) | `npm run lint`, strict `tsconfig` |
-| Везде | `.editorconfig`, LF |
+| Everywhere | `.editorconfig`, LF |
 
-## 7. Что НЕ коммитим
+## 7. What we do NOT commit
 
-- `.env`, ключи, токены → только `.env.example`
-- датасеты (`ml/data/`) и веса (`ml/models/`) → в облако/Drive, ссылку - в [ml/README.md](ml/README.md)
+- `.env`, keys, tokens → only `.env.example`
+- datasets (`ml/data/`) and weights (`ml/models/`) → to the cloud/Drive, with the link in [ml/README.md](ml/README.md)
 - `node_modules/`, `.venv/`, `__pycache__/`
 
 ## 8. Definition of Done
 
-- [ ] Код в `main` через PR с ревью
-- [ ] Запускается по инструкции из README
-- [ ] Локальные линтеры и тесты проходят
-- [ ] Если менялся API - обновлён `docs/api.md`
+- [ ] Code is in `main` through a reviewed PR
+- [ ] It runs by the instructions in the README
+- [ ] Local linters and tests pass
+- [ ] If the API changed, `docs/api.md` is updated
