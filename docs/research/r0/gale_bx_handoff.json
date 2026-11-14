@@ -1,0 +1,68 @@
+{
+  "schema": "ares.r0-handoff/v1",
+  "region_id": "GALE-BX",
+  "decision": "campaign-covered",
+  "dtm_product_id": "DTEEC_009149_1750_009294_1750_U01",
+  "aoi_proposal": {
+    "status": "preliminary; recompute and approve after R6/D9 and R1/Q6 terrain QA",
+    "planning_ready": false,
+    "required_extent_inputs": [
+      "R6 science targets",
+      "D9 habitat"
+    ],
+    "planning_points_count": 0,
+    "extent_policy": "Recompute with all finalized targets and habitat before enabling /plan",
+    "aoi_geojson": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            137.3774296395142,
+            -4.795930569514188
+          ],
+          [
+            137.3881231604858,
+            -4.795930569514188
+          ],
+          [
+            137.3881231604858,
+            -4.8104031204858115
+          ],
+          [
+            137.3774296395142,
+            -4.8104031204858115
+          ],
+          [
+            137.3774296395142,
+            -4.795930569514188
+          ]
+        ]
+      ]
+    },
+    "centre_lonlat_E": [
+      137.3827764,
+      -4.803166844999999
+    ],
+    "crs_proj": "+proj=eqc +lat_ts=-4.803166845000 +lat_0=-4.803166845000 +lon_0=137.382776400000 +R=3396190 +units=m +no_defs",
+    "buffer": {
+      "value": 100,
+      "unit": "m",
+      "source_tag": "R0-AOI-proposal-v1",
+      "label": "assumption"
+    },
+    "center_method": "centroid of campaign + planning-point envelope and buffer, clipped to DTM",
+    "extent_sha256": "1224eaeae369edf9b3b6c581d1bdd2a225aa6c2e14bac53cdbdb70615ac5d575",
+    "planning_points_sha256": null,
+    "planning_approval": null
+  },
+  "native_dtm": {
+    "crs_wkt": "PROJCRS[\"EQUIRECTANGULAR MARS\",BASEGEOGCRS[\"GCS_MARS\",DATUM[\"D_MARS\",ELLIPSOID[\"MARS_localRadius\",3396190,0,LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]]],PRIMEM[\"Reference_Meridian\",0,ANGLEUNIT[\"degree\",0.0174532925199433,ID[\"EPSG\",9122]]]],CONVERSION[\"unnamed\",METHOD[\"Equidistant Cylindrical (Spherical)\",ID[\"EPSG\",1029]],PARAMETER[\"Latitude of 1st standard parallel\",0,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8823]],PARAMETER[\"Longitude of natural origin\",137.41,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8802]],PARAMETER[\"False easting\",0,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8806]],PARAMETER[\"False northing\",0,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8807]]],CS[Cartesian,2],AXIS[\"easting\",east,ORDER[1],LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]],AXIS[\"northing\",north,ORDER[2],LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]]]",
+    "crs_proj": "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=137.41 +x_0=0 +y_0=0 +R=3396190 +units=m +no_defs",
+    "pixel_size_m": [
+      1.0117467945795,
+      1.0117467945795
+    ],
+    "radius_m": 3396190.0
+  },
+  "coverage_evidence": "r0_result.json"
+}
