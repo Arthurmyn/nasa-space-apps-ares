@@ -259,18 +259,19 @@ def test_stop_count_validation(terrain, count):
         assert client.post("/api/v1/route", json=payload).status_code == 422
 
 
-def test_shipped_fake_grid_route_under_three_seconds():
+def test_shipped_real_grid_group_route_under_three_seconds():
     path = Path(__file__).parents[1] / "data/gale-bx"
     meta = json.loads((path / "meta.json").read_text())
-    assert meta["is_test_data"] is True
+    assert meta["is_test_data"] is False
     with TestClient(create_app(path)) as client:
+        site = client.get("/api/v1/sites").json()["sites"][0]
+        catalog = {stop["id"]: stop for stop in site["stops"]}
+        targets = [catalog[id] for id in site["groups"][0]["stop_ids"]]
+        assert len(targets) == 6
         payload = {
-            "start": point(meta, 10, 10, "start"),
+            "start": {key: targets[0][key] for key in ("id", "lon", "lat", "name")},
             "stops": [
-                point(meta, meta["height"] - 11, meta["width"] - 11, f"stop-{i}")
-                if i % 2 == 0
-                else point(meta, 10, 10, f"stop-{i}")
-                for i in range(5)
+                {key: target[key] for key in ("id", "lon", "lat", "name")} for target in targets[1:]
             ],
             "constraints": {"max_slope_deg": 15},
         }
@@ -279,4 +280,33 @@ def test_shipped_fake_grid_route_under_three_seconds():
         elapsed = perf_counter() - started
     assert response.status_code == 200, response.text
     assert elapsed < 3, elapsed
-    print(f"Five-leg fake-grid route: {elapsed:.3f}s")
+    data = response.json()
+    assert [stop["id"] for stop in data["stops"]] == [s["id"] for s in targets[1:]]
+    assert data["max_slope_deg"] <= 15
+    assert data["distance_m"] > 0
+    assert all(stop["note"] == catalog[stop["id"]]["note"] for stop in data["stops"])
+    print(f"Real-grid group route ({len(targets)} targets): {elapsed:.3f}s")
+
+
+@pytest.mark.parametrize("requested,effective", [(5, 5), (15, 15), (30, 15)])
+def test_effective_limit_is_explained_without_mutating_cached_assumptions(
+    terrain, requested, effective
+):
+    path, meta, _ = terrain
+    payload = request(meta)
+    payload["constraints"]["max_slope_deg"] = requested
+    with TestClient(create_app(path)) as client:
+        original_items = [item.model_dump() for item in client.app.state.grid.items]
+        for _ in range(2):
+            response = client.post("/api/v1/route", json=payload)
+            assert response.status_code == 200, response.text
+            data = response.json()
+            assert f"{effective:g} degree route limit" in data["safety_reason"]
+            assert data["safety"] == "ok"
+            assumption = data["assumptions"][-1]
+            assert assumption["name"] == "Effective route slope limit"
+            assert assumption["value"] == f"{effective:g} deg"
+            assert f"requested {requested:g} deg" in assumption["source"]
+            assert "site limit 15 deg" in assumption["source"]
+            assert data["assumptions"][:-1] == original_items
+        assert [item.model_dump() for item in client.app.state.grid.items] == original_items

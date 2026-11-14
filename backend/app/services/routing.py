@@ -1,10 +1,10 @@
 """Eight-neighbour A* with an admissible octile-distance heuristic."""
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from heapq import heappop, heappush
 from math import hypot, inf, sqrt
 
-from app.schemas.route import ProfilePoint, RouteRequest, RouteResponse, RouteStop
+from app.schemas.route import Assumption, ProfilePoint, RouteRequest, RouteResponse, RouteStop
 from app.services.grid import Grid
 
 
@@ -129,15 +129,27 @@ def route(grid: Grid, request: RouteRequest):
         profile.append(samples[-1])
     safety = "ok" if maximum <= grid.caution else "caution"
     reason = (
-        f"Maximum slope {maximum:g} degrees is within the "
-        f"{grid.caution:g} degree caution threshold."
+        f"Maximum slope {maximum:g} degrees is within the {limit:g} degree route limit "
+        f"and does not exceed the {grid.caution:g} degree caution threshold."
         if safety == "ok"
         else f"Maximum slope {maximum:g} degrees exceeds the "
         f"{grid.caution:g} degree caution threshold and is within the "
         f"{limit:g} degree route limit."
     )
+    assumptions = [
+        *grid.items,
+        Assumption(
+            name="Effective route slope limit",
+            value=f"{limit:g} deg",
+            source=(
+                f"min(requested {request.constraints.max_slope_deg:g} deg, "
+                f"site limit {grid.limit:g} deg from assumptions.json)"
+            ),
+        ),
+    ]
     return RouteResponse(
-        computed_at=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        # timezone.utc keeps the backend compatible with local Python 3.10.
+        computed_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),  # noqa: UP017
         distance_m=distance,
         max_slope_deg=maximum,
         est_time_s=distance / (grid.speed / 3.6),
@@ -146,7 +158,7 @@ def route(grid: Grid, request: RouteRequest):
         polyline=geometry,
         stops=stops,
         profile=profile,
-        assumptions=grid.items,
+        assumptions=assumptions,
         hazards=[],
         alternative=None,
     )
