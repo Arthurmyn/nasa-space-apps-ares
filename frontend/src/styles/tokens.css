@@ -1,0 +1,81 @@
+/*
+ * Design tokens. Every colour, font, size and radius used in the app comes from here.
+ * Contrast ratios (WCAG AA needs 4.5:1 for text), computed, worst case on --panel-raised:
+ *   --text 12.6, --text-muted 6.2, --rust 4.6, --cyan 10.0, --amber 8.2,
+ *   --hazard 4.6, --ok 7.9. Dark text (--text-on-accent) on a rust/hazard fill is 5.1.
+ */
+:root {
+  /* Surfaces */
+  --bg: #0b0705;
+  --panel: #14100d;
+  --panel-raised: #1b1510;
+  --line: #2a211b;
+  --line-strong: #3a2d24;
+
+  /* Text */
+  --text: #e8d5b5;
+  --text-muted: #a8957a;
+  --text-on-accent: #0b0705;
+
+  /* Accents */
+  --rust: #d9582b; /* route, primary actions */
+  --cyan: #4fd1e8; /* data, cursor, hover marker */
+  --amber: #e0a43a; /* warning, caution */
+  --hazard: #e5484d; /* hazards, avoid */
+  --ok: #5fbf7a; /* within limits */
+
+  /* Safety/slope class colours, one place so map, profile and badges agree */
+  --class-ok: var(--ok);
+  --class-caution: var(--amber);
+  --class-avoid: var(--hazard);
+
+  /* Typography */
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.9375rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.5rem;
+  --fs-stat: 1.125rem;
+
+  /* Shape and spacing */
+  --radius-sm: 4px;
+  --radius: 6px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+
+  /* Minimum interactive size. Raised to 44px for touch and narrow screens below. */
+  --hit: 32px;
+
+  --topbar-h: 48px;
+  --profile-h: 176px;
+  --col-left: 248px;
+  --col-right: 308px;
+
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--cyan);
+}
+
+@media (pointer: coarse), (max-width: 899px) {
+  :root {
+    --hit: 44px;
+  }
+}
+
+@media (max-width: 1099px) and (min-width: 900px) {
+  :root {
+    --col-left: 224px;
+    --col-right: 276px;
+    --profile-h: 160px;
+  }
+}
+
+@media (max-width: 899px) {
+  :root {
+    --profile-h: 168px;
+  }
+}
