@@ -104,4 +104,4 @@ npm run dev
 См. [правила оформления и разделения задач](CONTRIBUTING.md#4-задачи-issues--доска), а также [CONTRIBUTING.md](CONTRIBUTING.md): ветки, коммиты, PR, ревью.
 
 ## Лицензия
-[MIT](LICENSE)
+[Apache License 2.0](LICENSE)

@@ -2,6 +2,8 @@
 
 Every font, icon set, library, image, tile source and data layer used by the app, with its license and where it is used. Update this file whenever something is added. If a license is unclear, do not use the asset.
 
+The project itself is licensed under the Apache License 2.0 (`LICENSE`, `NOTICE`). The licenses below are those of third-party material.
+
 ## Fonts (self-hosted, no third-party requests at runtime)
 
 | Font | Weights | Source | License | Used for |
@@ -35,7 +37,7 @@ Unit tests use Node's built-in test runner (`npm test`); no test framework was a
 
 ## Icons
 
-Hand-drawn 16px stroke icons, authored for this project as inline SVG paths in `frontend/src/components/Icon.tsx` (same license as the repository). The favicon is an inline SVG data URI in `frontend/index.html`, also project-authored. No third-party icon set.
+Hand-drawn 16px stroke icons, authored for this project as inline SVG paths in `frontend/src/components/Icon.tsx` (same license as the repository (Apache-2.0)). The favicon is an inline SVG data URI in `frontend/index.html`, also project-authored. No third-party icon set.
 
 ## Images
 
@@ -62,7 +64,7 @@ Processing: the video was re-encoded (H.264, CRF 23, audio removed); the picture
 
 | File | What | Source | License | Where used |
 |------|------|--------|---------|------------|
-| `landing/public/media/demo.mp4` (1440 x 900, about 63 s, no audio) and `demo-poster.jpg` | Screen recording of the planner in its sample-data build, with a cursor overlay | Recorded by the team's tooling from this repository (headless Chrome, Playwright), re-encoded to H.264. No third-party content | Same as the repository (MIT) | "See the planner work" section, opened by the "Get a demo" button |
+| `landing/public/media/demo.mp4` (1440 x 900, about 63 s, no audio) and `demo-poster.jpg` | Screen recording of the planner in its sample-data build, with a cursor overlay | Recorded by the team's tooling from this repository (headless Chrome, Playwright), re-encoded to H.264. No third-party content | Same as the repository (Apache-2.0) | "See the planner work" section, opened by the "Get a demo" button |
 
 It shows the "Sample data" badge because the planner ran on synthetic data. Re-record it when the planner uses real terrain data.
 
