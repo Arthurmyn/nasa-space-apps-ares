@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { LonLat, RouteResponse } from "../api/types.ts";
-import { computeHud, normalizeDeg, relativeBearing, toHeadingFrame } from "./hud.ts";
+import { computeHud, formatHeading, hazardLabel, nearestHazard, normalizeDeg, relativeBearing, toHeadingFrame } from "./hud.ts";
 import { offsetLonLat } from "./geo.ts";
 
 const close = (a: number, b: number, tol: number) => assert.ok(Math.abs(a - b) <= tol, `${a} vs ${b}`);
@@ -158,5 +158,49 @@ describe("HUD heading at turns", () => {
     close(computeHud(turnaround, 99, limits)!.headingDeg, 90, 0.01);
     close(computeHud(turnaround, 100, limits)!.headingDeg, 270, 0.01);
     close(computeHud(turnaround, 101, limits)!.headingDeg, 270, 0.01);
+  });
+});
+
+describe("heading text", () => {
+  it("pads to three digits and names the side", () => {
+    assert.equal(formatHeading(0), "000° N");
+    assert.equal(formatHeading(44.6), "045° NE");
+    assert.equal(formatHeading(359.6), "000° N");
+    assert.equal(formatHeading(-90), "270° W");
+    assert.equal(formatHeading(135), "135° SE");
+  });
+
+  it("writes the hazard label with a degree sign", () => {
+    assert.equal(hazardLabel("Slope over 15 deg"), "Slope over 15°");
+    assert.equal(hazardLabel("Rough terrain"), "Rough terrain");
+  });
+});
+
+describe("nearestHazard", () => {
+  const zone = (id: string, lon0: number, lat0: number, size = 0.0001) => ({
+    id,
+    kind: "steep_slope" as const,
+    label: "Slope over 15 deg",
+    polygon: { type: "Polygon" as const, coordinates: [[[lon0, lat0], [lon0 + size, lat0], [lon0 + size, lat0 + size], [lon0, lat0 + size], [lon0, lat0]]] },
+  });
+  const route = (hazards: ReturnType<typeof zone>[]) => ({ hazards }) as unknown as RouteResponse;
+
+  it("is null without zones", () => {
+    assert.equal(nearestHazard(route([]), [0, 0]), null);
+  });
+
+  it("measures to the edge, not the centre", () => {
+    // A square 0.0001 degrees (about 6 m) wide, 0.0010 degrees (about 59 m) east of the position.
+    const h = nearestHazard(route([zone("a", 0.001, 0)]), [0, 0.00005]);
+    assert.ok(h);
+    assert.ok(Math.abs(h.distM - 0.001 * 59293) < 1.5, `got ${h.distM}`);
+  });
+
+  it("is 0 inside a zone and picks the nearest of several", () => {
+    const inside = nearestHazard(route([zone("far", 0.01, 0), zone("in", -0.0001, -0.0001, 0.0003)]), [0, 0]);
+    assert.equal(inside?.id, "in");
+    assert.equal(inside?.distM, 0);
+    const near = nearestHazard(route([zone("far", 0.01, 0), zone("near", 0.001, 0)]), [0, 0]);
+    assert.equal(near?.id, "near");
   });
 });
