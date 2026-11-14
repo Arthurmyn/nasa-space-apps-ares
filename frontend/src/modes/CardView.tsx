@@ -3,8 +3,9 @@ import { dataSource } from "../api/client.ts";
 import { RouteSketch } from "../components/RouteSketch.tsx";
 import { SafetyBadge } from "../components/SafetyBadge.tsx";
 import { Icon } from "../components/Icon.tsx";
+import { SourceText } from "../components/SourceText.tsx";
 import { SLOPE_LIMITS } from "../config/route.ts";
-import { formatCoordinates, formatDistance, formatDuration, formatElevation, formatSlope, formatUtcTime, stopLabel } from "../lib/format.ts";
+import { formatCoordinates, formatDistance, formatDuration, formatSignedElevation, formatSlope, formatUtcTime, stopLabel } from "../lib/format.ts";
 import { routeLegs } from "../lib/legs.ts";
 import { SLOPE_CLASS_LABEL } from "../lib/slope.ts";
 import { usePlanner } from "../state/PlannerContext.tsx";
@@ -85,7 +86,7 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
               <ul>
                 {route.assumptions.map((a) => (
                   <li key={a.name}>
-                    <strong>{a.name}:</strong> <span className="mono">{a.value}</span> <span className="card__muted">({a.source})</span>
+                    <strong>{a.name}:</strong> <span className="mono">{a.value}</span> <span className="card__muted">(<SourceText text={a.source} />)</span>
                   </li>
                 ))}
               </ul>
@@ -169,7 +170,7 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
                       <td className="mono num">{formatSlope(l.stats.maxSlopeDeg)}</td>
                       <td className="mono num">{formatSlope(l.stats.meanSlopeDeg)}</td>
                       <td className="mono num">
-                        +{formatElevation(l.stats.elevGainM)} / −{formatElevation(l.stats.elevLossM)}
+                        {formatSignedElevation(l.stats.elevGainM, "+")} / {formatSignedElevation(l.stats.elevLossM, "−")}
                       </td>
                       <td>
                         <span className={`card__class card__class--${l.cls}`}>

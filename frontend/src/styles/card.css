@@ -327,3 +327,33 @@
     print-color-adjust: exact;
   }
 }
+
+/* On paper (print) the card stays A5 landscape. On a phone screen it fits the width instead. */
+@media screen and (max-width: 899px) {
+  .card-toolbar,
+  .card {
+    width: 100%;
+  }
+
+  .card {
+    font-size: 9pt;
+  }
+
+  .card__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card__table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+.card .tag--warn {
+  margin-left: 0;
+  padding: 0 1mm;
+  font-size: 0.8em;
+  letter-spacing: 0.04em;
+  border-color: var(--caution-ink);
+  color: var(--caution-ink);
+}
