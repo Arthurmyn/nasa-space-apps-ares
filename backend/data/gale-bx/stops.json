@@ -1,0 +1,72 @@
+{
+  "groups": [
+    {
+      "id": "boxwork",
+      "name": "Boxwork",
+      "stop_ids": [
+        "bx-1",
+        "bx-2",
+        "bx-3",
+        "bx-4",
+        "bx-5",
+        "bx-6"
+      ]
+    }
+  ],
+  "stops": [
+    {
+      "id": "bx-1",
+      "name": "Curiosity sol 4534",
+      "lon": 137.3864361,
+      "lat": -4.79761763,
+      "note": "Sol 4534: Curiosity waypoint RMC 116_0 from docs/research/r0/rover_sols4534-4805.geojson (MSL waypoints snapshot).",
+      "image": null,
+      "source_id": "src-msl-traverse"
+    },
+    {
+      "id": "bx-2",
+      "name": "Curiosity sol 4554",
+      "lon": 137.3834371,
+      "lat": -4.79971414,
+      "note": "Sol 4554: Curiosity waypoint RMC 116_1806 from docs/research/r0/rover_sols4534-4805.geojson (MSL waypoints snapshot).",
+      "image": null,
+      "source_id": "src-msl-traverse"
+    },
+    {
+      "id": "bx-3",
+      "name": "Curiosity sol 4585",
+      "lon": 137.381053,
+      "lat": -4.80256772,
+      "note": "Sol 4585: Curiosity waypoint RMC 117_702 from docs/research/r0/rover_sols4534-4805.geojson (MSL waypoints snapshot).",
+      "image": null,
+      "source_id": "src-msl-traverse"
+    },
+    {
+      "id": "bx-4",
+      "name": "Curiosity sol 4609",
+      "lon": 137.3793204,
+      "lat": -4.80474015,
+      "note": "Sol 4609: Curiosity waypoint RMC 117_2730 from docs/research/r0/rover_sols4534-4805.geojson (MSL waypoints snapshot).",
+      "image": null,
+      "source_id": "src-msl-traverse"
+    },
+    {
+      "id": "bx-5",
+      "name": "Curiosity sol 4655",
+      "lon": 137.3798956,
+      "lat": -4.80716832,
+      "note": "Sol 4655: Curiosity waypoint RMC 118_2538 from docs/research/r0/rover_sols4534-4805.geojson (MSL waypoints snapshot).",
+      "image": null,
+      "source_id": "src-msl-traverse"
+    },
+    {
+      "id": "bx-6",
+      "name": "Curiosity sol 4805",
+      "lon": 137.38142,
+      "lat": -4.8078367,
+      "note": "Sol 4805: Curiosity waypoint RMC 120_808 from docs/research/r0/rover_sols4534-4805.geojson (MSL waypoints snapshot).",
+      "image": null,
+      "source_id": "src-msl-traverse"
+    }
+  ]
+}
