@@ -1,6 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "services": {
+    "landing": {
+      "root": "landing",
+      "framework": "vite"
+    },
     "frontend": {
       "root": "frontend",
       "framework": "vite"
@@ -11,11 +15,6 @@
     }
   },
   "redirects": [
-    {
-      "source": "/",
-      "destination": "/app/",
-      "permanent": false
-    },
     {
       "source": "/app",
       "destination": "/app/",
@@ -30,6 +29,10 @@
     {
       "source": "/app/(.*)",
       "destination": { "service": "frontend" }
+    },
+    {
+      "source": "/(.*)",
+      "destination": { "service": "landing" }
     }
   ]
 }
