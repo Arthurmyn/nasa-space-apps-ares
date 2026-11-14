@@ -13,6 +13,9 @@ export interface SiteConfig {
   isTestData: boolean;
   preliminary: boolean;
   sources: readonly string[];
+  dtmProductId: string | null;
+  cellM: number | null;
+  slopeWindowM: number | null;
 }
 
 export function siteFromMeta(meta: SiteMeta): SiteConfig {
@@ -25,6 +28,9 @@ export function siteFromMeta(meta: SiteMeta): SiteConfig {
     isTestData: meta.is_test_data,
     preliminary: meta.preliminary,
     sources: meta.sources,
+    dtmProductId: meta.dtm_product_id,
+    cellM: meta.cell_m,
+    slopeWindowM: meta.slope_window_m,
   };
 }
 
