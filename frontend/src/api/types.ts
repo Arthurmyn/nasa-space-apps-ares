@@ -162,6 +162,19 @@ export interface SiteMeta {
   /** Grid cell size and slope smoothing window, metres. */
   cell_m: number | null;
   slope_window_m: number | null;
+  /** Grid geometry for reading slope.bin (contract section 4). Missing in older meta.json files. */
+  grid?: SiteGrid | null;
+}
+
+export interface SiteGrid {
+  width: number;
+  height: number;
+  cell_m: number;
+  x_min_m: number;
+  y_max_m: number;
+  mars_radius_m: number;
+  slope_unit_deg: number;
+  slope_nodata: number;
 }
 
 export interface SiteStop {

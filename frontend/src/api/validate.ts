@@ -17,6 +17,7 @@ import {
   type SafetyLevel,
   type SiteContextInfo,
   type SiteEntry,
+  type SiteGrid,
   type SiteMeta,
   type SiteStop,
   type SitesResponse,
@@ -268,7 +269,17 @@ export function parseSiteMeta(raw: unknown): SiteMeta {
     dtm_product_id: strOrNull(o.dtm_product_id, "meta.dtm_product_id"),
     cell_m: o.cell_m === undefined ? null : num(o.cell_m, "meta.cell_m"),
     slope_window_m: o.slope_window_m === undefined ? null : num(o.slope_window_m, "meta.slope_window_m"),
+    grid: siteGrid(o),
   };
+}
+
+/** Grid geometry when every field is present; null for an older meta.json without it. */
+function siteGrid(o: Obj): SiteGrid | null {
+  const keys = ["width", "height", "cell_m", "x_min_m", "y_max_m", "mars_radius_m", "slope_unit_deg", "slope_nodata"] as const;
+  if (keys.some((k) => o[k] === undefined)) return null;
+  const g = Object.fromEntries(keys.map((k) => [k, num(o[k], `meta.${k}`)])) as unknown as SiteGrid;
+  if (g.width <= 0 || g.height <= 0 || g.cell_m <= 0 || g.mars_radius_m <= 0) fail("meta", "a grid with positive size");
+  return g;
 }
 
 function siteStop(v: unknown, path: string): SiteStop {
