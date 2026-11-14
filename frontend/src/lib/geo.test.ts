@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import type { LonLat } from "../api/types.ts";
 import {
@@ -163,5 +164,12 @@ describe("ringCentroid", () => {
   });
   it("is null for an empty ring", () => {
     assert.equal(ringCentroid([]), null);
+  });
+});
+
+describe("map radius", () => {
+  it("is the radius of the data grid", () => {
+    const meta = JSON.parse(readFileSync(new URL("../../../backend/data/gale-bx/meta.json", import.meta.url), "utf8"));
+    assert.equal(MARS_RADIUS_M, meta.mars_radius_m);
   });
 });

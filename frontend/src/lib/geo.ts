@@ -1,11 +1,14 @@
 import type { LonLat } from "../api/types.ts";
 
 /**
- * Mars mean radius in metres (IAU WGCCRE 2015/2018 report: 3389.5 km).
+ * Radius of the Mars sphere in metres: 3396.19 km, the sphere of the HiRISE DTM and of the whole
+ * site grid (`mars_radius_m` in backend/data/gale-bx/meta.json, read from the PDS labels). The
+ * route length from the API is computed on this sphere, so distances drawn on the map use it too;
+ * a test compares this constant with meta.json. (The IAU mean radius, 3389.5 km, is 0.2% smaller.)
  * All ground distances in the UI use Mars, never Earth. MapLibre's built-in scale bar
  * assumes Earth, so scale and grid spacing are computed here instead.
  */
-export const MARS_RADIUS_M = 3_389_500;
+export const MARS_RADIUS_M = 3_396_190;
 
 const DEG = Math.PI / 180;
 /** Metres per degree of latitude (sphere). */
