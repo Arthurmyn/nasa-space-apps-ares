@@ -1,4 +1,4 @@
-/* ---- Card mode: a one-page A5 landscape route card, on light paper ---- */
+/* ---- Card mode: an A4 portrait route card, black on white, readable in black and white print ---- */
 
 .card-screen {
   overflow: auto;
@@ -33,121 +33,192 @@
   margin-top: var(--space-5);
 }
 
-.card {
+.doc {
+  --doc-ink: #000;
+  --doc-muted: #4a4a55;
+  --doc-line: #b8b8c4;
   width: 210mm;
-  min-height: 148mm;
-  padding: 6mm;
-  background: var(--paper);
-  color: var(--ink);
-  font-size: 7.5pt;
+  min-height: 297mm;
+  padding: 10mm 12mm;
+  background: #fff;
+  color: var(--doc-ink);
+  font-size: 8.5pt;
   line-height: 1.35;
-  border-radius: var(--radius-sm);
   display: grid;
   align-content: start;
-  gap: 3mm;
+  gap: 3.5mm;
 }
 
-.card__head {
+.doc__head {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  gap: 4mm;
-  padding-bottom: 2mm;
-  border-bottom: 0.3mm solid var(--ink);
+  align-items: flex-start;
+  gap: 6mm;
+  padding-bottom: 3mm;
+  border-bottom: 0.5mm solid var(--doc-ink);
 }
 
-.card__title {
-  font-size: 13pt;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.card__sub,
-.card__meta {
+.doc__title {
   margin: 0;
-  color: var(--ink-muted);
+  font-size: 17pt;
+  font-weight: 700;
+  letter-spacing: 0.1em;
 }
 
-.card__meta {
-  font-size: 6.5pt;
+.doc__site {
+  margin: 1mm 0 0;
+  font-size: 10pt;
+}
+
+.doc__meta {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 0.8mm 5mm;
+  margin: 0;
+  font-size: 7.5pt;
+}
+
+.doc__meta div {
+  display: contents;
+}
+
+.doc__meta dt {
+  color: var(--doc-muted);
+}
+
+.doc__meta dd {
+  margin: 0;
   text-align: right;
 }
 
-.card__grid {
-  display: grid;
-  grid-template-columns: 96mm 1fr;
-  gap: 4mm;
-  align-items: start;
-}
-
-.card__col {
-  display: grid;
-  gap: 2.5mm;
+.doc__section {
   min-width: 0;
 }
 
-.card__h {
-  margin-bottom: 1mm;
-  font-size: 6.5pt;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-muted);
-}
-
-.card__muted {
-  color: var(--ink-muted);
-}
-
-.card__stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2mm;
+.doc__h {
   margin: 0 0 1.5mm;
+  font-size: 8pt;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.card__stats dt {
-  font-size: 6.5pt;
-  color: var(--ink-muted);
+.doc__stats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2mm;
+  margin: 0 0 2mm;
 }
 
-.card__stats dd {
+.doc__stats dt {
+  font-size: 7pt;
+  color: var(--doc-muted);
+}
+
+.doc__stats dd {
   margin: 0;
   font-size: 12pt;
   font-weight: 600;
   white-space: nowrap;
 }
 
-.card__safety {
+.doc__status {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 2mm;
+  gap: 2.5mm;
 }
 
-/* On paper: darker inks, and status keeps its icon and text so it survives black and white. */
-.card .badge {
+.doc__cols {
+  display: grid;
+  grid-template-columns: 80mm minmax(0, 1fr);
+  gap: 5mm;
+  align-items: start;
+}
+
+.doc__cols--even {
+  grid-template-columns: 1fr 1fr;
+}
+
+.doc__stack {
+  display: grid;
+  gap: 4mm;
+  min-width: 0;
+}
+
+.doc__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 7.4pt;
+}
+
+.doc__table th,
+.doc__table td {
+  padding: 0.8mm 1mm;
+  border-bottom: 0.2mm solid var(--doc-line);
+  text-align: left;
+  vertical-align: baseline;
+  font-weight: 400;
+}
+
+.doc__table thead th {
+  color: var(--doc-muted);
+  font-weight: 600;
+}
+
+.doc__table tbody th {
+  font-weight: 600;
+}
+
+.doc__table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.doc__table--kv th {
+  width: 52%;
+}
+
+.doc__table--assump th {
+  width: 22%;
+}
+
+.doc__table--assump td:nth-child(2) {
+  width: 17%;
+  white-space: nowrap;
+}
+
+.doc__note,
+.doc__muted {
+  margin: 1mm 0 0;
+  font-size: 6.8pt;
+  color: var(--doc-muted);
+}
+
+/* Status keeps its icon and its words, so it survives black and white print. */
+.doc .badge {
   padding: 0.6mm 2mm;
-  font-size: 7.5pt;
+  font-size: 8pt;
+  background: transparent;
+  border: 0.3mm solid currentColor;
 }
 
-.card .badge--ok,
-.card__class--ok {
+.doc .badge--ok,
+.doc__class--ok {
   color: var(--ok-ink);
 }
 
-.card .badge--caution,
-.card__class--caution {
+.doc .badge--caution,
+.doc__class--caution {
   color: var(--caution-ink);
 }
 
-.card .badge--avoid,
-.card__class--avoid {
+.doc .badge--avoid,
+.doc__class--avoid {
   color: var(--hazard-ink);
 }
 
-.card__class {
+.doc__class {
   display: inline-flex;
   align-items: center;
   gap: 1mm;
@@ -155,52 +226,36 @@
   white-space: nowrap;
 }
 
-.card__table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 6.8pt;
+.doc .tag--warn {
+  margin-left: 0;
+  padding: 0 1mm;
+  font-size: 0.8em;
+  letter-spacing: 0.04em;
+  border-color: var(--caution-ink);
+  color: var(--caution-ink);
 }
 
-.card__table th,
-.card__table td {
-  padding: 0.7mm 1mm;
-  border-bottom: 0.2mm solid var(--ink-line);
-  text-align: left;
-  vertical-align: baseline;
-  font-weight: 400;
-}
-
-.card__table thead th {
-  color: var(--ink-muted);
-  font-weight: 600;
-}
-
-.card__table tbody th {
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.card__table .num {
-  text-align: right;
-  white-space: nowrap;
-}
-
-.card__note {
-  margin-top: 1mm;
-  font-size: 6.2pt;
-  color: var(--ink-muted);
-}
-
-.card__assumptions ul {
-  margin: 0;
+.doc__refs {
+  margin: 2mm 0 0;
   padding: 0;
   list-style: none;
-  font-size: 6.8pt;
+  font-size: 6.6pt;
+  color: var(--doc-muted);
 }
 
-.card__assumptions li {
-  break-inside: avoid;
-  padding: 0.3mm 0;
+.doc__refs li {
+  padding: 0.2mm 0;
+  overflow-wrap: anywhere;
+}
+
+.doc__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 4mm;
+  margin-top: 1mm;
+  padding-top: 2mm;
+  border-top: 0.3mm solid var(--doc-ink);
+  font-size: 7pt;
 }
 
 /* ---- Sketch (SVG) ---- */
@@ -284,8 +339,8 @@
 
 /* ---- Print ---- */
 @page {
-  size: A5 landscape;
-  margin: 6mm;
+  size: A4 portrait;
+  margin: 0;
 }
 
 @media print {
@@ -314,12 +369,13 @@
     overflow: visible;
   }
 
-  .card {
-    width: auto;
+  /* The page margin is the card's own padding, so the card is exactly one A4 sheet. */
+  .doc {
+    width: 210mm;
+    height: 297mm;
     min-height: 0;
-    padding: 0;
-    border-radius: 0;
-    background: #fff;
+    overflow: hidden;
+    break-inside: avoid;
   }
 
   * {
@@ -328,32 +384,31 @@
   }
 }
 
-/* On paper (print) the card stays A5 landscape. On a phone screen it fits the width instead. */
+/* On a phone screen the card fits the width instead of the paper size. Print is unaffected. */
 @media screen and (max-width: 899px) {
   .card-toolbar,
-  .card {
+  .doc {
     width: 100%;
   }
 
-  .card {
+  .doc {
+    padding: 5mm;
     font-size: 9pt;
   }
 
-  .card__grid {
+  .doc__head,
+  .doc__cols,
+  .doc__cols--even {
     grid-template-columns: minmax(0, 1fr);
+    flex-direction: column;
   }
 
-  .card__table {
+  .doc__stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .doc__table {
     display: block;
     overflow-x: auto;
   }
-}
-
-.card .tag--warn {
-  margin-left: 0;
-  padding: 0 1mm;
-  font-size: 0.8em;
-  letter-spacing: 0.04em;
-  border-color: var(--caution-ink);
-  color: var(--caution-ink);
 }
