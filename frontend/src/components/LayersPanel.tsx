@@ -122,8 +122,8 @@ export function LayersPanel() {
   return (
     <section className="panel panel--left" aria-labelledby="layers-title">
       <header className="panel__head">
-        <h2 id="layers-title" className="panel__title">
-          <Icon name="layers" /> Layers
+        <h2 id="layers-title" className="sr-only">
+          Layers
         </h2>
         {layers.status === "ready" && (
           <span className="panel__meta mono">
