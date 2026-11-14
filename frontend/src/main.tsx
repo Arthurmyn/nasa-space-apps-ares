@@ -1,9 +1,18 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import App from "./App";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App.tsx";
+import "./styles/tokens.css";
+import "./styles/fonts.css";
+import "./styles/base.css";
+import "./styles/shell.css";
+import "./styles/panels.css";
+import "./styles/map.css";
+import "./styles/profile.css";
+import "./styles/card.css";
+import "./styles/hud.css";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
     <App />
-  </StrictMode>,
+  </React.StrictMode>,
 );

@@ -1,0 +1,166 @@
+.profile {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
+  padding: var(--space-3) var(--space-4) var(--space-2);
+}
+
+.profile__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.profile__head .panel__title {
+  margin-right: var(--space-2);
+}
+
+.profile__legend {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0 0 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.profile__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.profile__chip--ok svg {
+  color: var(--class-ok);
+}
+
+.profile__chip--caution svg {
+  color: var(--class-caution);
+}
+
+.profile__chip--avoid svg {
+  color: var(--class-avoid);
+}
+
+.profile__body {
+  position: relative;
+  min-height: 0;
+  border-radius: var(--radius-sm);
+}
+
+.profile__body--stale .profile__svg {
+  opacity: 0.4;
+}
+
+.profile__svg {
+  display: block;
+  touch-action: none;
+}
+
+.profile__grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.profile__tick {
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+
+.profile__seg--ok {
+  color: var(--class-ok);
+}
+
+.profile__seg--caution {
+  color: var(--class-caution);
+}
+
+.profile__seg--avoid {
+  color: var(--class-avoid);
+}
+
+.profile__area {
+  fill: currentColor;
+  fill-opacity: 0.16;
+}
+
+.profile__line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.profile__stop-line {
+  stroke: var(--line-strong);
+  stroke-dasharray: 3 3;
+}
+
+.profile__stop-dot {
+  fill: var(--rust);
+}
+
+.profile__stop-label {
+  fill: var(--text-on-accent);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.profile__hover line {
+  stroke: var(--cyan);
+  stroke-width: 1;
+}
+
+.profile__hover circle {
+  fill: var(--cyan);
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+
+.profile__hover rect {
+  fill: var(--panel-raised);
+  stroke: var(--line-strong);
+}
+
+.profile__hover text {
+  fill: var(--text);
+  font-size: 11px;
+}
+
+.profile__hit {
+  fill: transparent;
+  cursor: crosshair;
+}
+
+.profile__empty {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  margin: 0;
+  text-align: center;
+}
+
+@media (max-width: 899px) {
+  .profile {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .profile__legend {
+    margin-left: 0;
+  }
+}
+
+/* Phones: keep the icon and range, drop the class word so the legend stays on one line. */
+@media (max-width: 599px) {
+  .profile__chip span:last-child {
+    display: none;
+  }
+
+  .profile__head {
+    gap: var(--space-2);
+  }
+}
