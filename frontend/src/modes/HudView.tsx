@@ -168,14 +168,11 @@ export function HudView({ onBackToPlan }: { onBackToPlan: () => void }) {
 
   return (
     <main className="hud-screen">
-      <div className="hud-banner" role="note">
-        <span className="tag tag--warn">Mockup</span>
-        <span>
-          Position is simulated with the slider; there is no live position feed. Heading, slope, stops and hazards come from the
-          planned route.
-          {stale && " The route is out of date."}
-        </span>
-      </div>
+      {stale && (
+        <div className="hud-banner" role="note">
+          <span>The route is out of date. Recalculate in Plan.</span>
+        </div>
+      )}
 
       <section className="hud" aria-label="Heads-up display">
         <div className="hud__top">
