@@ -77,3 +77,19 @@ export function formatSigned(value: number, format: (abs: number) => string): st
   if (value === 0) return format(0);
   return `${value > 0 ? "+" : "−"}${format(Math.abs(value))}`;
 }
+
+/** Document ID for the printed card, "ARES-RC-YYYYMMDD-HHMM", from the UTC time the route was computed. */
+export function documentId(iso: string): string | null {
+  const t = new Date(iso);
+  if (Number.isNaN(t.getTime())) return null;
+  const p = (n: number, w = 2) => String(n).padStart(w, "0");
+  return `ARES-RC-${t.getUTCFullYear()}${p(t.getUTCMonth() + 1)}${p(t.getUTCDate())}-${p(t.getUTCHours())}${p(t.getUTCMinutes())}`;
+}
+
+/** "2026-11-15 09:05 UTC" */
+export function formatUtcStamp(iso: string): string | null {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())} UTC`;
+}
