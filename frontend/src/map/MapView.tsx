@@ -103,7 +103,30 @@ export default function MapView() {
       setMapError("The map could not start. This browser may not support WebGL 2.");
       return;
     }
+
+    // If the container is tiny or has no size yet when the map starts (small window, hidden tab),
+    // MapLibre cannot fit the site: it only warns and stays zoomed out or on 0°, 0°, and
+    // "Set start at map centre" then lands outside the grid. So keep the site framed whenever the
+    // container changes size, until the user moves the map or the first route is framed.
+    let userMoved = false;
+    instance.on("movestart", (e) => {
+      if (e.originalEvent) userMoved = true;
+    });
+    const frameSite = () => {
+      if (userMoved || framed.current) return;
+      const { clientWidth: w, clientHeight: h } = host;
+      if (w < 2 || h < 2) return;
+      instance.resize();
+      const padding = Math.min(INITIAL_PADDING_PX, Math.floor(Math.min(w, h) / 4));
+      const camera = instance.cameraForBounds(boundsOfBbox(site.bbox), { padding });
+      if (camera) instance.jumpTo(camera);
+    };
+    instance.once("load", frameSite);
+    const observer = new ResizeObserver(frameSite);
+    observer.observe(host);
+
     return () => {
+      observer.disconnect();
       instance.remove();
       setMap(null);
     };
