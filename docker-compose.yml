@@ -4,13 +4,10 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     env_file: .env
-    environment:
-      MODEL_PATH: /app/ml/models/model.pkl
     ports:
       - "8000:8000"
     volumes:
       - ./backend/app:/app/backend/app
-      - ./ml:/app/ml
 
   frontend:
     build: ./frontend
