@@ -124,11 +124,26 @@ class SiteGroup(Model):
     stop_ids: list[str]
 
 
+class ContextSource(Model):
+    title: str
+    url: str
+    credit: str
+
+
+class SiteContext(Model):
+    """Short science context for the site, with the pages it comes from."""
+
+    title: str
+    text: str
+    sources: list[ContextSource]
+
+
 class Site(Model):
     id: str
     name: str
     groups: list[SiteGroup]
     stops: list[SiteStop]
+    context: SiteContext | None = None
 
 
 class SitesResponse(Model):

@@ -263,7 +263,7 @@ def test_layers_sites_and_cached_data(terrain):
         assert {x["id"] for x in layers if x["available"]} == {"slope", "optical"}
         assert all(x["reason"] for x in layers if not x["available"])
         site = client.get("/api/v1/sites").json()["sites"][0]
-        assert set(site) == {"id", "name", "groups", "stops"}
+        assert set(site) == {"id", "name", "groups", "stops", "context"}
         assert site["id"] == "gale-bx" and site["stops"][0]["note"] == "Science note"
         assert client.post("/api/v1/route", json=request(meta)).status_code == 200
 
@@ -578,3 +578,23 @@ def test_shipped_thermal_layer_matches_the_site_grid():
     assert info["native_pixel_m"] == 100.0
     assert info["value"]["site_dn_min"] < info["value"]["site_dn_max"]
     assert layers_of(root / "data/gale-bx")["thermal"]["available"] is True
+
+
+def test_shipped_site_context_is_short_and_cited():
+    path = Path(__file__).parents[1] / "data/gale-bx"
+    with TestClient(create_app(path)) as client:
+        site = client.get("/api/v1/sites").json()["sites"][0]
+    context = site["context"]
+    sentences = [s for s in context["text"].replace("?", ".").split(". ") if s.strip()]
+    assert 2 <= len(sentences) <= 4
+    assert context["sources"] and all(
+        s["url"].startswith("https://") and s["credit"] for s in context["sources"]
+    )
+    # Stops stay plain waypoints: no science claim is attached to any of them.
+    assert all(stop["note"].startswith("Curiosity waypoint at sol ") for stop in site["stops"])
+
+
+def test_site_without_context_has_none(terrain):
+    path, _, _ = terrain
+    with TestClient(create_app(path)) as client:
+        assert client.get("/api/v1/sites").json()["sites"][0]["context"] is None

@@ -821,3 +821,20 @@
   color: var(--text-muted);
   font-size: var(--fs-xs);
 }
+
+/* ---- Why this site ---- */
+.site-context__text {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-sm);
+}
+
+.site-context__sources {
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.site-context__sources a {
+  color: var(--accent);
+}

@@ -222,3 +222,26 @@ describe("describeError for a 422 with a reason", () => {
     assert.doesNotMatch(describeError(new ApiError("http", "HTTP 500", 500, "secret trace")), /secret/);
   });
 });
+
+describe("site context in the sites response", () => {
+  const site = (context: unknown) => ({ sites: [{ id: "a", name: "A", groups: [], stops: [], context }] });
+
+  it("reads a cited context and keeps only http(s) sources", () => {
+    const res = parseSitesResponse(
+      site({
+        title: "Why this site",
+        text: "Text.",
+        sources: [
+          { title: "Page", url: "https://nasa.gov/x", credit: "NASA" },
+          { title: "Bad", url: "javascript:alert(1)", credit: "x" },
+        ],
+      }),
+    );
+    assert.equal(res.sites[0]?.context?.sources.length, 1);
+    assert.equal(res.sites[0]?.context?.text, "Text.");
+  });
+
+  it("a site without a context has null", () => {
+    assert.equal(parseSitesResponse(site(undefined)).sites[0]?.context, null);
+  });
+});

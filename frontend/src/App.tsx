@@ -3,6 +3,7 @@ import { ElevationProfile } from "./components/ElevationProfile.tsx";
 import { LeftPanel } from "./components/LeftPanel.tsx";
 import { PanelToggle } from "./components/PanelToggle.tsx";
 import { MobileSummary, RouteSummary } from "./components/RouteSummary.tsx";
+import { SiteContextNote } from "./components/SiteContextNote.tsx";
 import { StopCard } from "./components/StopCard.tsx";
 import { StopsPanel } from "./components/StopsPanel.tsx";
 import { TopBar, type Drawer, type Mode } from "./components/TopBar.tsx";
@@ -49,6 +50,7 @@ function PlanView({ drawer, onDrawer }: { drawer: Drawer; onDrawer: (d: Drawer) 
         <RouteSummary />
         <StopsPanel />
         <StopCard />
+        <SiteContextNote />
       </aside>
       <MobileSummary onOpen={() => onDrawer("route")} />
       <div className="shell__profile">

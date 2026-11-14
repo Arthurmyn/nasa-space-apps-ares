@@ -1,0 +1,5 @@
+# Tools for running the backend tests locally and in CI. The deployed service
+# (Vercel, Docker) installs only requirements.txt, so test-only packages go here.
+-r requirements.txt
+# tests/test_routes.py reads the size of the shipped thermal.png.
+Pillow>=10,<13

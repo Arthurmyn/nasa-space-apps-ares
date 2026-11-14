@@ -15,6 +15,7 @@ import {
   type RouteNavigation,
   type RouteStop,
   type SafetyLevel,
+  type SiteContextInfo,
   type SiteEntry,
   type SiteMeta,
   type SiteStop,
@@ -284,6 +285,18 @@ function group(v: unknown, path: string): StopGroup {
   };
 }
 
+function siteContext(v: unknown, path: string): SiteContextInfo | null {
+  if (v === null || v === undefined) return null;
+  const o = obj(v, path);
+  const sources = arr(o.sources, `${path}.sources`).flatMap((s, i) => {
+    const p = obj(s, `${path}.sources[${i}]`);
+    const url = str(p.url, `${path}.sources[${i}].url`);
+    // Only http(s) links may reach an <a href>.
+    return isHttpUrl(url) ? [{ title: str(p.title, `${path}.sources[${i}].title`), url, credit: str(p.credit, `${path}.sources[${i}].credit`) }] : [];
+  });
+  return { title: str(o.title, `${path}.title`), text: str(o.text, `${path}.text`), sources };
+}
+
 export function parseSitesResponse(raw: unknown): SitesResponse {
   const o = obj(raw, "response");
   const sites: SiteEntry[] = arr(o.sites, "sites").map((v, i) => {
@@ -293,6 +306,7 @@ export function parseSitesResponse(raw: unknown): SitesResponse {
       name: str(p.name, `sites[${i}].name`),
       groups: arr(p.groups, `sites[${i}].groups`).map((g, j) => group(g, `sites[${i}].groups[${j}]`)),
       stops: arr(p.stops, `sites[${i}].stops`).map((s, j) => siteStop(s, `sites[${i}].stops[${j}]`)),
+      context: siteContext(p.context, `sites[${i}].context`),
     };
   });
   return { sites };

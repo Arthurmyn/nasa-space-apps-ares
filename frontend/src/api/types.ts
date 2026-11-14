@@ -181,11 +181,26 @@ export interface StopGroup {
 }
 
 /** One entry of GET /sites (contract section 7). */
+export interface ContextSource {
+  title: string;
+  url: string;
+  credit: string;
+}
+
+/** Short science context for a site, with the pages it comes from (stops.json "context"). */
+export interface SiteContextInfo {
+  title: string;
+  text: string;
+  sources: ContextSource[];
+}
+
 export interface SiteEntry {
   id: string;
   name: string;
   groups: StopGroup[];
   stops: SiteStop[];
+  /** Null when the site has none. */
+  context: SiteContextInfo | null;
 }
 
 export interface SitesResponse {
