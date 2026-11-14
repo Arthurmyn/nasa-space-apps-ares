@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from "react";
+import { ConditionsPanel, Disclaimer } from "./components/ConditionsPanel.tsx";
 import { ElevationProfile } from "./components/ElevationProfile.tsx";
 import { LeftPanel } from "./components/LeftPanel.tsx";
 import { PanelToggle } from "./components/PanelToggle.tsx";
@@ -51,6 +52,8 @@ function PlanView({ drawer, onDrawer }: { drawer: Drawer; onDrawer: (d: Drawer) 
         <StopsPanel />
         <StopCard />
         <SiteContextNote />
+        <ConditionsPanel />
+        <Disclaimer />
       </aside>
       <MobileSummary onOpen={() => onDrawer("route")} />
       <div className="shell__profile">

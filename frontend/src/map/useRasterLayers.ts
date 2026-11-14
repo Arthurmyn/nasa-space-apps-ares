@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import { LAYER_IDS, type LayerId } from "../api/types.ts";
 import { dataSource } from "../api/client.ts";
-import { siteFileUrl } from "../api/siteFiles.ts";
+import { siteFileUrl, siteImageryUrl } from "../api/siteFiles.ts";
 import type { SiteConfig } from "../config/site.ts";
 import { gridImagesForSite, TILE_SOURCES } from "../config/tiles.ts";
 import { imageCorners } from "../lib/siteGeo.ts";
@@ -54,7 +54,8 @@ export function useRasterLayers(map: MapLibreMap | null, layers: LayersModel, si
       const imageWanted = active.has(id) && info[id]?.available === true;
       const imagePresent = map.getLayer(imageId(id)) !== undefined;
       if (imageWanted && !imagePresent) {
-        map.addSource(imageId(id), { type: "image", url: siteFileUrl(site.id, image.file), coordinates: imageCorners(site.bbox) });
+        const url = image.dir === "imagery" ? siteImageryUrl(site.id, image.file) : siteFileUrl(site.id, image.file);
+        map.addSource(imageId(id), { type: "image", url, coordinates: imageCorners(site.bbox) });
         map.addLayer(
           { id: imageId(id), type: "raster", source: imageId(id), paint: { "raster-opacity": image.opacity, "raster-fade-duration": 0, "raster-resampling": image.resampling ?? "linear" } },
           LYR.grid,

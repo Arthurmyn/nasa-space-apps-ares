@@ -1,12 +1,11 @@
 import type { LayerId } from "../api/types.ts";
-import { LAYER_META, LAYER_SOURCE_LABEL, NO_DATA_REASON, type LayerMeta } from "../config/layers.ts";
+import { CARD_LAYERS, LAYER_META, LAYER_SOURCE_LABEL, NO_DATA_REASON, type LayerMeta } from "../config/layers.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
 import { layerHasImagery } from "../config/tiles.ts";
-import { SLOPE_CLASS_LABEL } from "../lib/slope.ts";
 import { useLayers, type LayersModel } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
 import { Icon } from "./Icon.tsx";
-import { ThermalLegend } from "./ThermalLegend.tsx";
+import { GeologyCard, RadiationCard, ThermalInertiaCard } from "./LayerCards.tsx";
 
 interface RowState {
   disabled: boolean;
@@ -21,22 +20,32 @@ function rowState(layers: LayersModel, id: LayerId): RowState {
   return { disabled: true, reason: NO_DATA_REASON };
 }
 
+/** Upper display break of the slope layer, degrees (NASA EVA-EXP-0075 lunar suit design case). */
+const STEEP_DEG = 20;
+
 function SlopeLegend() {
   const items = [
-    { cls: "ok", range: `0–${SLOPE_LIMITS.cautionDeg}°` },
-    { cls: "caution", range: `${SLOPE_LIMITS.cautionDeg}–${SLOPE_LIMITS.maxDeg}°` },
-    { cls: "avoid", range: `>${SLOPE_LIMITS.maxDeg}°` },
+    { cls: "ok", range: `≤${SLOPE_LIMITS.cautionDeg}°`, text: "display break only" },
+    { cls: "caution", range: `${SLOPE_LIMITS.cautionDeg}–${SLOPE_LIMITS.maxDeg}°`, text: "" },
+    { cls: "avoid", range: `${SLOPE_LIMITS.maxDeg}–${STEEP_DEG}°`, text: "over the route limit" },
+    { cls: "steep", range: `>${STEEP_DEG}°`, text: "" },
   ] as const;
   return (
-    <ul className="legend" aria-label="Slope legend">
-      {items.map((i) => (
-        <li key={i.cls} className="legend__item">
-          <span className={`legend__swatch legend__swatch--${i.cls}`} aria-hidden="true" />
-          <span className="mono">{i.range}</span>
-          <span className="legend__text">{SLOPE_CLASS_LABEL[i.cls]}</span>
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="legend" aria-label="Slope legend">
+        {items.map((i) => (
+          <li key={i.cls} className="legend__item">
+            <span className={`legend__swatch legend__swatch--${i.cls}`} aria-hidden="true" />
+            <span className="mono">{i.range}</span>
+            <span className="legend__text">{i.text}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="legend__note">
+        Thresholds are lunar analogs: {SLOPE_LIMITS.maxDeg}° Peña-Asensio et al. 2024 (route limit in this app), {STEEP_DEG}° NASA
+        EVA-EXP-0075 design case. Not Mars suit limits.
+      </p>
+    </>
   );
 }
 
@@ -63,10 +72,12 @@ function LayerLegend({ meta, source }: { meta: LayerMeta; source: string | null 
   return (
     <div className="layer-row__legend">
       {meta.id === "slope" && <SlopeLegend />}
-      {meta.id === "thermal" && <ThermalLegend />}
+      {meta.id === "thermal" && <ThermalInertiaCard />}
+      {meta.id === "geology" && <GeologyCard />}
+      {meta.id === "radiation" && <RadiationCard />}
       {meta.isEstimate && <p className="legend__note">Estimate. Modelled, not measured.</p>}
       {(LAYER_SOURCE_LABEL[meta.id] ?? source) && <SourceNote source={LAYER_SOURCE_LABEL[meta.id] ?? source ?? ""} />}
-      {!layerHasImagery(meta.id, site.id) && (
+      {!CARD_LAYERS.includes(meta.id) && !layerHasImagery(meta.id, site.id) && (
         <p className="legend__note legend__note--warn">
           <Icon name="info" size={12} /> No imagery for this layer yet
         </p>

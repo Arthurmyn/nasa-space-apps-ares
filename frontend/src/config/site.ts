@@ -1,4 +1,4 @@
-import type { GridBbox, LonLat, SiteMeta } from "../api/types.ts";
+import type { GridBbox, LonLat, SiteGrid, SiteMeta } from "../api/types.ts";
 
 /** The site the planner opens on. Its grid lives in public/data/<id>/ (docs/DATA_CONTRACT.md). */
 export const DEFAULT_SITE_ID = "gale-bx";
@@ -16,6 +16,8 @@ export interface SiteConfig {
   dtmProductId: string | null;
   cellM: number | null;
   slopeWindowM: number | null;
+  /** Geometry for reading slope.bin; null when meta.json has no grid fields. */
+  grid: SiteGrid | null;
 }
 
 export function siteFromMeta(meta: SiteMeta): SiteConfig {
@@ -31,6 +33,7 @@ export function siteFromMeta(meta: SiteMeta): SiteConfig {
     dtmProductId: meta.dtm_product_id,
     cellM: meta.cell_m,
     slopeWindowM: meta.slope_window_m,
+    grid: meta.grid ?? null,
   };
 }
 
