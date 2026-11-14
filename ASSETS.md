@@ -45,14 +45,14 @@ The concept images used as visual direction (`ref-dashboard`, `ref-terminal`, `r
 
 ### Landing page (`landing/`): AI-generated media
 
-Both files are **AI-generated** and carry a visible "AI-generated" label burned into the picture (poster, and every frame of the video). They contain no people, no NASA logos or insignia, and no real mission imagery: they are stylised illustrations of a ringed planet and satellites.
+Both files are **AI-generated** and carry a visible "AI-generated" label burned into the picture (poster, and every frame of the video). The page also shows a fixed "Background: AI-generated" note in the bottom-right corner, so the disclosure stays visible however the video is cropped. They contain no people, no NASA logos or insignia, and no real mission imagery: they are stylised illustrations of a ringed planet and satellites.
 
 | File | What | Original source | Tool | Date | License | Where used |
 |------|------|-----------------|------|------|---------|------------|
 | `landing/public/media/sky-poster.png` (1536 x 1024) | Poster still of the hero background | Downloaded from `d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/0bf7409c-9fa2-4bef-a49d-34903dcc91ad.png`, as referenced by the team's `Arthurmyn/space-website` repository | **Not recorded in the repository.** The hosting pattern matches the Higgsfield service used earlier by the team; confirm | Hosted copy dated 26 Sep 2026 (HTTP `Last-Modified`). Label added 14 Nov 2026 | **Unknown. The team must confirm the generating account's terms before submission** | Video poster and fallback |
 | `landing/public/media/sky.mp4` (1664 x 1248, 9 s loop, no audio) | Looping hero background | Same host, `.../4b73c700-3112-4c07-bd48-0af2893dff7c.mp4` | As above | Hosted copy dated 26 Sep 2026. Label added 14 Nov 2026 | **Unknown** | Hero background video |
 
-Processing: the label ("AI-generated", white on a dark plate, bottom centre) was drawn onto the poster with Pillow and onto the video with ffmpeg `drawtext`, and the video was re-encoded (H.264, CRF 23, audio removed). The unlabelled originals are not kept in the repository. They were hotlinked from third-party hosting before; they are now served from the site itself.
+Processing: the label ("AI-generated", white on a dark plate, centre, about two thirds down the frame) was drawn onto the poster with Pillow and onto the video with ffmpeg `drawtext`, and the video was re-encoded (H.264, CRF 23, audio removed). The unlabelled originals are not kept in the repository. They were hotlinked from third-party hosting before; they are now served from the site itself.
 
 ## Tile sources
 
