@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "inputs": [
+    {
+      "role": "waypoints",
+      "file": "r0_waypoints.geojson",
+      "snapshot": "data/r0_waypoints.geojson",
+      "url": "https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json",
+      "sha256": "ea8133b7e91f7fb35e34b566e27122969c593156f3d6fe5b5915be12fba292fe",
+      "bytes": 31051
+    },
+    {
+      "file": "DTEEC_001488_1750_001752_1750_U02.IMG",
+      "url": "https://www.uahirise.org/PDS/DTM/PSP/ORB_001400_001499/PSP_001488_1750_PSP_001752_1750/DTEEC_001488_1750_001752_1750_U02.IMG",
+      "sha256": "9359ca71b31e2689d9e2f38dd56fa83b051a09e360f8566730092a0f4cbe80bb",
+      "bytes": 360402944,
+      "role": "raster",
+      "product_id": "DTEEC_001488_1750_001752_1750_U02"
+    },
+    {
+      "file": "DTEEC_009149_1750_009294_1750_U01.IMG",
+      "url": "https://www.uahirise.org/PDS/DTM/PSP/ORB_009100_009199/PSP_009149_1750_PSP_009294_1750/DTEEC_009149_1750_009294_1750_U01.IMG",
+      "sha256": "74881a6f7af9f3dcacbee72cf148020467bba5fac5dec4b5349a614397455e32",
+      "bytes": 390551132,
+      "role": "raster",
+      "product_id": "DTEEC_009149_1750_009294_1750_U01"
+    }
+  ]
+}
