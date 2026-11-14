@@ -9,7 +9,7 @@ Every font, icon set, library, image, tile source and data layer used by the app
 | Space Grotesk | 400, 500, 600, 700 (Latin subset, woff2) | https://github.com/floriankarsten/space-grotesk, files taken from the `@fontsource/space-grotesk@5.3.0` npm package | SIL Open Font License 1.1 (`frontend/public/fonts/OFL-Space-Grotesk.txt`) | Headings, labels, body text (`--font-sans`) |
 | IBM Plex Mono | 400, 500, 600 (Latin subset, woff2) | https://github.com/IBM/plex, files taken from the `@fontsource/ibm-plex-mono@5.3.0` npm package | SIL Open Font License 1.1 (`frontend/public/fonts/OFL-IBM-Plex-Mono.txt`) | Numbers, coordinates, distances (`--font-mono`) |
 
-Files live in `frontend/public/fonts/`. The fontsource packages were used only to download the files; they are not project dependencies. Fallback stacks are in `frontend/src/styles/tokens.css`.
+Files live in `frontend/public/fonts/`; the landing page (`landing/public/fonts/`) uses a copy of the same files (Space Grotesk 400 to 700, IBM Plex Mono 400 and 500). The fontsource packages were used only to download the files; they are not project dependencies. Fallback stacks are in `frontend/src/styles/tokens.css`.
 
 ## Libraries
 
@@ -23,6 +23,14 @@ Files live in `frontend/public/fonts/`. The fontsource packages were used only t
 | @types/node | 22.20.5 | MIT | Types for the built-in `node:test` runner used by unit tests (dev only, never shipped) |
 
 Unit tests use Node's built-in test runner (`npm test`); no test framework was added.
+
+## Landing page (`landing/`)
+
+- No images. The hero is an inline SVG (topographic contour lines, a dashed route and three stops) generated at runtime from a sine-based height function in `landing/src/main.ts`. Project-authored.
+- No third-party requests at runtime: no Google Fonts, no CDN scripts, no analytics.
+- Runtime dependencies: none. Build tools only (`vite`, `typescript`, same versions as the planner).
+- Text content is drawn from `docs/` (research notes and the system specification). Links in its footer point to the sources listed there.
+- Not used, on purpose: the AI-generated images that the earlier "Redline" concept (github.com/Arthurmyn/Nasa-mars) loaded from images.higgs.ai. They are third-party hosted and AI-generated; if they are added later, the license and the AI disclosure must be recorded here.
 
 ## Icons
 
