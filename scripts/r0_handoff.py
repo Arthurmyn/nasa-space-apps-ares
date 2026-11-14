@@ -8,6 +8,8 @@ from pyproj import CRS, Transformer
 from shapely.geometry import MultiPoint, Point, mapping
 from shapely.ops import transform
 
+from scripts.r0_approval import apply_approval
+
 
 def make_handoff(
     native_footprint,
@@ -17,6 +19,8 @@ def make_handoff(
     *,
     planning_points: list[dict] | None = None,
     buffer_m: float = 100,
+    planning_points_sha256: str | None = None,
+    planning_approval: dict | None = None,
 ) -> dict:
     if not math.isfinite(buffer_m) or buffer_m <= 0:
         raise ValueError("AOI buffer must be a positive finite distance in meters")
@@ -58,7 +62,7 @@ def make_handoff(
     geographic_aoi = transform(to_geo.transform, aoi)
     if not geographic_aoi.covers(Point(longitude, latitude)):
         raise ValueError("AOI center outside proposed footprint")
-    return {
+    handoff = {
         "schema": "ares.r0-handoff/v1",
         "region_id": "GALE-BX",
         "decision": "campaign-covered",
@@ -89,3 +93,11 @@ def make_handoff(
         },
         "coverage_evidence": evidence,
     }
+    apply_approval(
+        handoff["aoi_proposal"],
+        metadata,
+        planning_points,
+        planning_points_sha256,
+        planning_approval,
+    )
+    return handoff

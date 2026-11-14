@@ -7,6 +7,7 @@ GeoJSON coordinates in this workflow are Mars planetocentric degrees, NOT WGS84.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 from datetime import datetime, timezone
@@ -23,40 +24,11 @@ from shapely.geometry import Point, mapping, shape
 from shapely.ops import transform, unary_union
 
 from scripts.r0_handoff import make_handoff
-from scripts.r0_sources import MANIFEST, load_inputs, sha256
+from scripts.r0_sources import load_inputs
+from scripts.r0_waypoints import COORDINATES, MANIFEST, WAYPOINT_URL, select_waypoints
 
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt  # noqa: E402
-
-WAYPOINT_URL = "https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json"
-COORDINATES = "Mars planetocentric latitude; east longitude; degrees; NOT EPSG:4326"
-
-
-def select_waypoints(collection: dict) -> list[dict]:
-    """Keep all available drive positions in the inclusive campaign interval."""
-    selected = []
-    for feature in collection["features"]:
-        try:
-            sol = float(feature.get("properties", {}).get("sol"))
-        except (TypeError, ValueError):
-            continue
-        if 4534 <= sol <= 4805:
-            if not sol.is_integer():
-                raise ValueError("Campaign waypoint must have an integer sol")
-            geometry = feature.get("geometry", {})
-            coords = geometry.get("coordinates", [])
-            if (
-                geometry.get("type") != "Point"
-                or len(coords) < 2
-                or not np.isfinite(coords[:2]).all()
-                or not 0 <= coords[0] <= 360
-                or not -90 <= coords[1] <= 90
-            ):
-                raise ValueError(f"Invalid Mars waypoint at sol {sol}")
-            selected.append(feature | {"properties": feature["properties"] | {"sol": int(sol)}})
-    if not selected:
-        raise ValueError("No waypoints in sols 4534–4805")
-    return sorted(selected, key=lambda f: f["properties"]["sol"])
 
 
 def footprint(path: Path) -> tuple:
@@ -210,17 +182,24 @@ def run(
     verify_inputs: bool = False,
     planning_points: Path | None = None,
     aoi_buffer_m: float = 100,
+    planning_approval: Path | None = None,
+    retry_source: bool = False,
 ) -> dict:
+    if planning_approval and not planning_points:
+        raise ValueError("--planning-approval requires --planning-points")
     handoff_path = handoff_path or output / "gale_bx_handoff.json"
     evidence = Path(
         os.path.relpath((output / "r0_result.json").resolve(), handoff_path.parent.resolve())
     ).as_posix()
-    inputs, source_records = load_inputs(raw, manifest, fetch=fetch, force=verify_inputs)
+    inputs, source_records = load_inputs(
+        raw, manifest, fetch=fetch, force=verify_inputs, retry_source=retry_source
+    )
     waypoints = select_waypoints(json.loads(inputs.pop("waypoints").read_text(encoding="utf-8")))
     rover_coordinates = rover_crs_check(waypoints)
     output.mkdir(parents=True, exist_ok=True)
     results, geometries, native_geometries = [], {}, {}
     source_urls = {item["file"]: item["url"] for item in source_records}
+    source_hashes = {item["file"]: item["sha256"] for item in source_records}
     for product, path in inputs.items():
         url = source_urls[path.name]
         print(f"Polygonizing {product}", flush=True)
@@ -234,6 +213,7 @@ def run(
             {
                 "product_id": product,
                 "source_url": url,
+                "source_sha256": source_hashes[path.name],
                 **metadata,
                 **coverage(geographic, waypoints),
             }
@@ -254,8 +234,12 @@ def run(
     selected = select_candidate(results)
     center, handoff, aoi = None, None, None
     extra_points = []
+    planning_bytes, approval_bytes, points_digest = None, None, None
+    approval = None
     if planning_points:
-        collection = json.loads(planning_points.read_text(encoding="utf-8"))
+        planning_bytes = planning_points.read_bytes()
+        points_digest = hashlib.sha256(planning_bytes).hexdigest()
+        collection = json.loads(planning_bytes)
         if collection.get("type") != "FeatureCollection":
             raise ValueError("--planning-points must contain a GeoJSON FeatureCollection of Points")
         extra_points = collection["features"]
@@ -263,11 +247,21 @@ def run(
             {
                 "file": planning_points.name,
                 "role": "planning-points",
-                "sha256": sha256(planning_points),
-                "bytes": planning_points.stat().st_size,
+                "sha256": points_digest,
+                "bytes": len(planning_bytes),
             }
         )
-        (output / "planning_points.geojson").write_bytes(planning_points.read_bytes())
+    if planning_approval:
+        approval_bytes = planning_approval.read_bytes()
+        approval = json.loads(approval_bytes)
+        source_records.append(
+            {
+                "role": "planning-approval",
+                "file": planning_approval.name,
+                "sha256": hashlib.sha256(approval_bytes).hexdigest(),
+                "bytes": len(approval_bytes),
+            }
+        )
     if selected:
         chosen = next(r for r in results if r["product_id"] == selected)
         handoff = make_handoff(
@@ -277,6 +271,8 @@ def run(
             evidence,
             planning_points=extra_points,
             buffer_m=aoi_buffer_m,
+            planning_points_sha256=points_digest,
+            planning_approval=approval,
         )
         center = handoff["aoi_proposal"]["centre_lonlat_E"]
         aoi = handoff["aoi_proposal"]["aoi_geojson"]
@@ -316,6 +312,16 @@ def run(
     )
     if handoff:
         write_json(handoff_path, handoff)
+        # Only reconcile artifacts after a successful handoff; failures preserve accepted inputs.
+        for name, payload in (
+            ("planning_points.geojson", planning_bytes),
+            ("planning_approval.json", approval_bytes),
+        ):
+            artifact = output / name
+            if payload is None:
+                artifact.unlink(missing_ok=True)
+            else:
+                artifact.write_bytes(payload)
     plot_overlay(geometries, waypoints, center, output / "r0_overlay.png", aoi)
     return result
 
@@ -334,6 +340,16 @@ def main() -> None:
     )
     parser.add_argument("--verify-inputs", action="store_true", help="Rehash all cached rasters")
     parser.add_argument(
+        "--retry-source",
+        action="store_true",
+        help="Explicitly retry a previously rejected source; requires --download",
+    )
+    parser.add_argument(
+        "--planning-approval",
+        type=Path,
+        help="Review record bound to the exact planning points, AOI and DTM hashes",
+    )
+    parser.add_argument(
         "--planning-points",
         type=Path,
         help="Mars GeoJSON Points for all finalized R6 targets and D9 habitat",
@@ -345,6 +361,8 @@ def main() -> None:
         help="AOI margin around rover and planning points in native DTM meters",
     )
     args = parser.parse_args()
+    if args.retry_source and not args.download:
+        parser.error("--retry-source requires --download")
     result = run(
         args.raw,
         args.output,
@@ -353,6 +371,8 @@ def main() -> None:
         verify_inputs=args.verify_inputs,
         planning_points=args.planning_points,
         aoi_buffer_m=args.aoi_buffer_m,
+        planning_approval=args.planning_approval,
+        retry_source=args.retry_source,
     )
     print(json.dumps({k: result[k] for k in ("decision", "selected_dtm", "center_lon_lat")}))
     if result["selected_dtm"] is None:

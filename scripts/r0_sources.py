@@ -8,7 +8,13 @@ from pathlib import Path
 
 import requests
 
-MANIFEST = Path(__file__).with_name("r0_inputs.json")
+
+class CacheIntegrityError(ValueError):
+    """Local cached bytes disagree with the pinned input."""
+
+
+class SourceMismatchError(ValueError):
+    """A complete remote response disagrees with the pin, independently of local cache."""
 
 
 def sha256(path: Path) -> str:
@@ -54,7 +60,7 @@ def validate_cached(path: Path, expected: str, *, force: bool = False) -> str:
         return expected
     actual = sha256(path)
     if actual != expected or signature(path) != before:
-        raise ValueError(
+        raise CacheIntegrityError(
             f"SHA-256 mismatch or file changed during verification: {path}. "
             "Repair with: python -m scripts.r0_coverage --download --verify-inputs "
             "(include the same --raw path if customized). "
@@ -65,9 +71,21 @@ def validate_cached(path: Path, expected: str, *, force: bool = False) -> str:
     return actual
 
 
-def download(url: str, path: Path, expected: str, size: int) -> str:
+def download(url: str, path: Path, expected: str, size: int, *, retry_source: bool = False) -> str:
     """Hash decoded bytes while streaming; never publish unverified downloads."""
     path.parent.mkdir(parents=True, exist_ok=True)
+    rejected_path = path.with_name(path.name + ".source-mismatch.json")
+    key = {"url": url, "expected_sha256": expected, "expected_bytes": size}
+    try:
+        rejected = json.loads(rejected_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        rejected = {}
+    if not retry_source and rejected.get("input") == key:
+        raise SourceMismatchError(
+            f"Previously rejected source response for {url}; no network download attempted. "
+            f"Details: {rejected_path}. Review the source/pin, then use --download --retry-source "
+            "for an explicit retry. Updating the reviewed pin also permits a new download."
+        )
     temporary = path.with_suffix(path.suffix + ".part")
     digest, length = hashlib.sha256(), 0
     try:
@@ -86,18 +104,37 @@ def download(url: str, path: Path, expected: str, size: int) -> str:
             if wire_size and encoding == "identity" and length != int(wire_size):
                 raise ValueError(f"Incomplete download: {url}")
         actual = digest.hexdigest()
-        if actual != expected:
-            raise ValueError(f"SHA-256 mismatch for pinned source: {url}")
-        if length != size:
-            raise ValueError(f"Decoded size mismatch for pinned source: {url}")
+        if actual != expected or length != size:
+            rejected_path.write_text(
+                json.dumps(
+                    {
+                        "input": key,
+                        "received_sha256": actual,
+                        "received_bytes": length,
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            raise SourceMismatchError(
+                f"SHA-256 source response differs from the pin: {url}. "
+                f"Expected {expected} ({size} bytes), received {actual} ({length} bytes). "
+                "This is a remote response mismatch, not proof of corrupt local cache. "
+                "The archive may have changed, or the transferred content may differ. "
+                f"Details saved to {rejected_path}; repeated downloads are blocked. "
+                "Review before using --download --retry-source; pins were not updated."
+            )
         temporary.replace(path)
         save_receipt(path, actual)
+        rejected_path.unlink(missing_ok=True)
         return actual
     finally:
         temporary.unlink(missing_ok=True)
 
 
-def load_inputs(raw: Path, manifest: Path, *, fetch: bool, force: bool) -> tuple[dict, list]:
+def load_inputs(
+    raw: Path, manifest: Path, *, fetch: bool, force: bool, retry_source: bool = False
+) -> tuple[dict, list]:
     inputs, records = {}, []
     for entry in json.loads(manifest.read_text(encoding="utf-8"))["inputs"]:
         snapshot = entry.get("snapshot")
@@ -110,14 +147,18 @@ def load_inputs(raw: Path, manifest: Path, *, fetch: bool, force: bool) -> tuple
         elif path.exists():
             try:
                 digest = validate_cached(path, entry["sha256"], force=force)
-            except ValueError:
+            except CacheIntegrityError:
                 if not fetch:
                     raise
                 print(f"Repairing corrupt cache: {path}", flush=True)
-                digest = download(entry["url"], path, entry["sha256"], entry["bytes"])
+                digest = download(
+                    entry["url"], path, entry["sha256"], entry["bytes"], retry_source=retry_source
+                )
         elif fetch:
             print(f"Downloading {entry['file']}", flush=True)
-            digest = download(entry["url"], path, entry["sha256"], entry["bytes"])
+            digest = download(
+                entry["url"], path, entry["sha256"], entry["bytes"], retry_source=retry_source
+            )
         else:
             raise FileNotFoundError(f"Missing {path}; run with --download")
         if path.stat().st_size != entry["bytes"]:

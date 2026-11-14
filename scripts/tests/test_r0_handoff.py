@@ -23,6 +23,7 @@ def inputs():
         "crs_proj": "+proj=eqc +lon_0=137.4 +R=3396190 +units=m",
         "pixel_size_m": [1.0117467945795, 1.0117467945795],
         "radius_m": 3396190,
+        "source_sha256": "a" * 64,
     }
     return box(-2000, northing - 2000, 2000, northing + 2000), metadata, [point(137.4, -4.8)]
 
@@ -61,3 +62,85 @@ def test_invalid_aoi_buffer_is_rejected(buffer_m):
     native, metadata, rover = inputs()
     with pytest.raises(ValueError, match="buffer"):
         make_handoff(native, metadata, rover, "r0_result.json", buffer_m=buffer_m)
+
+
+def test_planning_readiness_requires_review_bound_to_points_and_extent():
+    native, metadata, rover = inputs()
+    points = [point(137.4, -4.8), point(137.41, -4.8)]
+    for feature, role in zip(points, ["habitat", "target"], strict=True):
+        feature["properties"]["role"] = role
+    digest = "1" * 64
+    proposed = make_handoff(
+        native,
+        metadata,
+        rover,
+        "r0_result.json",
+        planning_points=points,
+        planning_points_sha256=digest,
+    )
+    approval = {
+        "schema": "ares.r0-planning-approval/v1",
+        "reviewer": "test-reviewer",
+        "reviewed_on": "2026-11-14",
+        "evidence": ["test-only terrain QA record"],
+        "extent_sha256": proposed["aoi_proposal"]["extent_sha256"],
+        "planning_points_sha256": digest,
+        "checks": {
+            "r6_targets_finalized": True,
+            "d9_habitat_finalized": True,
+            "terrain_qa_passed": True,
+        },
+    }
+    approved = make_handoff(
+        native,
+        metadata,
+        rover,
+        "r0_result.json",
+        planning_points=points,
+        planning_points_sha256=digest,
+        planning_approval=approval,
+    )
+    assert approved["aoi_proposal"]["planning_ready"] is True
+    assert approved["aoi_proposal"]["planning_approval"]["reviewer"] == "test-reviewer"
+    with pytest.raises(ValueError, match="approval"):
+        make_handoff(
+            native,
+            metadata,
+            rover,
+            "r0_result.json",
+            planning_points=points,
+            planning_points_sha256=digest,
+            planning_approval=approval,
+            buffer_m=250,
+        )
+    with pytest.raises(ValueError, match="approval"):
+        make_handoff(
+            native,
+            metadata | {"source_sha256": "b" * 64},
+            rover,
+            "r0_result.json",
+            planning_points=points,
+            planning_points_sha256=digest,
+            planning_approval=approval,
+        )
+    with pytest.raises(ValueError, match="approval"):
+        make_handoff(
+            native,
+            metadata,
+            rover,
+            "r0_result.json",
+            planning_points=points,
+            planning_points_sha256="2" * 64,
+            planning_approval=approval,
+        )
+    approval["checks"]["terrain_qa_passed"] = False
+    with pytest.raises(ValueError, match="approval"):
+        make_handoff(
+            native,
+            metadata,
+            rover,
+            "r0_result.json",
+            planning_points=points,
+            planning_points_sha256=digest,
+            planning_approval=approval,
+        )

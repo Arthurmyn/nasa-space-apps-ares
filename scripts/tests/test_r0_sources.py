@@ -134,3 +134,30 @@ def test_download_repairs_corrupt_cache_with_pinned_bytes(gzip_source, tmp_path)
     assert inputs["A"].read_bytes() == payload
     assert records[0]["sha256"] == digest
     assert r0_sources.validate_cached(path, digest) == digest
+
+
+def test_source_mismatch_is_distinct_and_blocks_repeated_download(
+    gzip_source, tmp_path, monkeypatch
+):
+    url, payload = gzip_source
+    path = tmp_path / "raster.IMG"
+    with pytest.raises(r0_sources.SourceMismatchError, match="source response differs"):
+        r0_sources.download(url, path, "0" * 64, len(payload))
+
+    def unexpected_request(*args, **kwargs):
+        raise AssertionError("mismatching source was downloaded again")
+
+    monkeypatch.setattr(r0_sources.requests, "get", unexpected_request)
+    with pytest.raises(r0_sources.SourceMismatchError, match="--retry-source"):
+        r0_sources.download(url, path, "0" * 64, len(payload))
+
+
+def test_source_mismatch_allows_explicit_retry_or_new_pin(gzip_source, tmp_path):
+    url, payload = gzip_source
+    path = tmp_path / "raster.IMG"
+    with pytest.raises(r0_sources.SourceMismatchError):
+        r0_sources.download(url, path, "0" * 64, len(payload))
+    with pytest.raises(r0_sources.SourceMismatchError, match="source response differs"):
+        r0_sources.download(url, path, "0" * 64, len(payload), retry_source=True)
+    digest = hashlib.sha256(payload).hexdigest()
+    assert r0_sources.download(url, path, digest, len(payload)) == digest
