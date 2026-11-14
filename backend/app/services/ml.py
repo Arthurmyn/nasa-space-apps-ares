@@ -23,7 +23,7 @@ class ModelService:
 
     def load(self) -> None:
         if not settings.model_path.exists():
-            log.warning("Model not found at %s — run `python -m ml.src.train`", settings.model_path)
+            log.warning("Model not found at %s - run `python -m ml.src.train`", settings.model_path)
             return
         self._model = inference.load_model(settings.model_path)
         log.info("Model loaded from %s", settings.model_path)
