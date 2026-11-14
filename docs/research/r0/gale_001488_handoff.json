@@ -1,0 +1,50 @@
+{
+  "schema": "ares.r0-handoff/v1",
+  "site_id": "gale-001488",
+  "site_name": "Gale crater: HiRISE DTM 001488 area",
+  "region_id": "GALE-001488",
+  "decision": "dtm-footprint-only",
+  "dtm_product_id": "DTEEC_001488_1750_001752_1750_U02",
+  "aoi_proposal": {
+    "status": "preliminary; no rover positions inside this DTM, the AOI only sits where the valid data is deepest",
+    "planning_ready": false,
+    "aoi_geojson": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            137.3114341586199,
+            -4.90691466515385
+          ],
+          [
+            137.3114341586199,
+            -4.892405944975871
+          ],
+          [
+            137.30073283158808,
+            -4.892405944975871
+          ],
+          [
+            137.30073283158808,
+            -4.90691466515385
+          ],
+          [
+            137.3114341586199,
+            -4.90691466515385
+          ]
+        ]
+      ]
+    },
+    "centre_lonlat_E": [
+      137.30608349510442,
+      -4.899660305064863
+    ],
+    "crs_proj": "+proj=eqc +lat_ts=-4.899660305065 +lat_0=-4.899660305065 +lon_0=137.306083495104 +R=3396190 +units=m +no_defs",
+    "size_m": [
+      632.0,
+      860.0
+    ],
+    "center_method": "centre of the maximum inscribed circle of the largest valid-footprint polygon",
+    "source_footprint": "docs/research/r0/DTEEC_001488_1750_001752_1750_U02_footprint.geojson"
+  }
+}
