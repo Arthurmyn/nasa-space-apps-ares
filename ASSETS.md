@@ -158,6 +158,16 @@ Planning assumptions (`assumptions.json`) are a copy of the `gale-bx` ones: the 
 
 The two source systems may use planetocentric or planetographic latitude; the markers are for orientation at planet scale, not for navigation.
 
+## Geology (SIM 3292)
+
+`backend/data/<site>/geology.json` for `gale-bx` and `gale-001488` (format: `docs/DATA_CONTRACT.md`, section 11), served by `GET /api/v1/geology`.
+
+| Item | Source | License | Where used |
+|------|--------|---------|------------|
+| Geologic unit of each site | Tanaka, K.L., Skinner, J.A., Jr., Dohm, J.M., Irwin, R.P., III, Kolb, E.J., Fortezzo, C.M., Platz, T., Michael, G.G., and Hare, T.M., 2014, Geologic map of Mars: USGS Scientific Investigations Map 3292, scale 1:20,000,000, `https://pubs.usgs.gov/sim/3292/`, DOI `10.3133/sim3292`. Database ZIP `https://pubs.usgs.gov/sim/3292/downloads/sim3292_database.zip` (808,910,442 bytes; only the member `SIM3292_Shapefiles/SIM3292_Global_Geology.shp`, 63,803,656 bytes, sha256 `9c0fbc204c1c7f108a854036d85f44c77531e85e0c03959eaea2b6cd33197f3a`, was read, with HTTP range requests, on 15 Nov 2026). Both sites fall in the polygon `Htu`, "Hesperian transition undivided unit". Checks of the read: Olympus Mons falls in `Ave` (Amazonian volcanic edifice), the Hellas basin in `lHb`, the Viking 1 site in `Hto` | USGS publication; the database metadata lists fees as "None" and states no other terms. TODO(team) confirm the terms of use before submission. Credit: U.S. Geological Survey | `GET /api/v1/geology` |
+
+The database holds the unit code (`Unit`) and a short description (`UnitDesc`) only; the long unit descriptions are in the map's Description of Map Units (`https://pubs.usgs.gov/sim/3292/pdf/sim3292_dmu_with_locality_images.pdf`). The scale is 1:20,000,000: a site of a few square kilometres is inside one regional unit.
+
 ## Weather (REMS)
 
 `GET /api/v1/conditions` proxies the Curiosity REMS (Rover Environmental Monitoring Station) weather feed, `https://mars.nasa.gov/rss/api/?feed=weather&category=msl&feedtype=json`, read on 15 November 2026 (4,745 sols, the newest sol 4995). The feed states: "The information contained into this file is provided by Centro de Astrobiologia (CAB) and is intended for outreach purposes only. Any other use is discouraged." The app shows that disclaimer with the data. Credit used: Centro de Astrobiologia (CAB, CSIC-INTA) and NASA, Mars Science Laboratory REMS. No license text beyond that disclaimer was found; TODO(team) confirm the terms before the data is shown to users. Nothing from the feed is stored in the repository: the backend caches it in memory for an hour. The values describe the rover's own position, not a planned route.
