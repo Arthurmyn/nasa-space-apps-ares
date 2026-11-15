@@ -282,6 +282,24 @@
   border-top-style: dotted;
 }
 
+.legend__swatch--traverse {
+  border-color: var(--traverse);
+  border-top-width: 2px;
+  border-top-style: dashed;
+}
+
+.legend__dot {
+  width: 7px;
+  height: 7px;
+  margin-left: -14px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--bg);
+}
+
+.legend__dot--traverse {
+  background: var(--traverse);
+}
+
 .legend__swatch--steep {
   border-color: var(--class-avoid);
   border-top-width: 5px;

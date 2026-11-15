@@ -270,3 +270,23 @@
     top: 104px;
   }
 }
+
+/* ---- Curiosity traverse tooltip (a MapLibre popup) ---- */
+.traverse-tip {
+  pointer-events: none;
+}
+
+.traverse-tip .maplibregl-popup-content {
+  padding: 4px 8px;
+  background: rgb(11 11 15 / 0.92);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  box-shadow: none;
+}
+
+.traverse-tip .maplibregl-popup-tip {
+  display: none;
+}

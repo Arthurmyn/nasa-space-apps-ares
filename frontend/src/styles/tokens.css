@@ -23,6 +23,7 @@
   --cyan: #7fe6c8; /* route and stops on the map, focus, cursor (the landing's mint) */
   --amber: #f0b45a; /* warning, caution */
   --hazard: #ff6b81; /* hazards, avoid */
+  --traverse: #f5d76e; /* Curiosity's own traverse on the map (not a class colour) */
   --ok: #7be0a8; /* within limits */
 
   /* HUD (3D view): the darker, violet-tinted palette of the design concept (docs/brand/hud-reference.png).

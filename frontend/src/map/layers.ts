@@ -9,6 +9,8 @@ export const SRC = {
   routeSlope: "ares-route-slope",
   alt: "ares-alt",
   hazards: "ares-hazards",
+  traverseLine: "ares-traverse",
+  traverseStops: "ares-traverse-points",
 } as const;
 
 export const LYR = {
@@ -16,6 +18,8 @@ export const LYR = {
   hazardFill: "ares-hazard-fill",
   hazardLine: "ares-hazard-line",
   alt: "ares-alt-line",
+  traverseLine: "ares-traverse-line",
+  traverseStops: "ares-traverse-stops",
   routeGlow: "ares-route-glow",
   routeCasing: "ares-route-casing",
   route: "ares-route-line",
@@ -104,6 +108,20 @@ export function addAresLayers(map: MapLibreMap, theme: MapTheme): void {
       source: SRC.route,
       layout: { "line-cap": "round", "line-join": "round" },
       paint: { "line-color": theme.cyan, "line-width": 16, "line-blur": 8, "line-opacity": 0.45 },
+    },
+    // Curiosity's own drive, yellow and dashed, under the route casing so the mint route stays on top.
+    {
+      id: LYR.traverseLine,
+      type: "line",
+      source: SRC.traverseLine,
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-color": theme.traverse, "line-width": 2, "line-dasharray": [2.5, 2], "line-opacity": 0.9 },
+    },
+    {
+      id: LYR.traverseStops,
+      type: "circle",
+      source: SRC.traverseStops,
+      paint: { "circle-radius": 3.5, "circle-color": theme.traverse, "circle-stroke-color": theme.bg, "circle-stroke-width": 1.25 },
     },
     {
       id: LYR.routeCasing,

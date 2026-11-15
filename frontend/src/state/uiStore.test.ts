@@ -22,3 +22,11 @@ test("subscribers are told once per real change", () => {
   off();
   assert.equal(calls, 2);
 });
+
+test("the Curiosity traverse is on by default and toggles", () => {
+  assert.equal(uiStore.get().traverseOn, true);
+  uiStore.toggleTraverse();
+  assert.equal(uiStore.get().traverseOn, false);
+  uiStore.toggleTraverse();
+  assert.equal(uiStore.get().traverseOn, true);
+});
