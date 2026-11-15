@@ -22,6 +22,13 @@ it("keeps validation arrays and malformed error bodies out of the message", asyn
   }
 });
 
+it("explains a rate limit (429) and a busy service (503) in plain words", async () => {
+  for (const [status, text] of [[429, "Too many route requests"], [503, "busy"]] as const) {
+    globalThis.fetch = async () => new Response(JSON.stringify({ detail: "x" }), { status });
+    await assert.rejects(requestJson("/route"), (e) => describeError(e).includes(text));
+  }
+});
+
 it("updates connection state after failure and recovery; 422 is reachable", async () => {
   globalThis.fetch = async () => { throw new TypeError("offline"); };
   await assert.rejects(requestJson("/layers"));

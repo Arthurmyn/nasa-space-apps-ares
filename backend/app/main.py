@@ -7,9 +7,10 @@ from app.api.routes import health, planner, space_weather
 from app.core.config import settings
 from app.services.donki import AdvisoryCache
 from app.services.grid import DATA_ROOT, default_site_id, load_grids
+from app.services.load import RouteGuard
 
 
-def create_app(data_dir=DATA_ROOT, donki_cache=None):
+def create_app(data_dir=DATA_ROOT, donki_cache=None, route_guard=None):
     """`data_dir` is the folder that holds one folder per site, or a single site folder."""
 
     @asynccontextmanager
@@ -21,6 +22,8 @@ def create_app(data_dir=DATA_ROOT, donki_cache=None):
         # The default site, for code that predates several sites.
         application.state.grid = grids[default] if default else None
         application.state.donki = donki_cache or AdvisoryCache()
+        # Created here, inside the event loop that serves the requests.
+        application.state.route_guard = route_guard() if route_guard else RouteGuard()
         yield
 
     application = FastAPI(title="Ares API", version="0.3.0", lifespan=lifespan)

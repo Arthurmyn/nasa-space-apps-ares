@@ -190,6 +190,17 @@ Same body as `POST /route`. Plans the same stops with hard slope limits of 10, 1
 
 The limits are used as given: this is an analysis, so 20 degrees is tried although the site data caps real routes at its own limit (15). The cost is `balanced`, or `fast` when the request says `fast`; `safe` is treated as `balanced`, because the limit is what varies. A point that is above a limit that is tried makes that limit unreachable (`reason`); a point outside the grid or on no-data is `422` with `status: "NO-GO"`, like `/route`.
 
+### Load limits for `POST /route` and `POST /route/sensitivity`
+
+Both run through one guard in `backend/app/services/load.py`, so a burst of requests cannot stall the backend:
+
+- The last 64 answers are kept by request body. The same request again (a profile toggled back, or the same stops sent to both endpoints) is answered at once and counts against no limit.
+- At most 2 computations run at a time. Another one waits up to 10 s, then gets `503` with `Retry-After: 5` and `detail` "The route service is busy...". A request whose client has disconnected while it waited (the app cancels a route when a point moves) is dropped without being computed.
+- One client address may start 120 computations per minute; over that it gets `429` with `Retry-After` in seconds.
+- The UI shows a plain message for `429` and `503` (`frontend/src/api/errors.ts`).
+
+The steep-slope regions behind `hazards` are cached per site for the 4 most recently used slope masks. The key is the number of stored slope values at or below the limit (slopes are stored in steps of `slope_unit_deg`), so any limit gives the exact same zones as before while the memory stays bounded.
+
 ### `GET /conditions`
 
 Curiosity REMS weather, proxied from `https://mars.nasa.gov/rss/api/?feed=weather&category=msl&feedtype=json` (provided by the Centro de Astrobiologia, for outreach) and cached in memory for one hour. Always `200`.

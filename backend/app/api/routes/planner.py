@@ -14,6 +14,7 @@ from app.schemas.route import (
 from app.services.conditions import get_conditions
 from app.services.geology import unit_at
 from app.services.grid import Grid
+from app.services.load import Busy
 from app.services.routing import route, sensitivity
 
 router = APIRouter(tags=["planner"])
@@ -94,17 +95,34 @@ def no_go(detail: str) -> JSONResponse:
     )
 
 
-@router.post("/route", response_model=RouteResponse, responses={422: {"description": "No route"}})
-def plan_route(body: RouteRequest, request: Request):
-    grid = resolve_grid(request, body.site_id)
+class NoGo(str):
+    """The reason a request has no route; answered as a 422."""
+
+
+async def guarded(request: Request, key, compute):
+    """Run `compute` through the app's RouteGuard (cache, queue, rate limit)."""
     try:
-        return route(grid, body)
-    except ValueError as exc:
-        return no_go(str(exc))
+        result = await request.app.state.route_guard.run(request, key, compute)
+    except Busy as busy:
+        return busy.response
+    return no_go(result) if isinstance(result, NoGo) else result
+
+
+@router.post("/route", response_model=RouteResponse, responses={422: {"description": "No route"}})
+async def plan_route(body: RouteRequest, request: Request):
+    grid = resolve_grid(request, body.site_id)
+
+    def compute():
+        try:
+            return route(grid, body)
+        except ValueError as exc:
+            return NoGo(str(exc))
+
+    return await guarded(request, ("route", grid.site.id, body.model_dump_json()), compute)
 
 
 @router.post("/route/sensitivity", response_model=SensitivityResponse)
-def route_sensitivity(body: RouteRequest, request: Request):
+async def route_sensitivity(body: RouteRequest, request: Request):
     """The same stops with hard slope limits of 10, 15 and 20 degrees: the cost, or why it fails."""
     grid = resolve_grid(request, body.site_id)
     try:
@@ -113,7 +131,11 @@ def route_sensitivity(body: RouteRequest, request: Request):
             grid.cell_index(point)
     except ValueError as exc:
         return no_go(str(exc))
-    return {"site_id": grid.site.id, "results": sensitivity(grid, body)}
+
+    def compute():
+        return {"site_id": grid.site.id, "results": sensitivity(grid, body)}
+
+    return await guarded(request, ("sensitivity", grid.site.id, body.model_dump_json()), compute)
 
 
 @router.get("/conditions")
