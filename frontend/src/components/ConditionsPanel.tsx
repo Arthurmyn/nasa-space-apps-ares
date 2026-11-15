@@ -51,15 +51,29 @@ const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object
 const isAdvisory = (v: unknown): v is Advisory => isObj(v) && typeof v.label === "string" && isObj(v.events) && Array.isArray(v.window);
 const isWeather = (v: unknown): v is Weather => isObj(v) && typeof v.label === "string" && isObj(v.values) && isObj(v.query);
 
-/** "2026-11-13T12:00Z" -> "2026-11-13 12:00 UTC". */
-export function utcLabel(iso: string | null): string {
+/** "8 Nov" from "2026-11-08" or a full ISO time, read in UTC. */
+export function dayLabel(iso: string | null): string {
   if (!iso) return "–";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return `${d.toISOString().slice(0, 16).replace("T", " ")} UTC`;
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
 }
 
-const kelvinToC = (k: number) => `${(k - 273.15).toFixed(0)} °C`;
+/** "8 Nov, 12:00 UTC". */
+export function dayTimeLabel(iso: string | null): string {
+  if (!iso) return "–";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return `${dayLabel(iso)}, ${d.toISOString().slice(11, 16)} UTC`;
+}
+
+/** Whole number with a real minus sign (U+2212), so negatives line up and read as numbers. */
+export const signed = (v: number): string => {
+  const n = Math.round(v);
+  return n < 0 ? `−${Math.abs(n)}` : String(n);
+};
+
+const kelvinToC = (k: number) => `${signed(k - 273.15)} °C`;
 
 function SpaceWeatherCard() {
   const load = useJson(apiUrl("/donki"), isAdvisory);
@@ -83,8 +97,8 @@ function SpaceWeatherCard() {
             <li>SEP events: {load.data.events.SEP?.count ?? "–"}</li>
           </ul>
           <p className="legend__note">
-            {load.data.window[0]} to {load.data.window[1]}, fetched {utcLabel(load.data.fetched_at_utc)}
-            {load.data.status === "incomplete" ? ", some feeds failed" : ""}
+            {dayLabel(load.data.window[0])} – {dayLabel(load.data.window[1])}, updated {dayTimeLabel(load.data.fetched_at_utc)}
+            {load.data.status === "incomplete" ? ". Some feeds failed" : ""}
           </p>
           {load.data.mars_cme_arrivals && (
             <div className="conditions__sub">
@@ -95,8 +109,8 @@ function SpaceWeatherCard() {
                 <ul className="conditions__list mono">
                   {load.data.mars_cme_arrivals.items.map((a) => (
                     <li key={`${a.cme_id}-${a.arrival_utc}`}>
-                      {utcLabel(a.arrival_utc)}
-                      {a.glancing_blow ? ", glancing blow" : ""}
+                      {dayTimeLabel(a.arrival_utc)}
+                      {a.glancing_blow ? " · glancing blow" : ""}
                     </li>
                   ))}
                 </ul>
@@ -111,10 +125,10 @@ function SpaceWeatherCard() {
 }
 
 const WEATHER_ROWS: ReadonlyArray<{ key: string; name: string; fmt: (v: number) => string }> = [
-  { key: "surface_temperature_K", name: "Ground temperature", fmt: kelvinToC },
-  { key: "air_temperature_10m_K", name: "Air at 10 m", fmt: kelvinToC },
-  { key: "surface_pressure_Pa", name: "Surface pressure", fmt: (v) => `${v.toFixed(0)} Pa` },
-  { key: "we_wind_ms", name: "W-E wind", fmt: (v) => `${v.toFixed(0)} m/s` },
+  { key: "surface_temperature_K", name: "Ground", fmt: kelvinToC },
+  { key: "air_temperature_10m_K", name: "Air, 10 m", fmt: kelvinToC },
+  { key: "surface_pressure_Pa", name: "Pressure", fmt: (v) => `${signed(v)} Pa` },
+  { key: "we_wind_ms", name: "Wind W–E", fmt: (v) => `${signed(v)} m/s` },
 ];
 
 function WeatherCard() {
@@ -135,8 +149,8 @@ function WeatherCard() {
                 <th scope="col">
                   <span className="sr-only">Quantity</span>
                 </th>
-                <th scope="col">min</th>
-                <th scope="col">max</th>
+                <th scope="col">Min</th>
+                <th scope="col">Max</th>
               </tr>
             </thead>
             <tbody>

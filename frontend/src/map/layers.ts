@@ -16,6 +16,7 @@ export const LYR = {
   hazardFill: "ares-hazard-fill",
   hazardLine: "ares-hazard-line",
   alt: "ares-alt-line",
+  routeGlow: "ares-route-glow",
   routeCasing: "ares-route-casing",
   route: "ares-route-line",
   slopeOk: "ares-slope-ok",
@@ -73,7 +74,8 @@ export function addAresLayers(map: MapLibreMap, theme: MapTheme): void {
       id: LYR.grid,
       type: "line",
       source: SRC.grid,
-      paint: { "line-color": theme.lineStrong, "line-width": 1, "line-opacity": 0.7 },
+      // Barely there: a reference only. The edge ticks carry the values.
+      paint: { "line-color": theme.text, "line-width": 0.5, "line-opacity": 0.1 },
     },
     {
       id: LYR.hazardFill,
@@ -94,19 +96,28 @@ export function addAresLayers(map: MapLibreMap, theme: MapTheme): void {
       layout: { "line-cap": "round", "line-join": "round" },
       paint: { "line-color": theme.muted, "line-width": 3, "line-dasharray": [2, 2], "line-opacity": 0.9 },
     },
+    // Route: a soft mint glow, a dark casing that separates it from the grey imagery, and a
+    // 6.5 px mint line on top. Mint reads better on greyscale HiRISE than the violet accent.
+    {
+      id: LYR.routeGlow,
+      type: "line",
+      source: SRC.route,
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-color": theme.cyan, "line-width": 16, "line-blur": 8, "line-opacity": 0.45 },
+    },
     {
       id: LYR.routeCasing,
       type: "line",
       source: SRC.route,
       layout: { "line-cap": "round", "line-join": "round" },
-      paint: { "line-color": theme.bg, "line-width": 9, "line-opacity": 0.85 },
+      paint: { "line-color": theme.bg, "line-width": 10, "line-opacity": 0.9 },
     },
     {
       id: LYR.route,
       type: "line",
       source: SRC.route,
       layout: { "line-cap": "round", "line-join": "round" },
-      paint: { "line-color": theme.accent, "line-width": 5 },
+      paint: { "line-color": theme.cyan, "line-width": 6.5 },
     },
     // Thin class-coloured centre line, shown only while the Slope layer is on. Dash style
     // differs per class so the information is not carried by colour alone.

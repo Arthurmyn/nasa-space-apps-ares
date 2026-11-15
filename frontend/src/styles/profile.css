@@ -103,7 +103,7 @@
 }
 
 .profile__stop-dot {
-  fill: var(--accent);
+  fill: var(--cyan);
 }
 
 .profile__stop-label {

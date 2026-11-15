@@ -15,7 +15,7 @@ import { CoordinateTicks, NorthArrow, ScaleBar, ZoomControls } from "./MapOverla
 import { addAresLayers, baseStyle } from "./layers.ts";
 import { getMapTheme, prefersReducedMotion } from "./theme.ts";
 import { useGridModel } from "./useGridModel.ts";
-import { useHazardLabels, useHoverMarker, usePinMarkers } from "./useMarkers.ts";
+import { useHoverMarker, usePinMarkers } from "./useMarkers.ts";
 import { useMapInteractions } from "./useMapInteractions.ts";
 import { useRasterLayers } from "./useRasterLayers.ts";
 import { useRouteOverlay } from "./useRouteOverlay.ts";
@@ -151,7 +151,6 @@ export default function MapView() {
     return () => cancelAnimationFrame(frame);
   }, [map, ui.leftCollapsed, ui.rightCollapsed]);
   usePinMarkers(map, entries, state.selectedId, { select: planner.select, move: planner.movePoint });
-  useHazardLabels(map, route?.hazards ?? []);
   useHoverMarker(map, route && !planner.stale ? route : null);
   useMapInteractions(map, {
     route,
