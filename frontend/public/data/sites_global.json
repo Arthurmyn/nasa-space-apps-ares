@@ -1,0 +1,206 @@
+[
+  {
+    "id": "gale-001488",
+    "name": "Gale crater: HiRISE DTM 001488 area",
+    "type": "active",
+    "lon": 137.30608,
+    "lat": -4.89966,
+    "note": "Second ARES site, from another HiRISE DTM of the Gale crater area. No science targets are listed for it.",
+    "source": {
+      "title": "ARES site metadata (backend/data/gale-001488/meta.json), HiRISE DTM, NASA/JPL/University of Arizona",
+      "url": "https://www.uahirise.org/dtm/"
+    }
+  },
+  {
+    "id": "gale-bx",
+    "name": "Gale crater: boxwork (Mount Sharp)",
+    "type": "active",
+    "lon": 137.3873,
+    "lat": -4.79575,
+    "note": "ARES planning site with a 1 m terrain grid from a HiRISE DTM. Routes, slopes and the 3D view are available.",
+    "source": {
+      "title": "ARES site metadata (backend/data/gale-bx/meta.json), HiRISE DTM, NASA/JPL/University of Arizona",
+      "url": "https://www.uahirise.org/dtm/"
+    }
+  },
+  {
+    "id": "viking-1",
+    "name": "Viking 1 lander",
+    "type": "landing",
+    "lon": -47.951,
+    "lat": 22.269,
+    "note": "Viking Lander 1 landing site.",
+    "source": {
+      "title": "PDS Geosciences Node, ODE: existing landing sites",
+      "url": "https://ode.rsl.wustl.edu/mars/pagehelp/Content/Missions_Instruments/Landing_Sites.htm"
+    }
+  },
+  {
+    "id": "viking-2",
+    "name": "Viking 2 lander",
+    "type": "landing",
+    "lon": 134.28,
+    "lat": 47.668,
+    "note": "Viking Lander 2 landing site, in Utopia Planitia.",
+    "source": {
+      "title": "PDS Geosciences Node, ODE: existing landing sites",
+      "url": "https://ode.rsl.wustl.edu/mars/pagehelp/Content/Missions_Instruments/Landing_Sites.htm"
+    }
+  },
+  {
+    "id": "pathfinder",
+    "name": "Mars Pathfinder",
+    "type": "landing",
+    "lon": -33.253,
+    "lat": 19.095,
+    "note": "Mars Pathfinder landing site.",
+    "source": {
+      "title": "PDS Geosciences Node, ODE: existing landing sites",
+      "url": "https://ode.rsl.wustl.edu/mars/pagehelp/Content/Missions_Instruments/Landing_Sites.htm"
+    }
+  },
+  {
+    "id": "spirit",
+    "name": "Spirit rover",
+    "type": "landing",
+    "lon": 175.47848,
+    "lat": -14.571892,
+    "note": "Mars Exploration Rover Spirit landing site, in Gusev crater (radiometric Doppler solution).",
+    "source": {
+      "title": "PDS Geosciences Node, ODE: existing landing sites",
+      "url": "https://ode.rsl.wustl.edu/mars/pagehelp/Content/Missions_Instruments/Landing_Sites.htm"
+    }
+  },
+  {
+    "id": "opportunity",
+    "name": "Opportunity rover",
+    "type": "landing",
+    "lon": -5.52583,
+    "lat": -1.9483,
+    "note": "Mars Exploration Rover Opportunity landing site, in Meridiani Planum (radiometric Doppler solution).",
+    "source": {
+      "title": "PDS Geosciences Node, ODE: existing landing sites",
+      "url": "https://ode.rsl.wustl.edu/mars/pagehelp/Content/Missions_Instruments/Landing_Sites.htm"
+    }
+  },
+  {
+    "id": "phoenix",
+    "name": "Phoenix lander",
+    "type": "landing",
+    "lon": -125.75,
+    "lat": 68.22,
+    "note": "Phoenix landing site.",
+    "source": {
+      "title": "PDS Geosciences Node, ODE: existing landing sites",
+      "url": "https://ode.rsl.wustl.edu/mars/pagehelp/Content/Missions_Instruments/Landing_Sites.htm"
+    }
+  },
+  {
+    "id": "curiosity",
+    "name": "Curiosity rover",
+    "type": "landing",
+    "lon": 137.44,
+    "lat": -4.59,
+    "note": "Mars Science Laboratory landing site in Gale crater, as given in the cited paper.",
+    "source": {
+      "title": "PDS Geosciences Node, ODE: existing landing sites",
+      "url": "https://ode.rsl.wustl.edu/mars/pagehelp/Content/Missions_Instruments/Landing_Sites.htm"
+    }
+  },
+  {
+    "id": "insight",
+    "name": "InSight lander",
+    "type": "landing",
+    "lon": 135.6234,
+    "lat": 4.5024,
+    "note": "InSight landing site, in Elysium Planitia.",
+    "source": {
+      "title": "Wikipedia: InSight",
+      "url": "https://en.wikipedia.org/wiki/InSight"
+    }
+  },
+  {
+    "id": "perseverance",
+    "name": "Perseverance rover",
+    "type": "landing",
+    "lon": 77.45,
+    "lat": 18.44,
+    "note": "Octavia E. Butler Landing, in Jezero crater.",
+    "source": {
+      "title": "Wikipedia: Octavia E. Butler Landing",
+      "url": "https://en.wikipedia.org/wiki/Octavia_E._Butler_Landing"
+    }
+  },
+  {
+    "id": "olympus-mons",
+    "name": "Olympus Mons",
+    "type": "landmark",
+    "lon": -133.8,
+    "lat": 18.65,
+    "note": "A large shield volcano, Mars's tallest volcano.",
+    "source": {
+      "title": "Wikipedia: Olympus Mons",
+      "url": "https://en.wikipedia.org/wiki/Olympus_Mons"
+    }
+  },
+  {
+    "id": "valles-marineris",
+    "name": "Valles Marineris",
+    "type": "landmark",
+    "lon": -59.2,
+    "lat": -13.9,
+    "note": "A system of canyons east of the Tharsis region, over 4,000 km long.",
+    "source": {
+      "title": "Wikipedia: Valles Marineris",
+      "url": "https://en.wikipedia.org/wiki/Valles_Marineris"
+    }
+  },
+  {
+    "id": "hellas-planitia",
+    "name": "Hellas Planitia",
+    "type": "landmark",
+    "lon": 70.5,
+    "lat": -42.4,
+    "note": "A plain inside the Hellas impact basin, in the southern hemisphere.",
+    "source": {
+      "title": "Wikipedia: Hellas Planitia",
+      "url": "https://en.wikipedia.org/wiki/Hellas_Planitia"
+    }
+  },
+  {
+    "id": "utopia-planitia",
+    "name": "Utopia Planitia",
+    "type": "landmark",
+    "lon": 117.5,
+    "lat": 46.7,
+    "note": "A large plain inside Utopia, the largest recognized impact basin on Mars.",
+    "source": {
+      "title": "Wikipedia: Utopia Planitia",
+      "url": "https://en.wikipedia.org/wiki/Utopia_Planitia"
+    }
+  },
+  {
+    "id": "elysium-mons",
+    "name": "Elysium Mons",
+    "type": "landmark",
+    "lon": 147.21,
+    "lat": 25.02,
+    "note": "A volcano in the Elysium volcanic province.",
+    "source": {
+      "title": "Wikipedia: Elysium Mons",
+      "url": "https://en.wikipedia.org/wiki/Elysium_Mons"
+    }
+  },
+  {
+    "id": "syrtis-major",
+    "name": "Syrtis Major Planum",
+    "type": "landmark",
+    "lon": 69.5,
+    "lat": 8.4,
+    "note": "A shield volcano on the boundary between the northern lowlands and the southern highlands.",
+    "source": {
+      "title": "Wikipedia: Syrtis Major Planum",
+      "url": "https://en.wikipedia.org/wiki/Syrtis_Major_Planum"
+    }
+  }
+]
