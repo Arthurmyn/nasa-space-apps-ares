@@ -1,15 +1,16 @@
-# Deploys main to the VPS. See deploy/README.md.
+# Deploys a commit to the VPS. See deploy/README.md.
+# Manual only: run it from the Actions tab ("Run workflow") and pick the branch, usually main.
+# Pushes never deploy on their own.
 name: Deploy
 
 on:
-  push:
   workflow_dispatch:
 
-# One deploy at a time: a newer push cancels the running one.
-# The server also holds a lock, so an interrupted deploy never overlaps the next.
+# One deploy at a time: a second run waits for the first instead of cancelling it.
+# The server also holds a lock, so deploys never overlap.
 concurrency:
   group: deploy-production
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read

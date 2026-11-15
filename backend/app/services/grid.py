@@ -47,6 +47,8 @@ class Grid:
         raw = np.fromfile(directory / "slope.bin", dtype=np.uint8)
         self.slope = raw.astype(float) * m["slope_unit_deg"]
         self.valid = (raw != m["slope_nodata"]) & np.isfinite(self.elevation)
+        # The distinct slope values, sorted: limits between two of them give the same steep mask.
+        self.slope_levels = np.unique(self.slope[self.valid])
         self.assumptions = a = read("assumptions")
         self.limit, self.caution, self.speed = map(
             float, (a["slope_limit_deg"], a["slope_caution_deg"], a["speed_kmh"])
@@ -76,7 +78,7 @@ class Grid:
         self.validation = read_validation(directory, m)
         stops = read("stops")
         self.site = Site(id=m["site_id"], name=m["name"], **stops)
-        for array in (self.elevation, self.slope, self.valid):
+        for array in (self.elevation, self.slope, self.valid, self.slope_levels):
             array.flags.writeable = False
 
     def xy(self, lon, lat):

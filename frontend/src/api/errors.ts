@@ -29,6 +29,12 @@ export function describeError(error: unknown, labelFor?: (pointId: string) => st
       if (error.status === 422 || error.status === 400) {
         return "The route service rejected these points. Move a stop and try again.";
       }
+      if (error.status === 429) {
+        return "Too many route requests in a short time. Wait a few seconds and the route will update.";
+      }
+      if (error.status === 503) {
+        return "The route service is busy. Retry in a few seconds.";
+      }
       if (error.status === 404) {
         return "The route service has no route endpoint yet. Check the API version.";
       }

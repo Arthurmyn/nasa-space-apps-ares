@@ -1,7 +1,10 @@
 # Deployment
 
-The site runs on one VPS (Ubuntu, Oracle Cloud). Every push to `main` deploys automatically
-through `.github/workflows/deploy.yml`.
+The site runs on one VPS (Ubuntu, Oracle Cloud). Deploys are manual: a push never deploys on its
+own. Deploy a commit in one of two ways:
+
+- GitHub: Actions -> Deploy -> Run workflow, on `main` (`.github/workflows/deploy.yml`).
+- SSH, as `deploy` on the server: `/srv/ares/bin/ssh-deploy <full commit sha>`.
 
 | Path | What it serves |
 |---|---|
@@ -14,15 +17,15 @@ delete it once the Vercel projects are disconnected from the repository.
 
 ## How a deploy works
 
-1. GitHub Actions connects as `deploy` with a key that may only run `ssh-deploy <commit sha>`.
+1. The workflow (or you, over SSH) connects as `deploy` with a key that may only run `ssh-deploy <commit sha>`.
 2. `ssh-deploy` takes a lock, fetches that commit into `/srv/ares/repo` and runs `deploy.sh`.
 3. `deploy.sh` builds `landing/` and `frontend/` in a `node:20-alpine` container into
    `/srv/ares/releases/<sha>/`, rebuilds the backend with `compose.yml` and waits until it is healthy.
 4. Only then `/srv/ares/current` is switched to the new release. Caddy serves from `current`.
 5. The workflow checks `$SITE_URL/api/v1/health`.
 
-One deploy at a time: a newer push cancels the running workflow, and the server lock makes the
-next deploy wait if the cancelled one is still finishing. A failed or cancelled deploy leaves the
+One deploy at a time: a second run waits for the first, and the server lock makes a deploy wait
+if another one is still finishing. A failed or cancelled deploy leaves the
 previous release live. The last 3 releases are kept.
 
 ## Server layout

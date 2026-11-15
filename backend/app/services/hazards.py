@@ -8,7 +8,8 @@ so the backend needs no extra dependency.
 
 from __future__ import annotations
 
-from collections import defaultdict
+import threading
+from collections import OrderedDict, defaultdict
 from dataclasses import dataclass
 from weakref import WeakKeyDictionary
 
@@ -22,26 +23,62 @@ MAX_ZONES = 8
 # Outline simplification, in cells. It is halved until no route point lies inside a zone.
 SIMPLIFY_CELLS = 1.0
 COORD_DIGITS = 7
+# Steep-region sets kept per grid. The planner uses two limits (the site limit and the caution
+# threshold), so a few entries cover normal use while keeping memory bounded.
+CACHE_ENTRIES = 4
+# Largest (cells x route points) distance matrix built at once when ranking regions.
+GAP_BLOCK = 1_000_000
 
 Vertex = tuple[int, int]  # (column edge, row edge) of the cell lattice; row edges grow southwards
 
 
 @dataclass(frozen=True)
 class Region:
-    cells: np.ndarray  # flat cell indices, sorted
-    rows: np.ndarray
-    cols: np.ndarray
+    cells: np.ndarray  # flat cell indices, sorted, int32
+    width: int
+
+    @property
+    def rows(self) -> np.ndarray:
+        return self.cells // self.width
+
+    @property
+    def cols(self) -> np.ndarray:
+        return self.cells % self.width
 
 
-_cache: WeakKeyDictionary[Grid, dict[float, list[Region]]] = WeakKeyDictionary()
+_cache: WeakKeyDictionary[Grid, OrderedDict[int, list[Region]]] = WeakKeyDictionary()
+_cache_lock = threading.Lock()
+
+
+def mask_key(grid: Grid, limit: float) -> int:
+    """How many distinct slope values of the grid are at or below ``limit``.
+
+    Slopes are stored in steps of ``slope_unit_deg``, so every limit between two stored values
+    gives the same steep mask. Caching by this count instead of the float limit keeps the result
+    exact while the number of possible keys stays small (at most 256).
+    """
+    return int(np.searchsorted(grid.slope_levels, limit, side="right"))
 
 
 def steep_regions(grid: Grid, limit: float) -> list[Region]:
-    """Regions of at least MIN_CELLS cells steeper than ``limit``; cached per grid and limit."""
-    per_grid = _cache.setdefault(grid, {})
-    if limit in per_grid:
-        return per_grid[limit]
+    """Regions of at least MIN_CELLS cells steeper than ``limit``; a few kept per grid (LRU)."""
+    key = mask_key(grid, limit)
+    with _cache_lock:
+        per_grid = _cache.setdefault(grid, OrderedDict())
+        if key in per_grid:
+            per_grid.move_to_end(key)
+            return per_grid[key]
 
+    regions = _find_regions(grid, limit)
+    with _cache_lock:
+        per_grid[key] = regions
+        per_grid.move_to_end(key)
+        while len(per_grid) > CACHE_ENTRIES:
+            per_grid.popitem(last=False)
+    return regions
+
+
+def _find_regions(grid: Grid, limit: float) -> list[Region]:
     width, height = grid.width, grid.height
     mask = (grid.valid & (grid.slope > limit)).tolist()
     seen = bytearray(width * height)
@@ -62,9 +99,10 @@ def steep_regions(grid: Grid, limit: float) -> list[Region]:
                         seen[nxt] = 1
                         stack.append(nxt)
         if len(members) >= MIN_CELLS:
-            cells = np.array(sorted(members), dtype=np.int64)
-            regions.append(Region(cells, cells // width, cells % width))
-    per_grid[limit] = regions
+            cells = np.array(members, dtype=np.int32)
+            cells.sort()
+            cells.flags.writeable = False
+            regions.append(Region(cells, width))
     return regions
 
 
@@ -191,9 +229,16 @@ def hazard_zones(
     route_xy = np.array(route, dtype=float)
 
     def gap(region: Region) -> float:
+        # Squared distance from the nearest cell centre to the nearest route point. The route is
+        # taken in chunks so a large region against a long route never builds a huge matrix.
         cx, cy = region.cols + 0.5, region.rows + 0.5
-        d = (cx[:, None] - route_xy[None, :, 0]) ** 2 + (cy[:, None] - route_xy[None, :, 1]) ** 2
-        return float(d.min())
+        step = max(1, GAP_BLOCK // len(cx))
+        best = np.inf
+        for i in range(0, len(route_xy), step):
+            part = route_xy[i : i + step]
+            d = (cx[:, None] - part[None, :, 0]) ** 2 + (cy[:, None] - part[None, :, 1]) ** 2
+            best = min(best, float(d.min()))
+        return best
 
     ranked = sorted(regions, key=lambda r: (gap(r), -len(r.cells)))[:MAX_ZONES]
 
