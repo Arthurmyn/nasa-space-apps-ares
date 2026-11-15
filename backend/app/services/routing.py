@@ -238,6 +238,18 @@ def go_status(
     return status, reasons
 
 
+READINESS_LEVEL = {"GO": "NOMINAL", "CAUTION": "MARGINAL", "NO-GO": "NOT_ADVISED"}
+
+
+def readiness(status: str, reasons: list[str]) -> dict:
+    """The `status` judgement under the readiness names.
+
+    NOT_ADVISED: no path, or the round trip is over the EVA limit. MARGINAL: steeper than the
+    caution slope, or the safe profile fell back. Otherwise NOMINAL.
+    """
+    return {"level": READINESS_LEVEL[status], "reasons": list(reasons)}
+
+
 def route(grid: Grid, request: RouteRequest, limit: float | None = None):
     effective = limit if limit is not None else min(grid.limit, request.constraints.max_slope_deg)
     profile = request.profile
@@ -348,6 +360,7 @@ def route(grid: Grid, request: RouteRequest, limit: float | None = None):
         eva_limit_s=grid.eva_limit_s,
         status=status,
         reasons=reasons,
+        readiness=readiness(status, reasons),
     )
 
 
