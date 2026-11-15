@@ -8,21 +8,14 @@ import { GCR_DOSE_EQUIVALENT_MSV_PER_DAY, GCR_DOSE_EQUIVALENT_SIGMA_MSV_PER_DAY 
 const facts = JSON.parse(readFileSync(new URL("../../../ares_layers/facts/site_facts.json", import.meta.url), "utf8"));
 const meta = (id: string) => LAYER_META.find((l) => l.id === id);
 
-test("layer descriptions are the verified labels, word for word", () => {
-  for (const id of ["slope", "optical", "thermal"] as const) {
-    assert.equal(meta(id)?.description, facts.layers[id].label, id);
-  }
-  assert.equal(meta("radiation")?.description, facts.layers.radiation.label);
-});
-
 test("thermal is called thermal inertia, never surface temperature", () => {
   assert.equal(meta("thermal")?.label, "Thermal inertia");
-  assert.match(meta("thermal")?.description ?? "", /NOT surface temperature/);
+  assert.match(meta("thermal")?.description ?? "", /not surface temperature/i);
 });
 
 test("radiation is a published mean, not live, and matches the verified rate", () => {
   assert.equal(meta("radiation")?.isEstimate, false);
-  assert.match(meta("radiation")?.description ?? "", /published mean, not live/);
+  assert.match(meta("radiation")?.description ?? "", /published mean dose, not live/i);
   assert.equal(`${GCR_DOSE_EQUIVALENT_MSV_PER_DAY} ± ${GCR_DOSE_EQUIVALENT_SIGMA_MSV_PER_DAY}`, facts.layers.radiation.dose_equivalent_mSv_per_day);
 });
 

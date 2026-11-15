@@ -21,7 +21,7 @@ export function DrivePathRow() {
             Full drive path
           </span>
           <span id="overlay-drive-desc" className="layer-row__desc">
-            The whole drive of Curiosity from the NASA traverse file, clipped to the area around the sites.
+            Curiosity's full drive path
           </span>
         </div>
         <button
@@ -58,23 +58,9 @@ export function DrivePathRow() {
               </button>
             </p>
           )}
-          {relation && relation.inside && <p className="legend__note">The rover drove through this site.</p>}
           {relation && !relation.inside && (
             <p className="legend__note legend__note--warn">
               <Icon name="info" size={12} /> The rover never drove through this site. The nearest part of its path is {formatDistance(relation.nearest.distanceM)} away, and the map shows it.
-            </p>
-          )}
-          {state.status === "ready" && (
-            <p className="legend__source">
-              Source:{" "}
-              {state.data.source.url ? (
-                <a href={state.data.source.url} target="_blank" rel="noreferrer">
-                  {state.data.source.title}
-                </a>
-              ) : (
-                state.data.source.title
-              )}
-              {state.data.source.fetchedUtc ? `, fetched ${state.data.source.fetchedUtc.slice(0, 10)}` : ""}. Simplified to a few metres.
             </p>
           )}
         </div>

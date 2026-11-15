@@ -12,10 +12,6 @@ export function ThermalInertiaCard() {
       <p className="value-card__value mono">
         355 ± 38 <span className="value-card__unit">J m⁻² K⁻¹ s⁻½</span>
       </p>
-      <p className="legend__note">
-        Published value for the layered sulfate unit that contains the boxwork (Fraeman et al. 2016, Table 2). No thermal
-        inertia raster for this site in this app.
-      </p>
     </div>
   );
 }
@@ -45,7 +41,6 @@ export function RadiationCard() {
           );
         })}
       </ul>
-      <p className="legend__note">Arithmetic on a published mean. No suit or habitat shielding, no solar particle events.</p>
     </div>
   );
 }
