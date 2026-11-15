@@ -15,13 +15,31 @@ CME = {
         {
             "speed": 726.0,
             "enlilList": [
-                {"link": "run1", "impactList": [
-                    {"location": "Mars", "arrivalTime": "2026-11-13T12:00Z", "isGlancingBlow": True},
-                    {"location": "STEREO A", "arrivalTime": "2026-11-12T00:00Z", "isGlancingBlow": False},
-                ]},
-                {"link": "run2", "impactList": [
-                    {"location": "Mars", "arrivalTime": "2026-11-13T12:00Z", "isGlancingBlow": True},
-                ]},
+                {
+                    "link": "run1",
+                    "impactList": [
+                        {
+                            "location": "Mars",
+                            "arrivalTime": "2026-11-13T12:00Z",
+                            "isGlancingBlow": True,
+                        },
+                        {
+                            "location": "STEREO A",
+                            "arrivalTime": "2026-11-12T00:00Z",
+                            "isGlancingBlow": False,
+                        },
+                    ],
+                },
+                {
+                    "link": "run2",
+                    "impactList": [
+                        {
+                            "location": "Mars",
+                            "arrivalTime": "2026-11-13T12:00Z",
+                            "isGlancingBlow": True,
+                        },
+                    ],
+                },
             ],
         }
     ],

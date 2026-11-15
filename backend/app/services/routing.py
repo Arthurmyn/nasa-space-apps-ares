@@ -4,7 +4,16 @@ from datetime import datetime, timezone
 from heapq import heappop, heappush
 from math import hypot, inf, sqrt
 
-from app.schemas.route import Assumption, ProfilePoint, RouteRequest, RouteResponse, RouteStop
+from app.schemas.route import (
+    Assumption,
+    ProfilePoint,
+    ReturnTrip,
+    RouteRequest,
+    RouteResponse,
+    RouteStats,
+    RouteStop,
+    SlopeClassPct,
+)
 from app.services.grid import Grid
 from app.services.hazards import hazard_zones
 
@@ -54,35 +63,57 @@ def astar(grid: Grid, start: int, goal: int, weights: list[float]):
     return None
 
 
-def route(grid: Grid, request: RouteRequest):
-    limit = min(grid.limit, request.constraints.max_slope_deg)
-    points = [request.start, *request.stops]
+# Cost of stepping onto a cell is length * (1 + k * (slope / limit)^2). "balanced" is the original
+# cost (k = 1); "fast" is less afraid of slopes (k = 0.5); "safe" keeps balanced costs but uses the
+# caution threshold as the hard limit.
+COST_FACTOR = {"fast": 0.5, "balanced": 1.0, "safe": 1.0}
+
+
+class Plan:
+    """The geometry and measurements of one planned path through a list of points."""
+
+    def __init__(self):
+        self.geometry: list[tuple[float, float]] = []
+        self.samples: list[ProfilePoint] = []
+        self.stops: list[RouteStop] = []
+        self.heading_segments: list[int] = []
+        self.distance = 0.0
+        self.maximum = 0.0
+        self.boundaries: set[int] = {0}
+
+
+def cost_weights(grid: Grid, limit: float, profile: str) -> list[float]:
+    weights = 1 + COST_FACTOR[profile] * (grid.slope / limit) ** 2
+    weights[~grid.valid | (grid.slope > limit)] = inf
+    return weights.tolist()
+
+
+def plan_path(grid: Grid, points, limit: float, profile: str) -> Plan:
+    """A* through `points` in order. Raises ValueError with a readable reason if no path exists."""
     indices = [grid.cell_index(p) for p in points]
     for point, index in zip(points, indices, strict=True):
         if grid.slope[index] > limit:
             raise ValueError(f"Point '{point.id}' exceeds the {limit:g} degree slope limit.")
-    weights = 1 + (grid.slope / limit) ** 2
-    weights[~grid.valid | (grid.slope > limit)] = inf
-    weights = weights.tolist()
-    geometry, samples, stops = [], [], []
-    heading_segments = []
-    distance, maximum = 0.0, 0.0
-    boundaries = {0}
+    weights = cost_weights(grid, limit, profile)
+    plan = Plan()
+    geometry, samples, stops = plan.geometry, plan.samples, plan.stops
+    heading_segments = plan.heading_segments
+    boundaries = plan.boundaries
     previous_xy = None
 
     def append(xy, index):
-        nonlocal distance, maximum, previous_xy
-        maximum = max(maximum, float(grid.slope[index]))
+        nonlocal previous_xy
+        plan.maximum = max(plan.maximum, float(grid.slope[index]))
         if previous_xy is not None:
             step = hypot(xy[0] - previous_xy[0], xy[1] - previous_xy[1])
             if step < 1e-9:
                 return None
-            distance += step
+            plan.distance += step
             heading_segments.append(len(geometry) - 1)
         geometry.append(grid.lonlat(*xy))
         samples.append(
             ProfilePoint(
-                dist_m=distance,
+                dist_m=plan.distance,
                 elev_m=float(grid.elevation[index]),
                 slope_deg=float(grid.slope[index]),
             )
@@ -132,11 +163,113 @@ def route(grid: Grid, request: RouteRequest):
                 name=point.name,
                 lon=point.lon,
                 lat=point.lat,
-                dist_m=distance,
+                dist_m=plan.distance,
                 note=catalog.note if catalog else None,
                 image=catalog.image if catalog else None,
             )
         )
+    return plan
+
+
+def travel_time_s(grid: Grid, distance_m: float) -> float:
+    return distance_m / (grid.speed / 3.6)
+
+
+def route_stats(plan: Plan, caution: float, limit: float) -> RouteStats:
+    """Share of the walk (by distance) in each slope class, and the total climb and descent."""
+    shares = {"ok": 0.0, "caution": 0.0, "avoid": 0.0}
+    climb = descent = 0.0
+    for a, b in zip(plan.samples[:-1], plan.samples[1:], strict=True):
+        step = b.dist_m - a.dist_m
+        slope = max(a.slope_deg, b.slope_deg)
+        shares["ok" if slope <= caution else "caution" if slope <= limit else "avoid"] += step
+        dz = b.elev_m - a.elev_m
+        climb += max(dz, 0.0)
+        descent += max(-dz, 0.0)
+    total = sum(shares.values())
+    if total <= 0:
+        pct = {"ok": 100.0, "caution": 0.0, "avoid": 0.0}
+    else:
+        pct = {k: round(100 * v / total, 1) for k, v in shares.items()}
+        pct["ok"] = round(
+            100.0 - pct["caution"] - pct["avoid"], 1
+        )  # the three always add up to 100
+    return RouteStats(slope_class_pct=SlopeClassPct(**pct), climb_m=climb, descent_m=descent)
+
+
+def go_status(
+    grid: Grid, maximum: float, round_trip_s: float | None, fallback: bool, limit: float
+) -> tuple[str, list[str]]:
+    """GO, CAUTION or NO-GO with the reasons, from the route's own numbers."""
+    reasons: list[str] = []
+    status = "GO"
+    eva = grid.eva_limit_s
+    if round_trip_s is None:
+        status = "NO-GO"
+        reasons.append("No path back to the start along the same stops.")
+    elif eva is not None and round_trip_s > eva:
+        status = "NO-GO"
+        reasons.append(
+            f"Round trip {round_trip_s / 3600:.1f} h exceeds the EVA time limit {eva / 3600:.1f} h."
+        )
+    if status != "NO-GO":
+        if maximum > grid.caution:
+            status = "CAUTION"
+            reasons.append(
+                f"Maximum slope {maximum:g} degrees is above the {grid.caution:g} degree "
+                f"caution threshold (route limit {limit:g} degrees)."
+            )
+        if fallback:
+            status = "CAUTION"
+            reasons.append(
+                f"The safe profile found no path under {grid.caution:g} degrees, "
+                f"so the {limit:g} degree limit was used."
+            )
+    if status == "GO":
+        reasons.append(
+            f"Maximum slope {maximum:g} degrees is within the {grid.caution:g} degree "
+            "caution threshold."
+        )
+        if eva is not None and round_trip_s is not None:
+            reasons.append(
+                f"Round trip {round_trip_s / 3600:.1f} h is within the EVA time limit "
+                f"{eva / 3600:.1f} h."
+            )
+    return status, reasons
+
+
+def route(grid: Grid, request: RouteRequest, limit: float | None = None):
+    effective = limit if limit is not None else min(grid.limit, request.constraints.max_slope_deg)
+    profile = request.profile
+    points = [request.start, *request.stops]
+
+    fallback = False
+    hard = effective
+    if profile == "safe":
+        hard = min(effective, grid.caution)
+        try:
+            plan = plan_path(grid, points, hard, profile)
+        except ValueError:
+            # Nothing passable under the caution threshold: use the normal limit and say so.
+            fallback, hard = True, effective
+            plan = plan_path(grid, points, effective, "balanced")
+    else:
+        plan = plan_path(grid, points, effective, profile)
+
+    cost_profile = "balanced" if fallback else profile
+    try:
+        back = plan_path(grid, list(reversed(points)), hard, cost_profile)
+        return_trip = ReturnTrip(
+            distance_m=back.distance, est_time_s=travel_time_s(grid, back.distance)
+        )
+    except ValueError:
+        return_trip = None
+
+    geometry, samples = plan.geometry, plan.samples
+    distance, maximum = plan.distance, plan.maximum
+    heading_segments = plan.heading_segments
+    boundaries = plan.boundaries
+    stops = plan.stops
     if len(geometry) == 1:
         geometry.append(geometry[0])
         heading_segments.append(0)
@@ -156,41 +289,101 @@ def route(grid: Grid, request: RouteRequest):
             if samples[i].dist_m - samples[bucket_start].dist_m >= 20 or i == last:
                 keep.update((peak, i))
                 bucket_start = peak = i
-    profile = [samples[i] for i in sorted(keep)]
+    profile_points = [samples[i] for i in sorted(keep)]
     safety = "ok" if maximum <= grid.caution else "caution"
     reason = (
-        f"Maximum slope {maximum:g} degrees is within the {limit:g} degree route limit "
+        f"Maximum slope {maximum:g} degrees is within the {hard:g} degree route limit "
         f"and does not exceed the {grid.caution:g} degree caution threshold."
         if safety == "ok"
         else f"Maximum slope {maximum:g} degrees exceeds the "
         f"{grid.caution:g} degree caution threshold and is within the "
-        f"{limit:g} degree route limit."
+        f"{hard:g} degree route limit."
     )
     assumptions = [
         *grid.items,
         Assumption(
             name="Effective route slope limit",
-            value=f"{limit:g} deg",
+            value=f"{effective:g} deg",
             source=(
                 f"min(requested {request.constraints.max_slope_deg:g} deg, "
                 f"site limit {grid.limit:g} deg from assumptions.json)"
             ),
         ),
     ]
+    if profile != "balanced":
+        assumptions.append(
+            Assumption(
+                name="Route profile",
+                value=profile if not fallback else f"{profile} (fell back to balanced)",
+                source=(
+                    "fast: step cost length * (1 + 0.5 * (slope / limit)^2); "
+                    f"safe: hard limit {min(effective, grid.caution):g} deg (the caution threshold)"
+                ),
+            )
+        )
+    est_time_s = travel_time_s(grid, distance)
+    round_trip_s = est_time_s + return_trip.est_time_s if return_trip else None
+    status, reasons = go_status(grid, maximum, round_trip_s, fallback, hard)
     return RouteResponse(
         # timezone.utc keeps the backend compatible with local Python 3.10.
         computed_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),  # noqa: UP017
         distance_m=distance,
         max_slope_deg=maximum,
-        est_time_s=distance / (grid.speed / 3.6),
+        est_time_s=est_time_s,
         safety=safety,
         safety_reason=reason,
         polyline=geometry,
         stops=stops,
-        profile=profile,
+        profile=profile_points,
         assumptions=assumptions,
-        hazards=hazard_zones(grid, limit, geometry),
+        hazards=hazard_zones(grid, hard, geometry),
         alternative=None,
         navigation={"vertex_dist_m": vertex_dist_m, "heading_segments": heading_segments},
         supports_alternatives=False,
+        route_profile=profile,
+        profile_fallback=fallback,
+        stats=route_stats(plan, grid.caution, hard),
+        return_trip=return_trip,
+        round_trip_time_s=round_trip_s,
+        eva_limit_s=grid.eva_limit_s,
+        status=status,
+        reasons=reasons,
     )
+
+
+def sensitivity(grid: Grid, request: RouteRequest, limits=(10.0, 15.0, 20.0)) -> list[dict]:
+    """The same stops planned with several hard slope limits: the cost of each, or why it fails.
+
+    The limits are used as given: this is an analysis, so 20 degrees is tried even though the site
+    data caps real routes at its own limit. The cost profile is `fast` or `balanced`; `safe` has no
+    meaning here, because the limit is what is being varied.
+    """
+    profile = "fast" if request.profile == "fast" else "balanced"
+    points = [request.start, *request.stops]
+    results = []
+    for limit in limits:
+        try:
+            plan = plan_path(grid, points, limit, profile)
+        except ValueError as exc:
+            results.append(
+                {
+                    "limit_deg": limit,
+                    "reachable": False,
+                    "distance_m": None,
+                    "est_time_s": None,
+                    "max_slope_deg": None,
+                    "reason": str(exc),
+                }
+            )
+            continue
+        results.append(
+            {
+                "limit_deg": limit,
+                "reachable": True,
+                "distance_m": plan.distance,
+                "est_time_s": travel_time_s(grid, plan.distance),
+                "max_slope_deg": plan.maximum,
+                "reason": None,
+            }
+        )
+    return results

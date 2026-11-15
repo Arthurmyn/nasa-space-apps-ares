@@ -2,10 +2,18 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 
-from app.schemas.route import LayersResponse, RouteRequest, RouteResponse, SitesResponse
+from app.schemas.route import (
+    LayersResponse,
+    RouteRequest,
+    RouteResponse,
+    SensitivityResponse,
+    SitesResponse,
+)
+from app.services.conditions import get_conditions
 from app.services.grid import Grid
-from app.services.routing import route
+from app.services.routing import route, sensitivity
 
 router = APIRouter(tags=["planner"])
 logger = logging.getLogger(__name__)
@@ -72,10 +80,36 @@ def sites(request: Request):
     return {"sites": [g.site for g in ordered]}
 
 
-@router.post("/route", response_model=RouteResponse)
+def no_go(detail: str) -> JSONResponse:
+    """422 with the reason; `status` and `reasons` say the same as a route response would."""
+    return JSONResponse(
+        status_code=422, content={"detail": detail, "status": "NO-GO", "reasons": [detail]}
+    )
+
+
+@router.post("/route", response_model=RouteResponse, responses={422: {"description": "No route"}})
 def plan_route(body: RouteRequest, request: Request):
     grid = resolve_grid(request, body.site_id)
     try:
         return route(grid, body)
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        return no_go(str(exc))
+
+
+@router.post("/route/sensitivity", response_model=SensitivityResponse)
+def route_sensitivity(body: RouteRequest, request: Request):
+    """The same stops with hard slope limits of 10, 15 and 20 degrees: the cost, or why it fails."""
+    grid = resolve_grid(request, body.site_id)
+    try:
+        # Points outside the grid or on no-data cells fail for every limit: report that as 422.
+        for point in (body.start, *body.stops):
+            grid.cell_index(point)
+    except ValueError as exc:
+        return no_go(str(exc))
+    return {"site_id": grid.site.id, "results": sensitivity(grid, body)}
+
+
+@router.get("/conditions")
+def conditions():
+    """Curiosity REMS weather, cached an hour. Always 200; {"available": false} on failure."""
+    return get_conditions()
