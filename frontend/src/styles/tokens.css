@@ -19,8 +19,8 @@
   --text-on-accent: #050507;
 
   /* Accents */
-  --accent: #9b8cff; /* route, switches, selection */
-  --cyan: #7fe6c8; /* focus, cursor, hover marker (the landing's mint) */
+  --accent: #9b8cff; /* switches, selection */
+  --cyan: #7fe6c8; /* route and stops on the map, focus, cursor (the landing's mint) */
   --amber: #f0b45a; /* warning, caution */
   --hazard: #ff6b81; /* hazards, avoid */
   --ok: #7be0a8; /* within limits */
