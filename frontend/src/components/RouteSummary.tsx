@@ -16,7 +16,7 @@ import { uiStore, useUi } from "../state/uiStore.ts";
 import { useSensitivity } from "../state/useSensitivity.ts";
 import { Drawer } from "./Drawer.tsx";
 import { ProfileSelector } from "./ProfileSelector.tsx";
-import { RouteStatus } from "./RouteStatus.tsx";
+import { EvaReadiness } from "./RouteStatus.tsx";
 import { SensitivityTable } from "./SensitivityTable.tsx";
 import { TripStats } from "./TripStats.tsx";
 import { Icon } from "./Icon.tsx";
@@ -173,7 +173,7 @@ export function RouteSummary() {
             <Stat label="Max slope" value={formatSlope(route.max_slope_deg)} />
             <Stat label="Est. time" value={formatDuration(route.est_time_s)} />
           </dl>
-          {route.status && <RouteStatus status={route.status} reasons={route.reasons ?? []} fallback={route.profile_fallback === true} />}
+          {route.readiness && <EvaReadiness readiness={route.readiness} fallback={route.profile_fallback === true} />}
           <div className="safety">
             <span className="stat__label">Slope safety</span>
             <SafetyBadge level={route.safety} />

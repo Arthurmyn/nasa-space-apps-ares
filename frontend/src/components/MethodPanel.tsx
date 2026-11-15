@@ -41,7 +41,7 @@ export function MethodPanel({ route }: { route: RouteResponse | null }) {
           <li>Balanced: k = 1. Fast: k = 0.5, so steeper shortcuts win more often.</li>
           <li>Safe: k = 1 with the {SLOPE_LIMITS.cautionDeg}° caution slope as the hard limit; if no path exists, the {SLOPE_LIMITS.maxDeg}° limit is used and the result says so.</li>
           <li>Time is distance divided by walking speed. The way back repeats the stops in reverse.</li>
-          <li>NO-GO: no path, or the round trip is longer than the EVA limit. CAUTION: the steepest section is above {SLOPE_LIMITS.cautionDeg}°, or Safe fell back. Otherwise GO.</li>
+          <li>EVA readiness is NOT ADVISED when there is no path or the round trip is longer than the EVA limit, MARGINAL when the steepest section is above {SLOPE_LIMITS.cautionDeg}° or Safe fell back, and NOMINAL otherwise.</li>
         </ul>
       </section>
 

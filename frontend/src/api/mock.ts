@@ -227,11 +227,11 @@ export async function mockRoute(req: RouteRequest, signal?: AbortSignal): Promis
 
   const estTime = distance / SAMPLE_SPEED_MPS;
   const roundTrip = estTime * 2;
-  const status = roundTrip > MOCK_EVA_LIMIT_S ? "NO-GO" : maxSlope > SLOPE_LIMITS.cautionDeg ? "CAUTION" : "GO";
+  const level = roundTrip > MOCK_EVA_LIMIT_S ? "NOT_ADVISED" : maxSlope > SLOPE_LIMITS.cautionDeg ? "MARGINAL" : "NOMINAL";
   const reasons =
-    status === "NO-GO"
+    level === "NOT_ADVISED"
       ? ["Sample data: the round trip is longer than the sample EVA limit."]
-      : status === "CAUTION"
+      : level === "MARGINAL"
         ? [`Sample data: the steepest section is above the ${SLOPE_LIMITS.cautionDeg}° caution threshold.`]
         : ["Sample data: the round trip fits the sample EVA limit and the slope is within the caution threshold."];
 
@@ -243,8 +243,7 @@ export async function mockRoute(req: RouteRequest, signal?: AbortSignal): Promis
     return: { distance_m: distance, est_time_s: estTime },
     round_trip_time_s: roundTrip,
     eva_limit_s: MOCK_EVA_LIMIT_S,
-    status,
-    reasons,
+    readiness: { level, reasons },
     navigation: { vertex_dist_m: dist, heading_segments: main.polyline.slice(1).map((_, i) => i) },
     computed_at: new Date().toISOString(),
     distance_m: distance,

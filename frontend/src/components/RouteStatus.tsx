@@ -1,28 +1,28 @@
-import type { RouteStatusCode } from "../api/types.ts";
-import { STATUS_TONE } from "../lib/routeInsight.ts";
+import type { Readiness, ReadinessLevel } from "../api/types.ts";
+import { READINESS_LABEL, READINESS_TONE } from "../lib/routeInsight.ts";
 import { Icon } from "./Icon.tsx";
 import { LEVEL_ICON } from "./SafetyBadge.tsx";
 
-/** GO, CAUTION or NO-GO: icon, text and colour together, never colour alone. */
-export function StatusBadge({ status }: { status: RouteStatusCode }) {
-  const tone = STATUS_TONE[status];
+/** NOMINAL, MARGINAL or NOT ADVISED: icon, text and colour together, never colour alone. */
+export function ReadinessBadge({ level }: { level: ReadinessLevel }) {
+  const tone = READINESS_TONE[level];
   return (
     <span className={`badge badge--${tone} status-badge`}>
       <Icon name={LEVEL_ICON[tone]} />
-      <span>{status}</span>
+      <span>{READINESS_LABEL[level]}</span>
     </span>
   );
 }
 
-/** The mission status of the route with the plain sentences behind it. */
-export function RouteStatus({ status, reasons, fallback }: { status: RouteStatusCode; reasons: readonly string[]; fallback: boolean }) {
+/** How ready the route is for an EVA, with the plain sentences behind it. */
+export function EvaReadiness({ readiness, fallback }: { readiness: Readiness; fallback: boolean }) {
   return (
     <div className="mission-status">
-      <span className="stat__label">Mission status</span>
-      <StatusBadge status={status} />
-      {reasons.length > 0 && (
+      <span className="stat__label">EVA readiness</span>
+      <ReadinessBadge level={readiness.level} />
+      {readiness.reasons.length > 0 && (
         <ul className="mission-status__reasons">
-          {reasons.map((r) => (
+          {readiness.reasons.map((r) => (
             <li key={r}>{r}</li>
           ))}
         </ul>
