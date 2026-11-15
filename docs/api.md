@@ -164,6 +164,8 @@ Notes for the backend:
 - Errors: `422` for invalid input (for example no stops, or more than five), `5xx` otherwise. The UI shows a plain-language message. For 422, a string `detail` is shown as text; validation arrays and non-JSON bodies use a generic points-rejected message. Other status codes use generic messages.
 - CORS: allow the frontend origin (`http://localhost:5173` in dev).
 
+**What the web app shows from these fields** (`frontend/src/components/`): `route_profile` and `profile` in the request become a Fast / Balanced / Safe selector (Balanced is not sent); `status` and `reasons` a GO / CAUTION / NO-GO badge with its sentences; `round_trip_time_s`, `return`, `stats` and `eva_limit_s` the round-trip, way-back, climb, descent and slope-class bar, with a "TO VERIFY" tag while the EVA limit is unverified. `POST /route/sensitivity` fills the "Slope limit sensitivity" table, requested only while its drawer is open; `GET /conditions` the "Mars weather" card, which is not drawn when `available` is false. A malformed value in one of the added route fields is dropped with a console warning; the route itself stays usable.
+
 ### `POST /route/sensitivity`
 
 Same body as `POST /route`. Plans the same stops with hard slope limits of 10, 15 and 20 degrees and reports what each limit costs:
