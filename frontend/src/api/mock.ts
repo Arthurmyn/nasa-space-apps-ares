@@ -230,11 +230,16 @@ export async function mockRoute(req: RouteRequest, signal?: AbortSignal): Promis
   const roundTrip = estTime * 2;
   const stopsTime = req.stops.length * (req.stop_time_min ?? 0) * 60;
   const returnCheck = sampleReturnCheck(main.polyline, dist);
-  const status = roundTrip + stopsTime > MOCK_EVA_LIMIT_S || !returnCheck.ok ? "NO-GO" : maxSlope > SLOPE_LIMITS.cautionDeg ? "CAUTION" : "GO";
+  const level =
+    roundTrip + stopsTime > MOCK_EVA_LIMIT_S || !returnCheck.ok
+      ? "NOT_ADVISED"
+      : maxSlope > SLOPE_LIMITS.cautionDeg
+        ? "MARGINAL"
+        : "NOMINAL";
   const reasons =
-    status === "NO-GO"
+    level === "NOT_ADVISED"
       ? ["Sample data: the EVA time or the walk back is over the sample limit."]
-      : status === "CAUTION"
+      : level === "MARGINAL"
         ? [`Sample data: the steepest section is above the ${SLOPE_LIMITS.cautionDeg}° caution threshold.`]
         : ["Sample data: the round trip fits the sample EVA limit and the slope is within the caution threshold."];
 
@@ -246,10 +251,12 @@ export async function mockRoute(req: RouteRequest, signal?: AbortSignal): Promis
     return: { distance_m: distance, est_time_s: estTime },
     round_trip_time_s: roundTrip,
     eva_limit_s: MOCK_EVA_LIMIT_S,
+    readiness: { level, reasons },
     return_check: returnCheck,
     stops_time_s: stopsTime,
     eva_time_s: roundTrip + stopsTime,
-    status,
+    // The old pair, as the backend still sends it next to `readiness`.
+    status: level === "NOT_ADVISED" ? "NO-GO" : level === "MARGINAL" ? "CAUTION" : "GO",
     reasons,
     navigation: { vertex_dist_m: dist, heading_segments: main.polyline.slice(1).map((_, i) => i) },
     computed_at: new Date().toISOString(),
