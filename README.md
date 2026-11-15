@@ -32,7 +32,7 @@ ARES plans a Marswalk route at Gale crater (boxwork, Mount Sharp):
 From `backend/data/gale-bx/meta.json` and `sources.json`:
 
 - **Terrain:** HiRISE DTM `DTEEC_009149_1750_009294_1750_U01`, NASA/JPL/University of Arizona. The grid cell is 3 m and each slope is measured over a 6 m window (a central difference between neighbouring cells; see `docs/DATA_CONTRACT.md`, section 4).
-- **Imagery:** Viking MDIM 2.1 colour mosaic through NASA/JPL Mars Trek, used as the map basemap.
+- **Imagery:** NASA/JPL-Caltech Mars Trek tiles: the Viking MDIM 2.1 colour mosaic (232 m/px) as the map basemap, with the CTX mosaic of the Gale area (finest level 10 m/px, from zoom 8) and the HiRISE mosaic of the Curiosity site (finest level 0.64 m/px, from zoom 13) drawn above it. One switch in the layers panel turns the CTX and HiRISE tiles on and off.
 - **Science stops:** Curiosity (MSL) waypoints, NASA/JPL, `https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json` (snapshot in `docs/research/r0/`).
 - **Thermal:** USGS Astrogeology "Gale Crater THEMIS Daytime IR ISIS", NASA/JPL-Caltech/Arizona State University (Mars Odyssey THEMIS). A single 2007 observation, 100 m per pixel, drawn as blocks; stretched 8-bit values, not calibrated temperature.
 - **Radiation:** average galactic cosmic ray dose equivalent rate of 0.67 mSv per day at the Gale surface (August 2012 to June 2013), measured by Curiosity RAD: Hassler et al., Science 2013, https://doi.org/10.1126/science.1244797. The dose of a walk is this rate times the walking time; galactic cosmic rays only, not a forecast.
