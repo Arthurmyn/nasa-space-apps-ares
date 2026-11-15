@@ -64,6 +64,12 @@ class Grid:
             math.isfinite(self.eva_limit_s) and self.eva_limit_s > 0
         ):
             raise ValueError("eva_limit_s must be a positive number of seconds")
+        # Optional: the longest walk back to the start from any route point, metres and seconds.
+        self.return_limit_m = float(a["return_limit_m"]) if "return_limit_m" in a else None
+        self.return_limit_s = float(a["return_limit_s"]) if "return_limit_s" in a else None
+        for value in (self.return_limit_m, self.return_limit_s):
+            if value is not None and not (math.isfinite(value) and value > 0):
+                raise ValueError("return_limit_m and return_limit_s must be positive numbers")
         self.layers = read_layer_files(directory, m)
         self.geology = read_geology(directory, m)
         stops = read("stops")

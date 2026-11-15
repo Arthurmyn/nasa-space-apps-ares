@@ -7,6 +7,7 @@ from math import hypot, inf, sqrt
 from app.schemas.route import (
     Assumption,
     ProfilePoint,
+    ReturnCheck,
     ReturnTrip,
     RouteRequest,
     RouteResponse,
@@ -14,6 +15,7 @@ from app.schemas.route import (
     RouteStop,
     SlopeClassPct,
 )
+from app.services.eva import return_check
 from app.services.grid import Grid
 from app.services.hazards import hazard_zones
 
@@ -80,6 +82,8 @@ class Plan:
         self.distance = 0.0
         self.maximum = 0.0
         self.boundaries: set[int] = {0}
+        # (cell index, x, y, distance along the path) per vertex, for the return check.
+        self.vertices: list[tuple[int, float, float, float]] = []
 
 
 def cost_weights(grid: Grid, limit: float, profile: str) -> list[float]:
@@ -111,6 +115,7 @@ def plan_path(grid: Grid, points, limit: float, profile: str) -> Plan:
             plan.distance += step
             heading_segments.append(len(geometry) - 1)
         geometry.append(grid.lonlat(*xy))
+        plan.vertices.append((index, xy[0], xy[1], plan.distance))
         samples.append(
             ProfilePoint(
                 dist_m=plan.distance,
@@ -198,19 +203,42 @@ def route_stats(plan: Plan, caution: float, limit: float) -> RouteStats:
 
 
 def go_status(
-    grid: Grid, maximum: float, round_trip_s: float | None, fallback: bool, limit: float
+    grid: Grid,
+    maximum: float,
+    round_trip_s: float | None,
+    fallback: bool,
+    limit: float,
+    stops_s: float = 0.0,
+    check: ReturnCheck | None = None,
 ) -> tuple[str, list[str]]:
     """GO, CAUTION or NO-GO with the reasons, from the route's own numbers."""
     reasons: list[str] = []
     status = "GO"
     eva = grid.eva_limit_s
+    what = "EVA time (round trip + time at stops)" if stops_s > 0 else "Round trip"
     if round_trip_s is None:
         status = "NO-GO"
         reasons.append("No path back to the start along the same stops.")
-    elif eva is not None and round_trip_s > eva:
+    elif eva is not None and round_trip_s + stops_s > eva:
         status = "NO-GO"
         reasons.append(
-            f"Round trip {round_trip_s / 3600:.1f} h exceeds the EVA time limit {eva / 3600:.1f} h."
+            f"{what} {(round_trip_s + stops_s) / 3600:.1f} h exceeds the EVA time limit "
+            f"{eva / 3600:.1f} h."
+        )
+    if check is not None and not check.ok:
+        status = "NO-GO"
+        limits = " / ".join(
+            text
+            for text in (
+                f"{check.limit_m / 1000:g} km" if check.limit_m is not None else None,
+                f"{check.limit_s / 60:g} min" if check.limit_s is not None else None,
+            )
+            if text
+        )
+        reasons.append(
+            f"Walk back from {check.worst_route_dist_m:.0f} m along the route is "
+            f"{check.worst_return_m / 1000:.2f} km, {check.worst_return_s / 60:.0f} min: "
+            f"over the {limits} return limit."
         )
     if status != "NO-GO":
         if maximum > grid.caution:
@@ -232,8 +260,13 @@ def go_status(
         )
         if eva is not None and round_trip_s is not None:
             reasons.append(
-                f"Round trip {round_trip_s / 3600:.1f} h is within the EVA time limit "
+                f"{what} {(round_trip_s + stops_s) / 3600:.1f} h is within the EVA time limit "
                 f"{eva / 3600:.1f} h."
+            )
+        if check is not None:
+            reasons.append(
+                f"Longest walk back to the start is {check.worst_return_m / 1000:.2f} km, "
+                f"{check.worst_return_s / 60:.0f} min, within the return limit."
             )
     return status, reasons
 
@@ -335,7 +368,19 @@ def route(grid: Grid, request: RouteRequest, limit: float | None = None):
         )
     est_time_s = travel_time_s(grid, distance)
     round_trip_s = est_time_s + return_trip.est_time_s if return_trip else None
-    status, reasons = go_status(grid, maximum, round_trip_s, fallback, hard)
+    stops_s = request.stop_time_min * 60 * len(stops)
+    check = return_check(
+        grid, hard, grid.xy(points[0].lon, points[0].lat), grid.cell_index(points[0]), plan.vertices
+    )
+    if stops_s > 0:
+        assumptions.append(
+            Assumption(
+                name="Time at each stop",
+                value=f"{request.stop_time_min:g} min",
+                source="Planning input set in ARES; not a NASA value.",
+            )
+        )
+    status, reasons = go_status(grid, maximum, round_trip_s, fallback, hard, stops_s, check)
     return RouteResponse(
         # timezone.utc keeps the backend compatible with local Python 3.10.
         computed_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),  # noqa: UP017
@@ -358,6 +403,9 @@ def route(grid: Grid, request: RouteRequest, limit: float | None = None):
         return_trip=return_trip,
         round_trip_time_s=round_trip_s,
         eva_limit_s=grid.eva_limit_s,
+        return_check=check,
+        stops_time_s=stops_s,
+        eva_time_s=round_trip_s + stops_s if round_trip_s is not None else None,
         status=status,
         reasons=reasons,
         readiness=readiness(status, reasons),
