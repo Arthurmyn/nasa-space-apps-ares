@@ -6,6 +6,7 @@ import { metresPerPixel, offsetLonLat, projectOnPath } from "../lib/geo.ts";
 import { fractionToProfileDist } from "../lib/routeGeo.ts";
 import { hoverStore } from "../state/hoverStore.ts";
 import type { PlanPoint } from "../state/plannerReducer.ts";
+import { LYR } from "./layers.ts";
 import { MARKER_CLASS } from "./useMarkers.ts";
 import { prefersReducedMotion } from "./theme.ts";
 
@@ -19,6 +20,11 @@ interface Deps {
   onRemove: (id: string) => void;
   onCursor: (at: LonLat | null) => void;
 }
+
+/** Map layers whose features are info only: a click on them shows their tooltip, never adds a stop. */
+const NON_STOP_LAYERS = [LYR.traverseStops];
+/** Extra margin around a click when looking for those features; the traverse dots are small. */
+const NON_STOP_HIT_PX = 4;
 
 const ARROWS: Record<string, readonly [dx: number, dy: number]> = {
   ArrowLeft: [-1, 0],
@@ -42,6 +48,13 @@ export function useMapInteractions(map: MapLibreMap | null, deps: Deps): void {
     const onClick = (e: MapMouseEvent) => {
       const target = e.originalEvent.target;
       if (target instanceof Element && target.closest(`.${MARKER_CLASS}`)) return;
+      const { x, y } = e.point;
+      const box: [[number, number], [number, number]] = [
+        [x - NON_STOP_HIT_PX, y - NON_STOP_HIT_PX],
+        [x + NON_STOP_HIT_PX, y + NON_STOP_HIT_PX],
+      ];
+      // Hidden layers return no features, so a switched-off traverse does not block clicks.
+      if (map.queryRenderedFeatures(box, { layers: NON_STOP_LAYERS }).length > 0) return;
       ref.current.onAdd(e.lngLat.lng, e.lngLat.lat);
     };
 

@@ -19,6 +19,7 @@ import { useHoverMarker, usePinMarkers } from "./useMarkers.ts";
 import { useMapInteractions } from "./useMapInteractions.ts";
 import { useRasterLayers } from "./useRasterLayers.ts";
 import { useRouteOverlay } from "./useRouteOverlay.ts";
+import { useTraverseLayer } from "./useTraverseLayer.ts";
 
 /** Margin around the site when the map first opens. */
 const INITIAL_PADDING_PX = 40;
@@ -54,7 +55,7 @@ function MapStatus() {
 }
 
 export default function MapView() {
-  const { planner, layers } = useApp();
+  const { planner, layers, slope, traverse } = useApp();
   const { site } = useSite();
   const ui = useUi();
   const { state } = planner;
@@ -143,6 +144,7 @@ export default function MapView() {
 
   useRouteOverlay(map, { route, stale: planner.stale, compare: state.compare, slopeOn });
   useRasterLayers(map, layers, site);
+  useTraverseLayer(map, { stops: traverse, on: ui.traverseOn, site, slope });
 
   // Folding a side panel changes the map's width; tell MapLibre once the layout has settled.
   useEffect(() => {
