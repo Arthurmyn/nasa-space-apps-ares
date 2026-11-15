@@ -87,10 +87,6 @@
   box-shadow: var(--focus-ring);
 }
 
-.topbar__drawer-btn {
-  display: none;
-}
-
 /* ---- Plan layout ---- */
 .shell__body {
   position: relative;
@@ -148,10 +144,6 @@
   .topbar__site,
   .topbar__time {
     display: none;
-  }
-
-  .topbar__drawer-btn {
-    display: inline-flex;
   }
 
   .topbar__modes {
@@ -329,4 +321,10 @@
     overflow: hidden;
     border-width: 0;
   }
+}
+
+/* The burger and route buttons: lit while their panel is open. */
+.topbar__drawer-btn[aria-expanded="true"] {
+  border-color: var(--line-strong);
+  background: var(--panel-raised);
 }
