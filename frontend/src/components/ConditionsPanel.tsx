@@ -233,12 +233,7 @@ function RemsCard() {
 
 export function ConditionsPanel() {
   return (
-    <section className="panel__section conditions" aria-labelledby="conditions-title">
-      <header className="panel__head">
-        <h2 id="conditions-title" className="panel__title">
-          <Icon name="info" /> Site conditions
-        </h2>
-      </header>
+    <section className="panel__section conditions" aria-label="Site conditions">
       <RemsCard />
       <SpaceWeatherCard />
       <WeatherCard />

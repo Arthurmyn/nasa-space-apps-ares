@@ -2,8 +2,6 @@ import type { RouteResponse } from "../api/types.ts";
 import { REFERENCES } from "../config/references.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
 import { useSite } from "../state/SiteContext.tsx";
-import { uiStore, useUi } from "../state/uiStore.ts";
-import { Drawer } from "./Drawer.tsx";
 import { SourceText } from "./SourceText.tsx";
 
 const COST_FORMULA = "step cost = length × (1 + k × (slope ÷ limit)²)";
@@ -27,13 +25,12 @@ function Facts({ rows }: { rows: ReadonlyArray<readonly [string, string]> }) {
  * response, not from this file; anything the data team has not checked says TO VERIFY.
  */
 export function MethodPanel({ route }: { route: RouteResponse | null }) {
-  const { howComputedOpen: open } = useUi();
   const { site } = useSite();
   const cell = site.cellM === null ? "not stated" : `${site.cellM} m`;
   const windowM = site.slopeWindowM === null ? "not stated" : `${site.slopeWindowM} m`;
 
   return (
-    <Drawer title="Method and references" open={open} onToggle={(v) => uiStore.setHowComputedOpen(v)}>
+    <div className="panel__section method-panel">
       <section className="method" aria-label="How the route is chosen">
         <h3 className="drawer__subtitle">How the route is chosen</h3>
         <p className="muted">
@@ -120,6 +117,6 @@ export function MethodPanel({ route }: { route: RouteResponse | null }) {
       </section>
 
       {site.isTestData && <p className="muted drawer__foot">This grid is generated test data, not measured terrain.</p>}
-    </Drawer>
+    </div>
   );
 }

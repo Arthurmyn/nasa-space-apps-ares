@@ -1,7 +1,7 @@
 import { Icon } from "./Icon.tsx";
 import { useSiteScienceContext } from "../state/SiteContext.tsx";
 
-/** "Why this site": a few cited sentences about the place. Shown under the stops in Plan. */
+/** "Why this site": a few cited sentences about the place. Shown above the method in the Method panel in Plan. */
 export function SiteContextNote() {
   const context = useSiteScienceContext();
   if (!context) return null;
