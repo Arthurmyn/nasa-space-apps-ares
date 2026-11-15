@@ -1,7 +1,4 @@
-import { useSyncExternalStore } from "react";
 import { dataSource } from "../api/client.ts";
-import { apiConnection } from "../api/connection.ts";
-import type { ApiConnection } from "../api/connection.ts";
 import { formatUtcTime } from "../lib/format.ts";
 import { usePlanner } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
@@ -22,24 +19,12 @@ interface TopBarProps {
   onDrawer: (drawer: Drawer) => void;
 }
 
-/** Status of the last completed API request, or a sample-data label in dev mock mode. */
-function DataBadge() {
-  const sample = dataSource === "mock";
-  const connection = useSyncExternalStore(apiConnection.subscribe, apiConnection.getSnapshot);
-  const labels: Record<ApiConnection, string> = {
-    unknown: "Connecting to API", online: "API online", offline: "API offline",
-    "service-error": "API service error", invalid: "Invalid API response", timeout: "API timed out",
-  };
-  const label = sample ? "Sample data" : labels[connection];
+/** Sample-data label, shown only in dev mock mode. */
+function SampleDataBadge() {
   return (
-    <span
-      className={`badge topbar__data-badge ${sample || connection !== "online" ? "badge--caution" : "badge--ok"}`}
-      title={label}
-      role="status"
-      aria-label={label}
-    >
-      <Icon name={sample || connection === "unknown" ? "info" : connection === "offline" ? "wifiOff" : connection === "online" ? "check" : "alert"} />
-      <span>{label}</span>
+    <span className="badge badge--caution topbar__data-badge" role="status" aria-label="Sample data" title="Sample data">
+      <Icon name="info" />
+      <span>Sample data</span>
     </span>
   );
 }
@@ -88,7 +73,7 @@ export function TopBar({ mode, modes, onMode, drawer, onDrawer }: TopBarProps) {
 
       <div className="topbar__right">
         {site.isTestData && <TestDataBadge />}
-        <DataBadge />
+        {dataSource === "mock" && <SampleDataBadge />}
         {mode === "hud" ? <UtcClock /> : <span className="topbar__time mono">{computed ? `Computed ${computed}` : "No route computed"}</span>}
         {mode === "plan" && (
           <button
