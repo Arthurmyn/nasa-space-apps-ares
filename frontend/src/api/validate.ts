@@ -21,6 +21,7 @@ import {
   type LegacyStatus,
   type Readiness,
   type ReadinessLevel,
+  type ReturnCheck,
   type ReturnTrip,
   type SensitivityResponse,
   ROUTE_PROFILE_IDS,
@@ -255,6 +256,26 @@ function readiness(v: unknown): Readiness {
   };
 }
 
+function returnCheck(v: unknown): ReturnCheck | null {
+  if (v === null) return null;
+  const o = obj(v, "return_check");
+  const nonNegative = (x: unknown, path: string): number => {
+    const n = num(x, path);
+    return n < 0 ? fail(path, "0 or more") : n;
+  };
+  const limit = (x: unknown, path: string): number | null => (x === null || x === undefined ? null : nonNegative(x, path));
+  if (typeof o.ok !== "boolean") fail("return_check.ok", "a boolean");
+  return {
+    ok: o.ok as boolean,
+    worst_return_m: nonNegative(o.worst_return_m, "return_check.worst_return_m"),
+    worst_return_s: nonNegative(o.worst_return_s, "return_check.worst_return_s"),
+    worst_point: lonLat(o.worst_point, "return_check.worst_point"),
+    worst_route_dist_m: nonNegative(o.worst_route_dist_m, "return_check.worst_route_dist_m"),
+    limit_m: limit(o.limit_m, "return_check.limit_m"),
+    limit_s: limit(o.limit_s, "return_check.limit_s"),
+  };
+}
+
 function profileExtras(o: Obj): Partial<RouteResponse> {
   const out: Partial<RouteResponse> = {};
   const set = <K extends keyof RouteResponse>(key: K, present: boolean, read: () => RouteResponse[K]) => {
@@ -273,6 +294,12 @@ function profileExtras(o: Obj): Partial<RouteResponse> {
   set("readiness", o.readiness !== undefined, () => readiness(o.readiness));
   // The legacy pair is kept for older clients; a bad value is dropped like any other added field.
   set("status", o.status !== undefined, () => oneOf<LegacyStatus>(o.status, LEGACY_STATUSES, "status"));
+  set("return_check", o.return_check !== undefined, () => returnCheck(o.return_check));
+  set("stops_time_s", o.stops_time_s !== undefined, () => {
+    const n = num(o.stops_time_s, "stops_time_s");
+    return n < 0 ? fail("stops_time_s", "0 or more") : n;
+  });
+  set("eva_time_s", o.eva_time_s !== undefined, () => (o.eva_time_s === null ? null : num(o.eva_time_s, "eva_time_s")));
   set("reasons", o.reasons !== undefined, () => arr(o.reasons, "reasons").map((r, i) => str(r, `reasons[${i}]`)));
   return out;
 }

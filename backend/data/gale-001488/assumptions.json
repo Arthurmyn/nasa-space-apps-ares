@@ -3,6 +3,8 @@
   "slope_caution_deg": 10,
   "speed_kmh": 2,
   "eva_limit_s": 28800,
+  "return_limit_m": 2000,
+  "return_limit_s": 3600,
   "items": [
     {
       "name": "Max slope",
@@ -37,7 +39,12 @@
     {
       "name": "EVA time limit",
       "value": "8 h",
-      "source": "TO VERIFY: document supporting the 8 h limit on one EVA. The MARSWALK project notes list 8 h (reference architecture, Rucker & Hoffman 2020, HEOMD-415) but it was not checked against those documents."
+      "source": "NASA Exploration EVA System supports EVAs of up to 8 hours in duration (6 ± 2 hours) [1]. Lunar Artemis value; no Mars standard was found."
+    },
+    {
+      "name": "Return limit",
+      "value": "2 km / 60 min",
+      "source": "Longest shortest walk back to the start from any route point. NASA lists a 2 km walking range and an additional hour of gas from the suit's secondary O2 [1]. Lunar Artemis values."
     }
   ]
 }
