@@ -16,3 +16,6 @@ export function useMediaQuery(query: string): boolean {
 
 /** The width from which the side panels sit beside the map instead of sliding over it. Keep equal to the CSS breakpoint in shell.css. */
 export const DESKTOP_QUERY = "(min-width: 900px)";
+
+/** Phones: the planner is a bottom sheet over a full-screen map. Keep equal to the CSS breakpoint in mobile.css. */
+export const MOBILE_QUERY = "(max-width: 767px)";

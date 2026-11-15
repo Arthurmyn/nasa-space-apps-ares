@@ -1,0 +1,186 @@
+/*
+ * Phones (under 768 px): a full-screen map and the planner as a bottom sheet with three resting
+ * heights, peek, half and full (components/BottomSheet.tsx). The layers, sites, conditions and method
+ * panels stay in the left drawer; the Method panel takes the whole screen. 768 to 899 px keeps the
+ * drawers, from 900 px the columns. The breakpoint equals MOBILE_QUERY in lib/useMediaQuery.ts.
+ */
+
+:root {
+  /* What shows of the sheet at peek: handle row (44) + summary row (52) + a little air. Equals PEEK_PX in BottomSheet.tsx. */
+  --sheet-peek: 104px;
+}
+
+/* The sheet is only drawn by the phone layout; outside it the class does nothing. */
+.sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--panel);
+  border-top: 1px solid var(--line-strong);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -8px 28px rgb(0 0 0 / 0.5);
+  transform: translateY(calc(100% - var(--sheet-peek)));
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+  --sheet-hidden: 0px;
+}
+
+.sheet[data-snap="half"] {
+  transform: translateY(50%);
+  --sheet-hidden: 50%;
+}
+
+.sheet[data-snap="full"] {
+  transform: none;
+}
+
+/* While a finger moves it the sheet follows 1:1, with no easing. */
+.sheet--dragging {
+  transition: none;
+}
+
+.sheet__head {
+  flex: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+
+.sheet__grip {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 44px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: inherit;
+}
+
+.sheet__grip:focus-visible {
+  outline: none;
+  box-shadow: inset var(--focus-ring);
+}
+
+.sheet__bar {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line-strong);
+}
+
+.sheet__summary {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  padding: 0 var(--space-4) var(--space-2);
+}
+
+.sheet__hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.sheet__line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  min-width: 0;
+  font-size: var(--fs-sm);
+}
+
+.sheet__line--stale > .badge,
+.sheet__line--stale > .mono {
+  opacity: 0.5;
+}
+
+/* The scrolling part sits inside the visible part of the sheet, whatever the height it rests at. */
+.sheet__body {
+  flex: 1;
+  min-height: 0;
+  max-height: calc(100% - 100px - var(--sheet-hidden));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
+}
+
+.sheet__body * {
+  min-width: 0;
+}
+
+.sheet__body .panel__section + .panel__section {
+  border-top: 1px solid var(--line);
+}
+
+.sheet__profile {
+  height: 200px;
+  border-top: 1px solid var(--line);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet {
+    transition-duration: 0.001ms;
+  }
+}
+
+@media (max-width: 767px) {
+  .shell__body--phone {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: "map";
+    overflow: hidden;
+  }
+
+  /* The route has no drawer here: it is the sheet. */
+  .topbar__drawer-btn:not(.topbar__drawer-btn--left) {
+    display: none;
+  }
+
+  /* The icon-only Mars button in the top bar keeps a full touch target. */
+  .seg--overview {
+    min-width: var(--hit);
+    justify-content: center;
+  }
+
+  /* Map controls ride above the peeking sheet instead of hiding behind it. */
+  .shell__body--phone .map-zoom {
+    bottom: calc(var(--sheet-peek) + 12px);
+  }
+
+  .shell__body--phone .map-inspect {
+    bottom: calc(var(--sheet-peek) + 12px + 100px);
+  }
+
+  .shell__body--phone .map-readout,
+  .shell__body--phone .map-scale {
+    bottom: calc(var(--sheet-peek) + 8px);
+  }
+
+  .shell__body--phone .maplibregl-ctrl-bottom-right,
+  .shell__body--phone .maplibregl-ctrl-bottom-left {
+    margin-bottom: var(--sheet-peek);
+  }
+
+  /* The Method panel is a document: it takes the whole screen. */
+  .shell__body--phone[data-left-panel="method"] .shell__left {
+    width: 100vw;
+    border-right: 0;
+  }
+
+  /* Results and tables wrap instead of scrolling sideways. */
+  .shell__body--phone .stat__value {
+    white-space: normal;
+  }
+
+  .shell__body--phone .table {
+    table-layout: fixed;
+    overflow-wrap: anywhere;
+  }
+}
