@@ -21,8 +21,8 @@ ARES plans a Marswalk route at Gale crater (boxwork, Mount Sharp):
 - **Limits with sources.** The slope limits, walking speed and maximum distance from the start are listed with their sources in `backend/data/gale-bx/assumptions.json`. They cite NASA and JPL documents [1] to [5], also listed in `frontend/src/config/references.ts`.
 - **Four views** in the web app. The app opens on the Mars overview; a link with a plan or a site (`#s=...`, `?site=...`) opens the planner instead:
   - **Mars:** the whole planet on the Viking mosaic, with markers for the ARES sites, mission landing sites and landmarks, a legend with layer toggles and an optional globe view. An ARES marker opens the planner on that site. The Mars button is always in the top bar.
-  - **Plan:** map with the layers that have data (slope, hillshade over Mars imagery, thermal), stops, route summary with the estimated radiation dose of the walk, elevation profile and a "How this is computed" panel. Layers without data are marked "No data for this site".
-  - **Plan** also has a Fast / Balanced / Safe route profile, a GO / CAUTION / NO-GO mission status, the round trip with the way back, climb and descent, a slope-class bar, a slope-limit sensitivity table (10, 15 and 20 degrees), "Method and references", a Mars weather card from Curiosity's REMS station when the backend has it, GeoJSON export of the route, and an optional "Full drive path" overlay of the whole Curiosity drive.
+  - **Plan:** map with the layers that have data (slope, hillshade over Mars imagery, thermal), stops, route summary with the estimated radiation dose of the walk and an elevation profile. The right column holds only the route; an icon rail on the left opens Layers, Sites, Site conditions (space weather and model climate) and "Method and sources" beside the map. Layers without data are marked "No data for this site".
+  - **Plan** also has a Fast / Balanced / Safe route profile, a GO / CAUTION / NO-GO mission status, the round trip with the way back, climb and descent, a slope-class bar, a slope-limit sensitivity table (10, 15 and 20 degrees), a Mars weather card from Curiosity's REMS station when the backend has it, GeoJSON export of the route, and an optional "Full drive path" overlay of the whole Curiosity drive.
   - **HUD:** a heads-up view with compass, next stop and slope. The position moves with a slider (simulated).
   - **Card:** a printable one-page A4 route card with the map, stops, slope by leg, safety margins, the estimated radiation dose and the sources.
 
@@ -104,7 +104,7 @@ VITE_USE_MOCK=true npm run dev          # PowerShell: $env:VITE_USE_MOCK="true";
 
 1. Open the **Plan** tab. The whole Gale boxwork site is on the map.
 2. Click the map to set the start, then click up to 5 stops. Or pick a group such as "Boxwork" under "Science targets" and then click a start.
-3. Read the route summary: length, maximum slope, time, safety status, estimated radiation dose and the elevation profile. Open "How this is computed" for the assumptions and sources.
+3. Read the route summary: length, maximum slope, time, safety status, estimated radiation dose and the elevation profile. Open "Method and sources" on the left rail for the assumptions and sources.
 4. Open **HUD** (compass, next stop and slope; the position moves with a slider) and **Card**, then press "Print or save as PDF" for the one-page A4 route card.
 
 ## Run the tests

@@ -92,11 +92,101 @@
   position: relative;
   display: grid;
   min-height: 0;
-  grid-template-columns: var(--col-left) minmax(0, 1fr) var(--col-right);
+  grid-template-columns: var(--rail-w) var(--col-left) minmax(0, 1fr) var(--col-right);
   grid-template-rows: minmax(0, 1fr) var(--profile-h);
   grid-template-areas:
-    "left map right"
-    "profile profile profile";
+    "rail left map right"
+    "rail profile profile profile";
+}
+
+/* ---- Icon rail: one button per left panel (desktop only) ---- */
+.rail {
+  grid-area: rail;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  min-height: 0;
+}
+
+.rail__btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.rail__btn:hover {
+  color: var(--text);
+  background: var(--panel-raised);
+}
+
+.rail__btn[aria-pressed="true"] {
+  color: var(--text);
+  background: var(--panel-raised);
+  border-color: var(--line-strong);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.rail__btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.rail__badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* ---- Left flyout header; the tabs inside it are for the narrow drawer, where there is no rail ---- */
+.flyout__head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: var(--topbar-h);
+  padding: 0 var(--space-2) 0 var(--space-4);
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+.flyout__title {
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+@media (min-width: 900px) {
+  .shell__left .flyout__tabs {
+    display: none;
+  }
+
+  .topbar__drawer-btn--left {
+    display: none;
+  }
 }
 
 .shell__left {
@@ -148,6 +238,14 @@
 
   .topbar__modes {
     justify-self: center;
+  }
+
+  .rail {
+    display: none;
+  }
+
+  .flyout__tabs {
+    top: var(--topbar-h);
   }
 
   .shell__body {

@@ -87,7 +87,8 @@
 
   --topbar-h: 48px;
   --profile-h: 176px;
-  --col-left: 248px;
+  --rail-w: 52px;
+  --col-left: 300px;
   --col-right: 308px;
 
   --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--cyan);
@@ -101,7 +102,7 @@
 
 @media (max-width: 1099px) and (min-width: 900px) {
   :root {
-    --col-left: 224px;
+    --col-left: 260px;
     --col-right: 276px;
     --profile-h: 160px;
   }
