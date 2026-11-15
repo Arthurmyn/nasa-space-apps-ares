@@ -84,7 +84,11 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
   const { legs, whole, margins, speedKmh, walkBackS } = model;
   const start = route.polyline[0];
   const overLimit = margins ? margins.farthestM > MAX_DISTANCE_FROM_START_M : false;
-  const mode = dataSource === "mock" ? "Sample data" : "API online";
+  const dataNotes = [
+    dataSource === "mock" && "Sample data",
+    site.isTestData && "Test data",
+    stale && "Out of date",
+  ].filter(Boolean).join(", ");
 
   return (
     <main className="card-screen">
@@ -120,14 +124,12 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
               <dt>Computed</dt>
               <dd className="mono">{formatUtcStamp(route.computed_at) ?? dash}</dd>
             </div>
-            <div>
-              <dt>Data mode</dt>
-              <dd>
-                {mode}
-                {site.isTestData && ", test data"}
-                {stale && ", out of date"}
-              </dd>
-            </div>
+            {dataNotes && (
+              <div>
+                <dt>Data mode</dt>
+                <dd>{dataNotes}</dd>
+              </div>
+            )}
           </dl>
         </header>
 
