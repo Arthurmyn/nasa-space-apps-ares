@@ -235,9 +235,9 @@ How well our terrain agrees with Curiosity's own measured drive: the elevation o
 ```json
 {
   "available": true, "schema": "ares.validation/v1", "site_id": "gale-bx",
-  "status": "ok", "n_points": 14097, "correlation": 0.99,
-  "raw": { "mean_m": -4.66, "std_m": 2.74, "max_abs_m": 29.25, "rmse_m": 5.41 },
-  "offset_corrected": { "offset_m": -4.66, "mean_m": 0.0, "std_m": 2.74, "max_abs_m": 24.59, "rmse_m": 2.74 },
+  "status": "ok", "n_points": 14564, "correlation": 0.99,
+  "raw": { "mean_m": -4.73, "std_m": 2.82, "max_abs_m": 29.31, "rmse_m": 5.51 },
+  "offset_corrected": { "offset_m": -4.73, "mean_m": 0.0, "std_m": 2.82, "max_abs_m": 24.58, "rmse_m": 2.82 },
   "method": "...", "offset_note": "...",
   "source": { "title": "...", "url": "https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_traverse.json", "fetched_utc": "...", "sha256": "...", "bytes": 1357951 },
   "computed_utc": "..."
@@ -253,9 +253,9 @@ How well our terrain agrees with Curiosity's own measured drive: the elevation o
 ```json
 {
   "available": true, "schema": "ares.validation/v1", "site_id": "gale-bx",
-  "status": "ok", "n_points": 14097, "correlation": 0.99,
-  "raw": { "mean_m": -4.66, "std_m": 2.74, "max_abs_m": 29.25, "rmse_m": 5.41 },
-  "offset_corrected": { "offset_m": -4.66, "mean_m": 0.0, "std_m": 2.74, "max_abs_m": 24.59, "rmse_m": 2.74 },
+  "status": "ok", "n_points": 14564, "correlation": 0.99,
+  "raw": { "mean_m": -4.73, "std_m": 2.82, "max_abs_m": 29.31, "rmse_m": 5.51 },
+  "offset_corrected": { "offset_m": -4.73, "mean_m": 0.0, "std_m": 2.82, "max_abs_m": 24.58, "rmse_m": 2.82 },
   "method": "...", "offset_note": "...",
   "source": { "title": "...", "url": "https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_traverse.json", "fetched_utc": "...", "sha256": "...", "bytes": 1357951 },
   "computed_utc": "..."

@@ -16,7 +16,7 @@ A person walking on Mars needs a route that respects slope limits and a safe way
 
 ARES plans a Marswalk route at Gale crater (boxwork, Mount Sharp):
 
-- **Terrain.** A 2 m grid of elevation and slope built from a HiRISE digital terrain model (DTM).
+- **Terrain.** A 4 m grid of elevation and slope, 526 x 736 cells (2.1 x 2.9 km), built from a HiRISE digital terrain model (DTM).
 - **Routing.** The backend runs A* over the slope grid (8 neighbours). A cell steeper than the slope limit cannot be crossed. The route goes from a start through up to 5 stops.
 - **Limits with sources.** The slope limits, walking speed and maximum distance from the start are listed with their sources in `backend/data/gale-bx/assumptions.json`. They cite NASA and JPL documents [1] to [5], also listed in `frontend/src/config/references.ts`.
 - **Four views** in the web app. The app opens on the Mars overview; a link with a plan or a site (`#s=...`, `?site=...`) opens the planner instead:
@@ -31,7 +31,7 @@ ARES plans a Marswalk route at Gale crater (boxwork, Mount Sharp):
 
 From `backend/data/gale-bx/meta.json` and `sources.json`:
 
-- **Terrain:** HiRISE DTM `DTEEC_009149_1750_009294_1750_U01`, NASA/JPL/University of Arizona. The grid cell is 3 m and each slope is measured over a 6 m window (a central difference between neighbouring cells; see `docs/DATA_CONTRACT.md`, section 4).
+- **Terrain:** HiRISE DTM `DTEEC_009149_1750_009294_1750_U01`, NASA/JPL/University of Arizona. The grid cell is 4 m, the area about 2.1 x 2.9 km (526 x 736 cells), and each slope is measured over an 8 m window (a central difference between neighbouring cells; see `docs/DATA_CONTRACT.md`, section 4).
 - **Imagery:** NASA/JPL-Caltech Mars Trek tiles: the Viking MDIM 2.1 colour mosaic (232 m/px) as the map basemap, with the CTX mosaic of the Gale area (finest level 10 m/px, from zoom 8) and the HiRISE mosaic of the Curiosity site (finest level 0.64 m/px, from zoom 13) drawn above it. One switch in the layers panel turns the CTX and HiRISE tiles on and off.
 - **Science stops:** Curiosity (MSL) waypoints, NASA/JPL, `https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_waypoints.json` (snapshot in `docs/research/r0/`).
 - **Thermal:** USGS Astrogeology "Gale Crater THEMIS Daytime IR ISIS", NASA/JPL-Caltech/Arizona State University (Mars Odyssey THEMIS). A single 2007 observation, 100 m per pixel, drawn as blocks; stretched 8-bit values, not calibrated temperature.
