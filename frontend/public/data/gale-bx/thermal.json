@@ -19,23 +19,23 @@
     "cube_sha256": "8c256fe8e85ebec53c33fb9ea258efd7548b519439a468e54750caf617bdcd91"
   },
   "native_pixel_m": 100.0,
-  "site_thermal_pixels": 285,
+  "site_thermal_pixels": 682,
   "output": {
-    "width": 438,
-    "height": 616,
-    "cell_m": 3.0
+    "width": 526,
+    "height": 736,
+    "cell_m": 4.0
   },
   "bbox": {
-    "lon_min": 137.3761770719427,
-    "lon_max": 137.39842292805733,
-    "lat_min": -4.811338438888899,
-    "lat_max": -4.780161561111101
+    "lon_min": 137.3694897712081,
+    "lon_max": 137.40511022879193,
+    "lat_min": -4.820583530351145,
+    "lat_max": -4.770916469648855
   },
   "resampling": "nearest: each output pixel copies the THEMIS pixel containing its centre",
   "value": {
     "kind": "relative brightness, stretched 8-bit values (DN) of band 9 radiance",
     "not_calibrated_temperature": true,
-    "site_dn_min": 88,
+    "site_dn_min": 85,
     "site_dn_max": 233,
     "nodata_dn": 0,
     "label_core_name": "CALIBRATED_SPECTRAL_RADIANCE"
@@ -64,7 +64,7 @@
         "#fcffa4"
       ]
     ],
-    "low_is": "DN 88",
+    "low_is": "DN 85",
     "high_is": "DN 233"
   },
   "notes": [

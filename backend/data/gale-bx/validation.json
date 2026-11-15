@@ -2,39 +2,39 @@
   "schema": "ares.validation/v1",
   "site_id": "gale-bx",
   "bbox": {
-    "lon_min": 137.3761770719427,
-    "lon_max": 137.39842292805733,
-    "lat_min": -4.811338438888899,
-    "lat_max": -4.780161561111101
+    "lon_min": 137.3694897712081,
+    "lon_max": 137.40511022879193,
+    "lat_min": -4.820583530351145,
+    "lat_max": -4.770916469648855
   },
   "method": "Vertices of the MSL traverse inside the site bbox, exact repeats removed. Our elevation is read at each vertex with the local equidistant projection of docs/DATA_CONTRACT.md, section 4, bilinear between the centres of the four nearest cells; a vertex outside the grid or next to a no-data cell is skipped. difference = traverse z minus our elevation. The offset-corrected difference removes the mean of the raw difference. mean_m is the signed mean, std_m the population standard deviation, rmse_m the root of the mean square, max_abs_m the largest absolute value.",
-  "n_points": 14097,
-  "n_vertices_in_bbox": 14228,
-  "n_repeats_removed": 129,
+  "n_points": 14564,
+  "n_vertices_in_bbox": 17586,
+  "n_repeats_removed": 236,
   "n_without_height": 0,
-  "n_skipped_no_data": 2,
+  "n_skipped_no_data": 2786,
   "status": "ok",
-  "correlation": 0.9875426218683659,
+  "correlation": 0.9937050743597113,
   "raw": {
-    "mean_m": -4.664803348921972,
-    "std_m": 2.7396240881220377,
-    "max_abs_m": 29.254171067378138,
-    "rmse_m": 5.409799481342368
+    "mean_m": -4.7292640574589635,
+    "std_m": 2.8189614581137836,
+    "max_abs_m": 29.308134042047186,
+    "rmse_m": 5.505677272371149
   },
   "offset_corrected": {
-    "offset_m": -4.664803348921972,
-    "mean_m": -1.290337946758783e-16,
-    "std_m": 2.7396240881220377,
-    "max_abs_m": 24.589367718456167,
-    "rmse_m": 2.7396240881220377
+    "offset_m": -4.7292640574589635,
+    "mean_m": -6.24481393691931e-16,
+    "std_m": 2.8189614581137836,
+    "max_abs_m": 24.578869984588223,
+    "rmse_m": 2.8189614581137836
   },
   "traverse_z_range_m": [
-    -3734.705614,
-    -3591.723992
+    -3796.793608,
+    -3526.904488
   ],
   "our_elevation_range_m": [
-    -3720.628544289589,
-    -3588.8031330070085
+    -3790.7898149427165,
+    -3515.3618271678615
   ],
   "offset_note": "A constant offset between the two heights can exist because they are not the same surface or the same height reference. The MMGIS file does not state what its heights are measured from, and our elevation is the HiRISE DTM surface; possible causes are a different zero level (for example a geoid against the Mars 2000 sphere), a different tie to the global topography (a DTM carries a vertical registration uncertainty of its own), and a different measured point (the rover against the ground). This script does not tell these apart; it only removes the mean difference.",
   "source": {
@@ -44,6 +44,6 @@
     "sha256": "c22752254772c8edaee295986cf6a188daf088957f29d042cd62862365cdf3f5",
     "bytes": 1357951
   },
-  "elevation_sha256": "d197d7b0833023f898eeef57bf075c2fafc22b8d066522275b08e4585b25c2ba",
-  "computed_utc": "2026-11-15T06:40:11Z"
+  "elevation_sha256": "a832472d673276ecf86b2a339113ac45e85ab36073b6ed7bc642e54e331f31ea",
+  "computed_utc": "2026-11-15T08:10:16Z"
 }

@@ -4,10 +4,10 @@
     "schema": "ares.geology/v1",
     "site_id": "gale-bx",
     "bbox": {
-      "lon_min": 137.3761770719427,
-      "lon_max": 137.39842292805733,
-      "lat_min": -4.811338438888899,
-      "lat_max": -4.780161561111101
+      "lon_min": 137.3694897712081,
+      "lon_max": 137.40511022879193,
+      "lat_min": -4.820583530351145,
+      "lat_max": -4.770916469648855
     },
     "scale": "1:20,000,000",
     "source": {
@@ -15,7 +15,7 @@
       "url": "https://pubs.usgs.gov/sim/3292/",
       "citation": "Tanaka, K.L., Skinner, J.A., Jr., Dohm, J.M., Irwin, R.P., III, Kolb, E.J., Fortezzo, C.M., Platz, T., Michael, G.G., and Hare, T.M., 2014, Geologic map of Mars: U.S. Geological Survey Scientific Investigations Map 3292, scale 1:20,000,000, https://doi.org/10.3133/sim3292",
       "unit_descriptions": "https://pubs.usgs.gov/sim/3292/pdf/sim3292_dmu_with_locality_images.pdf",
-      "fetched_utc": "2026-11-15T06:20:42Z",
+      "fetched_utc": "2026-11-15T08:10:14Z",
       "shapefile_sha256": "9c0fbc204c1c7f108a854036d85f44c77531e85e0c03959eaea2b6cd33197f3a",
       "shapefile_bytes": 63803656
     },
@@ -34,24 +34,24 @@
         "coordinates": [
           [
             [
-              137.3761770719427,
-              -4.811338438888899
+              137.3694897712081,
+              -4.820583530351145
             ],
             [
-              137.3761770719427,
-              -4.780161561111101
+              137.3694897712081,
+              -4.770916469648855
             ],
             [
-              137.39842292805733,
-              -4.780161561111101
+              137.40511022879193,
+              -4.770916469648855
             ],
             [
-              137.39842292805733,
-              -4.811338438888899
+              137.40511022879193,
+              -4.820583530351145
             ],
             [
-              137.3761770719427,
-              -4.811338438888899
+              137.3694897712081,
+              -4.820583530351145
             ]
           ]
         ]
