@@ -12,6 +12,7 @@ from app.schemas.route import (
     SitesResponse,
 )
 from app.services.conditions import get_conditions
+from app.services.geology import unit_at
 from app.services.grid import Grid
 from app.services.routing import route, sensitivity
 
@@ -120,3 +121,32 @@ def conditions():
     """Curiosity REMS weather, cached an hour. Always 200; {"available": false} on failure."""
     return get_conditions()
 
+
+@router.get("/geology")
+def geology(
+    grid: GridDependency,
+    lon: Annotated[float, Query(ge=-180, le=180, allow_inf_nan=False)],
+    lat: Annotated[float, Query(ge=-90, le=90, allow_inf_nan=False)],
+):
+    """The geologic unit (USGS SIM 3292) at a point of the site. Always 200 for a valid query."""
+    doc = grid.geology
+    if doc is None:
+        return {"available": False, "reason": "No geology data for this site"}
+    info = doc["ares"]
+    box = info["bbox"]
+    if not (box["lon_min"] <= lon <= box["lon_max"] and box["lat_min"] <= lat <= box["lat_max"]):
+        return {
+            "available": False,
+            "reason": "The point is outside the area covered by this site's geology data",
+        }
+    found = unit_at(doc, lon, lat)
+    if found is None:
+        return {"available": False, "reason": "No mapped unit at this point"}
+    return {
+        "available": True,
+        "site_id": info["site_id"],
+        **found,
+        "scale": info["scale"],
+        "source": {k: info["source"][k] for k in ("title", "url", "citation")},
+        "note": info["note"],
+    }

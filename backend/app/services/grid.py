@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 
 from app.schemas.route import Assumption, Site
+from app.services.geology import read_geology
 
 DATA_ROOT = Path(__file__).resolve().parents[2] / "data"
 DEFAULT_SITE_ID = "gale-bx"
@@ -64,6 +65,7 @@ class Grid:
         ):
             raise ValueError("eva_limit_s must be a positive number of seconds")
         self.layers = read_layer_files(directory, m)
+        self.geology = read_geology(directory, m)
         stops = read("stops")
         self.site = Site(id=m["site_id"], name=m["name"], **stops)
         for array in (self.elevation, self.slope, self.valid):
