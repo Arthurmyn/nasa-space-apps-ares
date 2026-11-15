@@ -115,6 +115,11 @@ class ReturnCheck(Model):
     limit_s: float | None
 
 
+class Readiness(Model):
+    level: Literal["NOMINAL", "MARGINAL", "NOT_ADVISED"]
+    reasons: list[str]
+
+
 class RouteResponse(Model):
     model_config = ConfigDict(allow_inf_nan=False, populate_by_name=True)
 
@@ -146,6 +151,8 @@ class RouteResponse(Model):
     eva_time_s: float | None = None
     status: Literal["GO", "CAUTION", "NO-GO"] = "GO"
     reasons: list[str] = Field(default_factory=list)
+    # The same judgement as `status`, under the readiness names; `status` stays for older clients.
+    readiness: Readiness | None = None
 
 
 class SensitivityResult(Model):

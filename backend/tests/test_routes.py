@@ -111,6 +111,7 @@ def test_route_avoids_hill_and_matches_contract(terrain):
         "eva_time_s",
         "status",
         "reasons",
+        "readiness",
     }
     assert data["distance_m"] > 52
     assert data["max_slope_deg"] == 0
@@ -943,6 +944,55 @@ def test_no_path_is_a_422_that_says_no_go(terrain):
         and body["reasons"] == [body["detail"]]
         and "No route" in body["detail"]
     )
+
+
+def test_readiness_is_nominal_when_status_is_go(terrain):
+    path, meta, _ = terrain
+    with TestClient(create_app(path)) as client:
+        data = plan(client, meta).json()
+    assert data["status"] == "GO"
+    assert data["readiness"] == {"level": "NOMINAL", "reasons": data["reasons"]}
+
+
+def test_readiness_is_marginal_above_the_caution_slope(terrain):
+    path, meta, slope = terrain
+    band_terrain(path, slope, 12, rows=(0, 31))
+    with TestClient(create_app(path)) as client:
+        data = plan(client, meta).json()
+    assert data["status"] == "CAUTION"
+    assert data["readiness"]["level"] == "MARGINAL"
+    assert any("caution threshold" in r for r in data["readiness"]["reasons"])
+
+
+def test_readiness_is_marginal_when_the_safe_profile_fell_back(terrain):
+    path, meta, slope = terrain
+    band_terrain(path, slope, 12, rows=(0, 31))
+    with TestClient(create_app(path)) as client:
+        data = plan(client, meta, profile="safe").json()
+    assert data["profile_fallback"] is True
+    assert data["readiness"]["level"] == "MARGINAL"
+    assert any("safe profile" in r for r in data["readiness"]["reasons"])
+
+
+def test_readiness_is_not_advised_when_the_round_trip_exceeds_the_eva_limit(terrain):
+    path, meta, _ = terrain
+    set_assumptions(path, eva_limit_s=60)
+    with TestClient(create_app(path)) as client:
+        data = plan(client, meta).json()
+    assert data["status"] == "NO-GO"
+    assert data["readiness"]["level"] == "NOT_ADVISED"
+    assert any("EVA time limit" in r for r in data["readiness"]["reasons"])
+
+
+def test_readiness_is_not_advised_in_the_422_when_there_is_no_path(terrain):
+    path, meta, slope = terrain
+    slope[:] = 0
+    slope[:, 14:17] = 255
+    slope.tofile(path / "slope.bin")
+    with TestClient(create_app(path)) as client:
+        body = plan(client, meta).json()
+    assert body["status"] == "NO-GO"
+    assert body["readiness"] == {"level": "NOT_ADVISED", "reasons": [body["detail"]]}
 
 
 @pytest.mark.parametrize("site", ["gale-bx", "gale-001488"])
