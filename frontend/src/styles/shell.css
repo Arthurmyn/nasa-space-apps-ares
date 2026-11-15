@@ -235,8 +235,26 @@
   color: var(--text-muted);
 }
 
-.shell__body[data-profile="empty"] {
-  --profile-h: 72px;
+/* No route yet: the profile row collapses and the map takes the full height. */
+.shell__body[data-profile="hidden"] {
+  --profile-h: 0px;
+}
+
+.shell__profile {
+  animation: profile-in 0.22s ease-out;
+}
+
+@keyframes profile-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell__profile {
+    animation: none;
+  }
 }
 
 /* ---- Folding the side panels (desktop only; narrow screens use drawers) ---- */
