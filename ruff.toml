@@ -6,3 +6,9 @@ select = ["E", "F", "I", "UP", "B"]
 
 [lint.isort]
 known-first-party = ["app", "ml"]
+
+[lint.per-file-ignores]
+# Data scripts carry long messages, docstrings and URLs that read better unbroken.
+"scripts/*.py" = ["E501"]
+"scripts/tests/*.py" = ["E501"]
+
