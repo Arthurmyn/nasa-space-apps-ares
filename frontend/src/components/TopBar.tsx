@@ -46,17 +46,19 @@ export function TopBar({ mode, modes, onMode, drawer, onDrawer }: TopBarProps) {
   const computed = state.route ? formatUtcTime(state.route.computed_at) : null;
   const ui = useUi();
   const desktop = useMediaQuery(DESKTOP_QUERY);
-  // Wide screens fold the column away; narrow screens slide it over the map.
+  // Wide screens fold the column away (the left one lives on the icon rail there); narrow screens
+  // slide it over the map.
   const toggle = (side: "left" | "right") => {
     if (desktop) {
-      uiStore.togglePanel(side);
+      if (side === "left") uiStore.toggleSidePanel(ui.leftPanel ?? "layers");
+      else uiStore.toggleRight();
       return;
     }
     const d = side === "left" ? "layers" : "route";
     onDrawer(drawer === d ? null : d);
   };
   const open = (side: "left" | "right") =>
-    desktop ? !(side === "left" ? ui.leftCollapsed : ui.rightCollapsed) : drawer === (side === "left" ? "layers" : "route");
+    desktop ? (side === "left" ? ui.leftPanel !== null : !ui.rightCollapsed) : drawer === (side === "left" ? "layers" : "route");
 
   return (
     <header className="topbar">
@@ -64,7 +66,7 @@ export function TopBar({ mode, modes, onMode, drawer, onDrawer }: TopBarProps) {
         {mode === "plan" && (
           <button
             type="button"
-            className="btn btn--icon topbar__drawer-btn"
+            className="btn btn--icon topbar__drawer-btn topbar__drawer-btn--left"
             aria-expanded={open("left")}
             aria-controls="layers-drawer"
             aria-label="Layers and sites"
