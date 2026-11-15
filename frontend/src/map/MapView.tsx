@@ -3,6 +3,7 @@ import "./worker.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapLibreMap } from "maplibre-gl";
 import { Icon, type IconName } from "../components/Icon.tsx";
+import { InspectPopup, InspectToggle } from "./InspectPopup.tsx";
 import { boundsOf, type Bounds } from "../lib/geo.ts";
 import { boundsOfBbox } from "../lib/siteGeo.ts";
 import { formatCoordinates } from "../lib/format.ts";
@@ -64,6 +65,9 @@ export default function MapView() {
   const readoutRef = useRef<HTMLOutputElement>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
+  // The point the inspector shows; `n` makes two clicks on the same spot two events.
+  const [inspected, setInspected] = useState<{ lon: number; lat: number; n: number } | null>(null);
+  const inspectCount = useRef(0);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -167,6 +171,8 @@ export default function MapView() {
     onCursor: (at) => {
       if (readoutRef.current) readoutRef.current.textContent = at ? formatCoordinates(at[1], at[0], 5) : "–";
     },
+    inspect: ui.inspectOn,
+    onInspect: (lon, lat) => setInspected({ lon, lat, n: inspectCount.current++ }),
   });
   const grid = useGridModel(map);
 
@@ -212,6 +218,8 @@ export default function MapView() {
       )}
       {map && <NorthArrow />}
       {map && <ZoomControls map={map} />}
+      {map && <InspectToggle />}
+      {map && <InspectPopup map={map} point={ui.inspectOn ? inspected : null} onClose={() => setInspected(null)} />}
       <MapStatus />
       <div className="map-readout" aria-live="off">
         <span className="eyebrow">Cursor</span>

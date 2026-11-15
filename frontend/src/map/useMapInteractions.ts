@@ -19,6 +19,9 @@ interface Deps {
   onSelect: (id: string | null) => void;
   onRemove: (id: string) => void;
   onCursor: (at: LonLat | null) => void;
+  /** True while the point inspector is on: a click inspects the point and adds nothing. */
+  inspect: boolean;
+  onInspect: (lon: number, lat: number) => void;
 }
 
 /** Map layers whose features are info only: a click on them shows their tooltip, never adds a stop. */
@@ -48,6 +51,10 @@ export function useMapInteractions(map: MapLibreMap | null, deps: Deps): void {
     const onClick = (e: MapMouseEvent) => {
       const target = e.originalEvent.target;
       if (target instanceof Element && target.closest(`.${MARKER_CLASS}`)) return;
+      if (ref.current.inspect) {
+        ref.current.onInspect(e.lngLat.lng, e.lngLat.lat);
+        return;
+      }
       const { x, y } = e.point;
       const box: [[number, number], [number, number]] = [
         [x - NON_STOP_HIT_PX, y - NON_STOP_HIT_PX],
