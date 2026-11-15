@@ -1,0 +1,61 @@
+{
+  "type": "FeatureCollection",
+  "ares": {
+    "schema": "ares.geology/v1",
+    "site_id": "gale-bx",
+    "bbox": {
+      "lon_min": 137.3761770719427,
+      "lon_max": 137.39842292805733,
+      "lat_min": -4.811338438888899,
+      "lat_max": -4.780161561111101
+    },
+    "scale": "1:20,000,000",
+    "source": {
+      "title": "Geologic Map of Mars (SIM 3292)",
+      "url": "https://pubs.usgs.gov/sim/3292/",
+      "citation": "Tanaka, K.L., Skinner, J.A., Jr., Dohm, J.M., Irwin, R.P., III, Kolb, E.J., Fortezzo, C.M., Platz, T., Michael, G.G., and Hare, T.M., 2014, Geologic map of Mars: U.S. Geological Survey Scientific Investigations Map 3292, scale 1:20,000,000, https://doi.org/10.3133/sim3292",
+      "unit_descriptions": "https://pubs.usgs.gov/sim/3292/pdf/sim3292_dmu_with_locality_images.pdf",
+      "fetched_utc": "2026-11-15T06:20:42Z",
+      "shapefile_sha256": "9c0fbc204c1c7f108a854036d85f44c77531e85e0c03959eaea2b6cd33197f3a",
+      "shapefile_bytes": 63803656
+    },
+    "note": "Global map at 1:20,000,000: the units are regional and a site of a few square kilometres is one polygon. `unit` is the map's code and `name` its short unit description (the `UnitDesc` field); the long descriptions are in the map's Description of Map Units."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "unit": "Htu",
+        "name": "Hesperian transition undivided unit",
+        "source_url": "https://pubs.usgs.gov/sim/3292/"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              137.3761770719427,
+              -4.811338438888899
+            ],
+            [
+              137.3761770719427,
+              -4.780161561111101
+            ],
+            [
+              137.39842292805733,
+              -4.780161561111101
+            ],
+            [
+              137.39842292805733,
+              -4.811338438888899
+            ],
+            [
+              137.3761770719427,
+              -4.811338438888899
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
