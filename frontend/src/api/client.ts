@@ -1,10 +1,11 @@
 // Types mirror backend/app/schemas/. Route types live in ./types.ts (proposal, see docs/api.md).
 import { requestJson } from "./request.ts";
 import { siteFileUrl } from "./siteFiles.ts";
-import { parseConditions, parseLayersResponse, parseRouteResponse, parseSensitivityResponse, parseSiteMeta, parseSitesResponse, parseThermalInfo } from "./validate.ts";
+import { parseConditions, parseValidation, parseLayersResponse, parseRouteResponse, parseSensitivityResponse, parseSiteMeta, parseSitesResponse, parseThermalInfo } from "./validate.ts";
 import {
   ApiError,
   type ConditionsResponse,
+  type ValidationResponse,
   type LayersResponse,
   type RouteRequest,
   type RouteResponse,
@@ -90,6 +91,22 @@ export const api = {
       if (signal?.aborted) throw e;
       console.warn("Conditions request failed", e);
       return { available: false, reason: "The conditions service could not be reached" };
+    }
+  },
+
+  /** Our elevation against Curiosity's traverse. Never throws for "no data": a failure comes back as { available: false }. */
+  validation: async (siteId: string, signal?: AbortSignal): Promise<ValidationResponse> => {
+    if (dataSource === "mock") {
+      const { mockValidation } = await import("./mock.ts");
+      return mockValidation(signal);
+    }
+    try {
+      return await requestJson(`${BASE}/validation?site_id=${encodeURIComponent(siteId)}`, undefined, signal, parseValidation);
+    } catch (e) {
+      if (signal?.aborted) throw e;
+      console.warn("Validation request failed", e);
+      const older = e instanceof ApiError && e.status === 404;
+      return { available: false, reason: older ? "This server has no validation endpoint yet" : "The validation service could not be reached" };
     }
   },
 

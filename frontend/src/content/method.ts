@@ -7,7 +7,7 @@
  */
 
 export interface MethodSection {
-  id: "terrain" | "route" | "step-cost" | "time" | "limits" | "radiation" | "limitations";
+  id: "terrain" | "route" | "step-cost" | "time" | "limits" | "radiation" | "validation" | "limitations";
   title: string;
   /** Plain paragraphs. */
   paragraphs: readonly string[];
@@ -80,6 +80,14 @@ export const METHOD: MethodContent = {
       title: "Radiation",
       paragraphs: [
         "The dose shown for a route is arithmetic on a published mean rate measured by Curiosity's RAD instrument [5]: rate × time. It leaves out the suit, a habitat and solar particle events, and the rate is from 2012-13, so 2026 values are likely higher.",
+      ],
+    },
+    {
+      id: "validation",
+      title: "Validation",
+      paragraphs: [
+        "Where Curiosity's own drive crosses the site, its measured heights can be set against our elevation. The comparison below is made by a script from NASA/JPL's traverse file and is shown here as the backend reports it.",
+        "The two heights can differ by a constant offset, because they are not tied to the same reference. Both numbers are given: the raw difference, and the difference after that offset is removed.",
       ],
     },
     {

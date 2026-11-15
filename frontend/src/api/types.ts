@@ -336,6 +336,35 @@ export interface ThermalInfo {
   productId: string | null;
 }
 
+// ---- GET /validation -------------------------------------------------------
+
+/** Statistics of a difference in metres: mean (signed), standard deviation, largest absolute value, RMSE. */
+export interface DifferenceStats {
+  mean_m: number;
+  std_m: number;
+  max_abs_m: number;
+  rmse_m: number;
+}
+
+/**
+ * Our elevation against the heights of Curiosity's measured traverse (scripts/validate_traverse.py).
+ * `status` "ok" carries the statistics; the other two carry a `reason` and none.
+ */
+export interface ValidationResult {
+  available: true;
+  site_id: string;
+  status: "ok" | "insufficient_points" | "not_comparable";
+  n_points: number;
+  reason: string | null;
+  /** Traverse z minus our elevation. */
+  raw: DifferenceStats | null;
+  /** The same after the constant offset between the two height references is removed. */
+  offset_corrected: (DifferenceStats & { offset_m: number }) | null;
+  source: { url: string; fetched_utc: string };
+}
+
+export type ValidationResponse = ValidationResult | { available: false; reason: string };
+
 // ---- Client-side error model ----------------------------------------------
 
 export type ApiErrorKind = "network" | "timeout" | "http" | "invalid" | "aborted";

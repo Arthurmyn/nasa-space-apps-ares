@@ -11,6 +11,8 @@ import {
   type LonLat,
   type ProfilePoint,
   type ConditionsResponse,
+  type DifferenceStats,
+  type ValidationResponse,
   type RouteAlternative,
   type RouteProfileId,
   type RouteResponse,
@@ -324,6 +326,39 @@ export function parseSensitivityResponse(raw: unknown): SensitivityResponse {
   });
   if (results.length === 0) fail("results", "at least one limit");
   return { site_id: str(o.site_id, "site_id"), results };
+}
+
+function differenceStats(v: unknown, path: string): DifferenceStats {
+  const o = obj(v, path);
+  return { mean_m: num(o.mean_m, `${path}.mean_m`), std_m: num(o.std_m, `${path}.std_m`), max_abs_m: num(o.max_abs_m, `${path}.max_abs_m`), rmse_m: num(o.rmse_m, `${path}.rmse_m`) };
+}
+
+/**
+ * The check against the traverse. Like the weather, a wrong shape is "not available" and never an
+ * error, and an "ok" result without its numbers is not shown as ok: no number is made up.
+ */
+export function parseValidation(raw: unknown): ValidationResponse {
+  if (!isObj(raw)) return { available: false, reason: "The validation answer was not an object" };
+  if (raw.available !== true) return { available: false, reason: typeof raw.reason === "string" ? raw.reason : "No reason given" };
+  try {
+    const status = oneOf<"ok" | "insufficient_points" | "not_comparable">(raw.status, ["ok", "insufficient_points", "not_comparable"], "status");
+    const source = obj(raw.source, "source");
+    const ok = status === "ok";
+    const corrected = ok ? obj(raw.offset_corrected, "offset_corrected") : null;
+    return {
+      available: true,
+      site_id: str(raw.site_id, "site_id"),
+      status,
+      n_points: num(raw.n_points, "n_points"),
+      reason: ok ? null : str(raw.reason, "reason"),
+      raw: ok ? differenceStats(raw.raw, "raw") : null,
+      offset_corrected: corrected ? { ...differenceStats(corrected, "offset_corrected"), offset_m: num(corrected.offset_m, "offset_corrected.offset_m") } : null,
+      source: { url: str(source.url, "source.url"), fetched_utc: str(source.fetched_utc, "source.fetched_utc") },
+    };
+  } catch (e) {
+    if (!(e instanceof ApiError)) throw e;
+    return { available: false, reason: e.message };
+  }
 }
 
 /**

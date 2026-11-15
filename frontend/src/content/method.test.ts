@@ -7,8 +7,8 @@ const values: MethodValues = { cellM: "3 m", slopeWindowM: "6 m", cautionDeg: "1
 
 describe("the method content", () => {
   it("has the sections the panel promises, in order", () => {
-    assert.deepEqual(METHOD.sections.map((s) => s.id), ["terrain", "route", "step-cost", "time", "limits", "radiation", "limitations"]);
-    assert.deepEqual(METHOD.sections.map((s) => s.title), ["Terrain", "Route", "Step cost", "Time", "Limits", "Radiation", "Limitations"]);
+    assert.deepEqual(METHOD.sections.map((s) => s.id), ["terrain", "route", "step-cost", "time", "limits", "radiation", "validation", "limitations"]);
+    assert.deepEqual(METHOD.sections.map((s) => s.title), ["Terrain", "Route", "Step cost", "Time", "Limits", "Radiation", "Validation", "Limitations"]);
   });
 
   it("fills every placeholder it uses", () => {
