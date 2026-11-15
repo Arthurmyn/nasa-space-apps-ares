@@ -1,6 +1,6 @@
 import type { RouteProfileId, RouteRequest, RouteResponse, StopImage } from "../api/types.ts";
 import { orderFromStart } from "../lib/presets.ts";
-import { MAX_STOPS, SLOPE_LIMITS } from "../config/route.ts";
+import { DEFAULT_STOP_TIME_MIN, MAX_STOPS, SLOPE_LIMITS } from "../config/route.ts";
 
 export interface PlanPoint {
   /** "start" or "stop-<n>"; stable for the life of the point. */
@@ -39,6 +39,8 @@ export interface PlannerState {
   compare: boolean;
   /** Cost profile of the next route request. */
   profile: RouteProfileId;
+  /** Planned minutes at each stop; part of the plan, so a change asks for a new route. */
+  stopTimeMin: number;
   /** Short message for the live region, for example "Maximum of 5 stops reached". */
   notice: string | null;
 }
@@ -53,6 +55,7 @@ export type PlannerAction =
   | { type: "select"; id: string | null }
   | { type: "compare/set"; value: boolean }
   | { type: "profile/set"; profile: RouteProfileId }
+  | { type: "stopTime/set"; minutes: number }
   | { type: "route/loading" }
   | { type: "route/success"; route: RouteResponse; version: number }
   | { type: "route/failure"; message: string }
@@ -71,6 +74,7 @@ export const initialPlannerState: PlannerState = {
   selectedId: null,
   compare: false,
   profile: "balanced",
+  stopTimeMin: DEFAULT_STOP_TIME_MIN,
   notice: null,
 };
 
@@ -151,6 +155,11 @@ export function plannerReducer(s: PlannerState, a: PlannerAction): PlannerState 
     case "profile/set":
       // A different profile is a different route: the points did not change, but the route is out of date.
       return s.profile === a.profile ? s : edited(s, { profile: a.profile });
+    case "stopTime/set": {
+      if (!Number.isFinite(a.minutes)) return s;
+      const minutes = Math.min(240, Math.max(0, Math.round(a.minutes)));
+      return minutes === s.stopTimeMin ? s : edited(s, { stopTimeMin: minutes });
+    }
     case "route/loading":
       return { ...s, status: "loading", error: null };
     case "route/success":
@@ -160,7 +169,7 @@ export function plannerReducer(s: PlannerState, a: PlannerAction): PlannerState 
     case "notice/clear":
       return s.notice === null ? s : { ...s, notice: null };
     case "reset":
-      return { ...initialPlannerState, compare: s.compare, profile: s.profile, planVersion: s.planVersion + 1 };
+      return { ...initialPlannerState, compare: s.compare, profile: s.profile, stopTimeMin: s.stopTimeMin, planVersion: s.planVersion + 1 };
   }
 }
 
@@ -173,5 +182,6 @@ export function buildRouteRequest(s: PlannerState, siteId?: string): RouteReques
     constraints: { max_slope_deg: SLOPE_LIMITS.maxDeg },
     ...(s.profile !== "balanced" ? { profile: s.profile } : {}),
     ...(s.compare ? { compare: true } : {}),
+    ...(s.stopTimeMin > 0 ? { stop_time_min: s.stopTimeMin } : {}),
   };
 }

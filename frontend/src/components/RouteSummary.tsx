@@ -19,6 +19,7 @@ import { ProfileSelector } from "./ProfileSelector.tsx";
 import { EvaReadiness, ReadinessBadge } from "./RouteStatus.tsx";
 import { SensitivityTable } from "./SensitivityTable.tsx";
 import { TripStats } from "./TripStats.tsx";
+import { ReturnCheck } from "./ReturnCheck.tsx";
 import { Icon } from "./Icon.tsx";
 import { SafetyBadge } from "./SafetyBadge.tsx";
 
@@ -183,6 +184,7 @@ export function RouteSummary() {
             <p className="safety__reason">{route.safety_reason}</p>
           </div>
           <TripStats route={route} />
+          <ReturnCheck check={route.return_check} />
           <div className="dose">
             <span className="stat__label">{RADIATION_LABEL}</span>
             <span className="dose__value mono">{formatDose(estimatedDoseMsv(GCR_DOSE_EQUIVALENT_MSV_PER_DAY, route.est_time_s))}</span>
