@@ -1,8 +1,8 @@
 import { useEffect, useRef, type MutableRefObject } from "react";
 import { Marker, type Map as MapLibreMap } from "maplibre-gl";
-import type { HazardZone, RouteResponse } from "../api/types.ts";
+import type { RouteResponse } from "../api/types.ts";
 import { formatCoordinates } from "../lib/format.ts";
-import { pointAtFraction, ringCentroid } from "../lib/geo.ts";
+import { pointAtFraction } from "../lib/geo.ts";
 import { profileDistToFraction } from "../lib/routeGeo.ts";
 import type { StopEntry } from "../state/stopEntries.ts";
 import { hoverStore } from "../state/hoverStore.ts";
@@ -99,27 +99,7 @@ export function usePinMarkers(
   );
 }
 
-/** Text labels on hazard polygons. Plain DOM so the map needs no font glyph server. */
-export function useHazardLabels(map: MapLibreMap | null, hazards: readonly HazardZone[]): void {
-  useEffect(() => {
-    if (!map) return;
-    const markers: Marker[] = [];
-    for (const h of hazards) {
-      const ring = h.polygon.coordinates[0];
-      const centre = ring ? ringCentroid(ring) : null;
-      if (!ring || !centre) continue;
-      // Anchor the label above the polygon's northern edge so it never hides the hatching.
-      const north = ring.reduce((max, p) => Math.max(max, p[1]), -Infinity);
-      const el = document.createElement("div");
-      el.className = `${MARKER_CLASS} hazard-label`;
-      el.textContent = `Hazard: ${h.label}`;
-      markers.push(new Marker({ element: el, anchor: "bottom", offset: [0, -4] }).setLngLat([centre[0], north]).addTo(map));
-    }
-    return () => markers.forEach((m) => m.remove());
-  }, [map, hazards]);
-}
-
-/** Cyan dot on the route that follows the shared hover position (set by the map or the profile). */
+/** White dot on the route that follows the shared hover position (set by the map or the profile). */
 export function useHoverMarker(map: MapLibreMap | null, route: RouteResponse | null): void {
   useEffect(() => {
     if (!map || !route) return;

@@ -62,11 +62,12 @@ export function useRouteOverlay(map: MapLibreMap | null, { route, stale, compare
   useEffect(() => {
     if (!map) return;
     const duration = prefersReducedMotion() ? 0 : 300;
-    for (const id of [LYR.route, LYR.routeCasing, LYR.alt]) {
+    for (const id of [LYR.route, LYR.routeCasing, LYR.routeGlow, LYR.alt]) {
       map.setPaintProperty(id, "line-opacity-transition", { duration, delay: 0 });
     }
     map.setPaintProperty(LYR.route, "line-opacity", stale ? 0.3 : 1);
-    map.setPaintProperty(LYR.routeCasing, "line-opacity", stale ? 0.3 : 0.85);
+    map.setPaintProperty(LYR.routeCasing, "line-opacity", stale ? 0.3 : 0.9);
+    map.setPaintProperty(LYR.routeGlow, "line-opacity", stale ? 0 : 0.45);
     map.setPaintProperty(LYR.alt, "line-opacity", stale ? 0.3 : 0.9);
   }, [map, stale]);
 

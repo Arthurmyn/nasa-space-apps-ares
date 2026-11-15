@@ -561,8 +561,8 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  border: 2px solid var(--accent);
-  background: var(--accent);
+  border: 2px solid var(--cyan);
+  background: var(--cyan);
   color: var(--text-on-accent);
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
@@ -571,7 +571,7 @@
 
 .pin--start {
   background: var(--bg);
-  color: var(--accent);
+  color: var(--cyan);
 }
 
 /* ---- Stop card ---- */
