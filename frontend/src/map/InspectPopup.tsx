@@ -6,7 +6,7 @@ import { loadTerrain, type Terrain } from "../api/terrain.ts";
 import type { GeologyResponse } from "../api/types.ts";
 import { Icon } from "../components/Icon.tsx";
 import { formatCoordinates, formatElevation, formatSlope } from "../lib/format.ts";
-import { GEOLOGY_CAVEAT, geologyLabel, terrainAt, type TerrainAt } from "../lib/inspect.ts";
+import { geologyCaveat, geologyLabel, geologyScope, terrainAt, type TerrainAt } from "../lib/inspect.ts";
 import { useApp } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
 import { uiStore, useUi } from "../state/uiStore.ts";
@@ -94,17 +94,13 @@ function InspectBody({ point, onClose }: { point: Point; onClose: () => void }) 
           </dd>
         </div>
       </dl>
-      {geology.status === "done" && (
+      {geo?.available && (
         <p className="inspect__note">
-          {GEOLOGY_CAVEAT}
-          {geo?.available && (
-            <>
-              {" "}
-              <a href={geo.source.url} target="_blank" rel="noreferrer">
-                {geo.source.title}
-              </a>
-            </>
-          )}
+          <strong>{geologyCaveat(geo)}</strong>
+          {geologyScope(geo) && <> {geologyScope(geo)}</>}{" "}
+          <a href={geo.source.url} target="_blank" rel="noreferrer">
+            {geo.source.title}
+          </a>
         </p>
       )}
     </div>

@@ -374,6 +374,7 @@ export function parseGeology(raw: unknown): GeologyResponse {
       unit: str(raw.unit, "unit"),
       name: str(raw.name, "name"),
       scale: str(raw.scale, "scale"),
+      ...(Number.isInteger(raw.units_in_site) && (raw.units_in_site as number) > 0 ? { units_in_site: raw.units_in_site as number } : {}),
       source: { title: str(source.title, "source.title"), url: str(source.url, "source.url"), citation: str(source.citation, "source.citation") },
       note: str(raw.note, "note"),
     };
