@@ -127,6 +127,9 @@ export function RouteSummary() {
           <Icon name="route" /> Route summary
         </h2>
         {stale && <span className="tag tag--warn">Out of date</span>}
+        <button type="button" className="btn btn--ghost route-method-btn" onClick={() => uiStore.showSidePanel("method")} title="How the route and the numbers are worked out">
+          <Icon name="doc" /> Method
+        </button>
       </header>
 
       {state.start && <ProfileSelector value={state.profile} onChange={p.setProfile} />}

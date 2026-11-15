@@ -16,6 +16,7 @@ import {
   type ProfilePoint,
   type ReturnCheck,
   type ConditionsResponse,
+  type ValidationResponse,
   type RouteProfileId,
   type RouteRequest,
   type RouteResponse,
@@ -323,6 +324,21 @@ export async function mockConditions(signal?: AbortSignal): Promise<ConditionsRe
     opacity: null,
     wind_speed: null,
     fetched_at: null,
+  };
+}
+
+/** Sample validation: made-up numbers, labelled as sample data in the source. */
+export async function mockValidation(signal?: AbortSignal): Promise<ValidationResponse> {
+  await delay(250, signal);
+  return {
+    available: true,
+    site_id: "gale-bx",
+    status: "ok",
+    n_points: 1000,
+    reason: null,
+    raw: { mean_m: -1, std_m: 1, max_abs_m: 4, rmse_m: 1.4 },
+    offset_corrected: { offset_m: -1, mean_m: 0, std_m: 1, max_abs_m: 3, rmse_m: 1 },
+    source: { url: "https://example.org/sample-data", fetched_utc: "1970-01-01T00:00:00Z" },
   };
 }
 
