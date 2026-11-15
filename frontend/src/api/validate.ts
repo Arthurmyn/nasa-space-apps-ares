@@ -10,8 +10,15 @@ import {
   type LayersResponse,
   type LonLat,
   type ProfilePoint,
+  type ConditionsResponse,
   type RouteAlternative,
+  type RouteProfileId,
   type RouteResponse,
+  type RouteStats,
+  type RouteStatusCode,
+  type ReturnTrip,
+  type SensitivityResponse,
+  ROUTE_PROFILE_IDS,
   type RouteNavigation,
   type RouteStop,
   type SafetyLevel,
@@ -195,6 +202,65 @@ function optionalNavigation(v: unknown, polyline: readonly LonLat[], distance: n
   }
 }
 
+const STATUS_CODES: readonly RouteStatusCode[] = ["GO", "CAUTION", "NO-GO"];
+
+/**
+ * The fields added with route profiles are analysis on top of a usable route. One that does not
+ * match the contract is left out with a warning, so a backend slip there cannot hide the route.
+ */
+function lenient<T>(path: string, read: () => T): T | undefined {
+  try {
+    return read();
+  } catch (e) {
+    if (!(e instanceof ApiError)) throw e;
+    console.warn(`Ignoring ${path}. ${e.message}`);
+    return undefined;
+  }
+}
+
+function routeStats(v: unknown): RouteStats {
+  const o = obj(v, "stats");
+  const pct = obj(o.slope_class_pct, "stats.slope_class_pct");
+  const read = (k: "ok" | "caution" | "avoid"): number => {
+    const n = num(pct[k], `stats.slope_class_pct.${k}`);
+    return n < 0 || n > 100 ? fail(`stats.slope_class_pct.${k}`, "a percentage from 0 to 100") : n;
+  };
+  const slope_class_pct = { ok: read("ok"), caution: read("caution"), avoid: read("avoid") };
+  const sum = slope_class_pct.ok + slope_class_pct.caution + slope_class_pct.avoid;
+  if (Math.abs(sum - 100) > 0.6) fail("stats.slope_class_pct", "percentages that add up to 100");
+  const nonNegative = (x: unknown, path: string): number => {
+    const n = num(x, path);
+    return n < 0 ? fail(path, "0 or more") : n;
+  };
+  return { slope_class_pct, climb_m: nonNegative(o.climb_m, "stats.climb_m"), descent_m: nonNegative(o.descent_m, "stats.descent_m") };
+}
+
+function returnTrip(v: unknown): ReturnTrip | null {
+  if (v === null) return null;
+  const o = obj(v, "return");
+  return { distance_m: num(o.distance_m, "return.distance_m"), est_time_s: num(o.est_time_s, "return.est_time_s") };
+}
+
+function profileExtras(o: Obj): Partial<RouteResponse> {
+  const out: Partial<RouteResponse> = {};
+  const set = <K extends keyof RouteResponse>(key: K, present: boolean, read: () => RouteResponse[K]) => {
+    if (!present) return;
+    const value = lenient(String(key), read);
+    if (value !== undefined) out[key] = value;
+  };
+  set("route_profile", o.route_profile !== undefined, () => oneOf<RouteProfileId>(o.route_profile, ROUTE_PROFILE_IDS, "route_profile"));
+  set("profile_fallback", o.profile_fallback !== undefined, () =>
+    typeof o.profile_fallback === "boolean" ? o.profile_fallback : fail("profile_fallback", "a boolean"),
+  );
+  set("stats", o.stats !== undefined, () => routeStats(o.stats));
+  set("return", o.return !== undefined, () => returnTrip(o.return));
+  set("round_trip_time_s", o.round_trip_time_s !== undefined, () => (o.round_trip_time_s === null ? null : num(o.round_trip_time_s, "round_trip_time_s")));
+  set("eva_limit_s", o.eva_limit_s !== undefined, () => (o.eva_limit_s === null ? null : num(o.eva_limit_s, "eva_limit_s")));
+  set("status", o.status !== undefined, () => oneOf<RouteStatusCode>(o.status, STATUS_CODES, "status"));
+  set("reasons", o.reasons !== undefined, () => arr(o.reasons, "reasons").map((r, i) => str(r, `reasons[${i}]`)));
+  return out;
+}
+
 export function parseRouteResponse(raw: unknown): RouteResponse {
   const o = obj(raw, "response");
   const polyline = arr(o.polyline, "polyline").map((p, i) => lonLat(p, `polyline[${i}]`));
@@ -224,7 +290,65 @@ export function parseRouteResponse(raw: unknown): RouteResponse {
     alternative: alternative(o.alternative, "alternative"),
     navigation: optionalNavigation(o.navigation, polyline, distance),
     supports_alternatives: o.supports_alternatives === true,
+    ...profileExtras(o),
   };
+}
+
+export function parseSensitivityResponse(raw: unknown): SensitivityResponse {
+  const o = obj(raw, "response");
+  const results = arr(o.results, "results").map((r, i) => {
+    const p = obj(r, `results[${i}]`);
+    if (typeof p.reachable !== "boolean") fail(`results[${i}].reachable`, "a boolean");
+    const numOrNull = (v: unknown, path: string) => (v === null ? null : num(v, path));
+    return {
+      limit_deg: num(p.limit_deg, `results[${i}].limit_deg`),
+      reachable: p.reachable === true,
+      distance_m: numOrNull(p.distance_m, `results[${i}].distance_m`),
+      est_time_s: numOrNull(p.est_time_s, `results[${i}].est_time_s`),
+      max_slope_deg: numOrNull(p.max_slope_deg, `results[${i}].max_slope_deg`),
+      reason: strOrNull(p.reason, `results[${i}].reason`),
+    };
+  });
+  if (results.length === 0) fail("results", "at least one limit");
+  return { site_id: str(o.site_id, "site_id"), results };
+}
+
+/**
+ * The REMS weather. Anything that is not the documented shape is "not available": the card hides
+ * itself rather than showing half a reading, so this never throws.
+ */
+export function parseConditions(raw: unknown): ConditionsResponse {
+  if (!isObj(raw)) return { available: false, reason: "The conditions answer was not an object" };
+  if (raw.available !== true) return { available: false, reason: typeof raw.reason === "string" ? raw.reason : "No reason given" };
+  try {
+    const n = (k: string): number | null => (raw[k] === null || raw[k] === undefined ? null : num(raw[k], k));
+    const t = (k: string): string | null => strOrNull(raw[k], k);
+    return {
+      available: true,
+      provider: str(raw.provider, "provider"),
+      disclaimer: str(raw.disclaimer, "disclaimer"),
+      source_url: str(raw.source_url, "source_url"),
+      sol: n("sol"),
+      earth_date: t("earth_date"),
+      ls_deg: n("ls_deg"),
+      season: t("season"),
+      air_temp_min_c: n("air_temp_min_c"),
+      air_temp_max_c: n("air_temp_max_c"),
+      ground_temp_min_c: n("ground_temp_min_c"),
+      ground_temp_max_c: n("ground_temp_max_c"),
+      pressure_pa: n("pressure_pa"),
+      pressure_note: t("pressure_note"),
+      sunrise: t("sunrise"),
+      sunset: t("sunset"),
+      uv_index: t("uv_index"),
+      opacity: t("opacity"),
+      wind_speed: n("wind_speed"),
+      fetched_at: t("fetched_at"),
+    };
+  } catch (e) {
+    if (!(e instanceof ApiError)) throw e;
+    return { available: false, reason: e.message };
+  }
 }
 
 export function parseLayersResponse(raw: unknown): LayersResponse {

@@ -2,7 +2,15 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { describeError } from "./errors.ts";
 import { ApiError } from "./types.ts";
-import { isSafeImageUrl, parseLayersResponse, parseRouteResponse, parseSiteMeta, parseSitesResponse } from "./validate.ts";
+import {
+  isSafeImageUrl,
+  parseConditions,
+  parseLayersResponse,
+  parseRouteResponse,
+  parseSensitivityResponse,
+  parseSiteMeta,
+  parseSitesResponse,
+} from "./validate.ts";
 
 const valid = () => ({
   computed_at: "2030-01-01T00:00:00Z",
@@ -261,5 +269,124 @@ describe("isSafeImageUrl", () => {
   it("a stop with a same-site image path keeps its image", () => {
     const route = { ...valid(), stops: [{ id: "s", name: null, lon: 1, lat: 2, dist_m: 5, note: null, image: { url: "/app/stops/x.jpg", alt: "a", credit: "c" } }] };
     assert.equal(parseRouteResponse(route).stops[0]?.image?.url, "/app/stops/x.jpg");
+  });
+});
+
+const extras = () => ({
+  route_profile: "safe",
+  profile_fallback: false,
+  stats: { slope_class_pct: { ok: 80, caution: 15, avoid: 5 }, climb_m: 12.5, descent_m: 7 },
+  return: { distance_m: 100, est_time_s: 60 },
+  round_trip_time_s: 120,
+  eva_limit_s: 28800,
+  status: "GO",
+  reasons: ["Checked."],
+});
+
+describe("parseRouteResponse: profile fields", () => {
+  it("leaves them out of an older response", () => {
+    const r = parseRouteResponse(valid());
+    for (const key of ["status", "stats", "return", "round_trip_time_s", "reasons", "route_profile"]) assert.equal(key in r, false, key);
+  });
+
+  it("reads them when they are valid", () => {
+    const r = parseRouteResponse({ ...valid(), ...extras() });
+    assert.equal(r.status, "GO");
+    assert.equal(r.route_profile, "safe");
+    assert.deepEqual(r.return, { distance_m: 100, est_time_s: 60 });
+    assert.equal(r.stats?.slope_class_pct.caution, 15);
+    assert.equal(r.round_trip_time_s, 120);
+    assert.deepEqual(r.reasons, ["Checked."]);
+  });
+
+  it("keeps null for a missing way back", () => {
+    const r = parseRouteResponse({ ...valid(), ...extras(), return: null, round_trip_time_s: null, status: "NO-GO" });
+    assert.equal(r.return, null);
+    assert.equal(r.round_trip_time_s, null);
+    assert.equal(r.status, "NO-GO");
+  });
+
+  it("drops a bad field and keeps the route and the good fields", () => {
+    const warn = console.warn;
+    const warned: string[] = [];
+    console.warn = (m: string) => void warned.push(String(m));
+    try {
+      const r = parseRouteResponse({ ...valid(), ...extras(), status: "MAYBE", stats: { slope_class_pct: { ok: 50, caution: 10, avoid: 10 }, climb_m: 1, descent_m: 1 } });
+      assert.equal("status" in r, false);
+      assert.equal("stats" in r, false, "percentages that do not add up to 100 are dropped");
+      assert.equal(r.round_trip_time_s, 120);
+      assert.equal(r.distance_m, 100);
+      assert.equal(warned.length, 2);
+    } finally {
+      console.warn = warn;
+    }
+  });
+});
+
+describe("parseSensitivityResponse", () => {
+  const ok = {
+    site_id: "gale-bx",
+    results: [
+      { limit_deg: 10, reachable: true, distance_m: 1419.5, est_time_s: 2555.2, max_slope_deg: 10, reason: null },
+      { limit_deg: 20, reachable: false, distance_m: null, est_time_s: null, max_slope_deg: null, reason: "No route" },
+    ],
+  };
+
+  it("reads reachable and unreachable limits", () => {
+    const r = parseSensitivityResponse(ok);
+    assert.equal(r.results.length, 2);
+    assert.equal(r.results[1]?.distance_m, null);
+    assert.equal(r.results[1]?.reason, "No route");
+  });
+
+  it("rejects an empty or malformed answer", () => {
+    assert.throws(() => parseSensitivityResponse({ site_id: "x", results: [] }), ApiError);
+    assert.throws(() => parseSensitivityResponse({ site_id: "x", results: [{ ...ok.results[0], reachable: "yes" }] }), ApiError);
+    assert.throws(() => parseSensitivityResponse([]), ApiError);
+  });
+});
+
+describe("parseConditions", () => {
+  const feed = {
+    available: true,
+    provider: "CAB",
+    disclaimer: "Outreach only.",
+    source_url: "https://mars.nasa.gov/rss/api/",
+    sol: 4995,
+    earth_date: "2026-08-25",
+    ls_deg: 341,
+    season: "Month 12",
+    air_temp_min_c: -71,
+    air_temp_max_c: -5,
+    ground_temp_min_c: -84,
+    ground_temp_max_c: 4,
+    pressure_pa: 777,
+    pressure_note: "Higher",
+    sunrise: "06:46",
+    sunset: "18:51",
+    uv_index: "Moderate",
+    opacity: "Sunny",
+    wind_speed: null,
+    fetched_at: "2026-11-15T05:34:50Z",
+  };
+
+  it("reads the feed, with null for a value it lacks", () => {
+    const c = parseConditions(feed);
+    assert.equal(c.available, true);
+    if (c.available) {
+      assert.equal(c.sol, 4995);
+      assert.equal(c.wind_speed, null);
+      assert.equal(c.disclaimer, "Outreach only.");
+    }
+  });
+
+  it("passes the reason of an unavailable feed", () => {
+    assert.deepEqual(parseConditions({ available: false, reason: "Feed down" }), { available: false, reason: "Feed down" });
+  });
+
+  it("never throws: a wrong shape is unavailable", () => {
+    for (const bad of [null, [], "x", { available: true }, { ...feed, sol: "high" }, { ...feed, disclaimer: undefined }]) {
+      assert.equal(parseConditions(bad).available, false);
+    }
   });
 });
