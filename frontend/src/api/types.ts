@@ -123,8 +123,23 @@ export interface RouteNavigation {
   heading_segments: number[];
 }
 
-/** Mission status of a route: GO, CAUTION, or NO-GO (no path, or the round trip is over the EVA limit). */
-export type RouteStatusCode = "GO" | "CAUTION" | "NO-GO";
+/**
+ * How ready the route is for an EVA. NOT_ADVISED: no path, or the round trip is over the EVA limit.
+ * MARGINAL: steeper than the caution slope, or the safe profile fell back. Otherwise NOMINAL.
+ */
+export type ReadinessLevel = "NOMINAL" | "MARGINAL" | "NOT_ADVISED";
+
+/**
+ * The older name for the same judgement, still sent next to `readiness` for older clients:
+ * "GO", "CAUTION" or "NO-GO". The web app reads `readiness` and never shows this value.
+ */
+export type LegacyStatus = "GO" | "CAUTION" | "NO-GO";
+
+export interface Readiness {
+  level: ReadinessLevel;
+  /** Plain sentences behind the level. */
+  reasons: string[];
+}
 
 /** Share of the distance in each slope class, in percent; the three add up to 100. */
 export interface SlopeClassPct {
@@ -190,6 +205,9 @@ export interface RouteResponse {
   round_trip_time_s?: number | null;
   /** The EVA time limit behind `status`, seconds. Null when the site has none. */
   eva_limit_s?: number | null;
+  readiness?: Readiness;
+  /** Legacy fields, kept in the type for older clients and old saved responses. Not shown anywhere. */
+  status?: LegacyStatus;
   // Added with the return check. Optional: an older backend does not send them.
   /** Null when the site sets no return limit. */
   return_check?: ReturnCheck | null;
@@ -197,7 +215,6 @@ export interface RouteResponse {
   stops_time_s?: number;
   /** Round trip + time at stops, the number checked against `eva_limit_s`. Null with no path back. */
   eva_time_s?: number | null;
-  status?: RouteStatusCode;
   reasons?: string[];
 }
 

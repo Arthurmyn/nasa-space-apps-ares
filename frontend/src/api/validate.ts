@@ -15,7 +15,9 @@ import {
   type RouteProfileId,
   type RouteResponse,
   type RouteStats,
-  type RouteStatusCode,
+  type LegacyStatus,
+  type Readiness,
+  type ReadinessLevel,
   type ReturnCheck,
   type ReturnTrip,
   type SensitivityResponse,
@@ -203,7 +205,8 @@ function optionalNavigation(v: unknown, polyline: readonly LonLat[], distance: n
   }
 }
 
-const STATUS_CODES: readonly RouteStatusCode[] = ["GO", "CAUTION", "NO-GO"];
+const LEGACY_STATUSES: readonly LegacyStatus[] = ["GO", "CAUTION", "NO-GO"];
+const READINESS_LEVELS: readonly ReadinessLevel[] = ["NOMINAL", "MARGINAL", "NOT_ADVISED"];
 
 /**
  * The fields added with route profiles are analysis on top of a usable route. One that does not
@@ -242,6 +245,14 @@ function returnTrip(v: unknown): ReturnTrip | null {
   return { distance_m: num(o.distance_m, "return.distance_m"), est_time_s: num(o.est_time_s, "return.est_time_s") };
 }
 
+function readiness(v: unknown): Readiness {
+  const o = obj(v, "readiness");
+  return {
+    level: oneOf<ReadinessLevel>(o.level, READINESS_LEVELS, "readiness.level"),
+    reasons: arr(o.reasons, "readiness.reasons").map((r, i) => str(r, `readiness.reasons[${i}]`)),
+  };
+}
+
 function returnCheck(v: unknown): ReturnCheck | null {
   if (v === null) return null;
   const o = obj(v, "return_check");
@@ -277,13 +288,15 @@ function profileExtras(o: Obj): Partial<RouteResponse> {
   set("return", o.return !== undefined, () => returnTrip(o.return));
   set("round_trip_time_s", o.round_trip_time_s !== undefined, () => (o.round_trip_time_s === null ? null : num(o.round_trip_time_s, "round_trip_time_s")));
   set("eva_limit_s", o.eva_limit_s !== undefined, () => (o.eva_limit_s === null ? null : num(o.eva_limit_s, "eva_limit_s")));
+  set("readiness", o.readiness !== undefined, () => readiness(o.readiness));
+  // The legacy pair is kept for older clients; a bad value is dropped like any other added field.
+  set("status", o.status !== undefined, () => oneOf<LegacyStatus>(o.status, LEGACY_STATUSES, "status"));
   set("return_check", o.return_check !== undefined, () => returnCheck(o.return_check));
   set("stops_time_s", o.stops_time_s !== undefined, () => {
     const n = num(o.stops_time_s, "stops_time_s");
     return n < 0 ? fail("stops_time_s", "0 or more") : n;
   });
   set("eva_time_s", o.eva_time_s !== undefined, () => (o.eva_time_s === null ? null : num(o.eva_time_s, "eva_time_s")));
-  set("status", o.status !== undefined, () => oneOf<RouteStatusCode>(o.status, STATUS_CODES, "status"));
   set("reasons", o.reasons !== undefined, () => arr(o.reasons, "reasons").map((r, i) => str(r, `reasons[${i}]`)));
   return out;
 }

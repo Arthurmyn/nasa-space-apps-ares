@@ -279,31 +279,30 @@ const extras = () => ({
   return: { distance_m: 100, est_time_s: 60 },
   round_trip_time_s: 120,
   eva_limit_s: 28800,
-  status: "GO",
-  reasons: ["Checked."],
+  readiness: { level: "NOMINAL", reasons: ["Checked."] },
 });
 
 describe("parseRouteResponse: profile fields", () => {
   it("leaves them out of an older response", () => {
     const r = parseRouteResponse(valid());
-    for (const key of ["status", "stats", "return", "round_trip_time_s", "reasons", "route_profile"]) assert.equal(key in r, false, key);
+    for (const key of ["stats", "return", "round_trip_time_s", "readiness", "route_profile"]) assert.equal(key in r, false, key);
   });
 
   it("reads them when they are valid", () => {
     const r = parseRouteResponse({ ...valid(), ...extras() });
-    assert.equal(r.status, "GO");
+    assert.equal(r.readiness?.level, "NOMINAL");
     assert.equal(r.route_profile, "safe");
     assert.deepEqual(r.return, { distance_m: 100, est_time_s: 60 });
     assert.equal(r.stats?.slope_class_pct.caution, 15);
     assert.equal(r.round_trip_time_s, 120);
-    assert.deepEqual(r.reasons, ["Checked."]);
+    assert.deepEqual(r.readiness?.reasons, ["Checked."]);
   });
 
   it("keeps null for a missing way back", () => {
-    const r = parseRouteResponse({ ...valid(), ...extras(), return: null, round_trip_time_s: null, status: "NO-GO" });
+    const r = parseRouteResponse({ ...valid(), ...extras(), return: null, round_trip_time_s: null, readiness: { level: "NOT_ADVISED", reasons: ["No path back."] } });
     assert.equal(r.return, null);
     assert.equal(r.round_trip_time_s, null);
-    assert.equal(r.status, "NO-GO");
+    assert.equal(r.readiness?.level, "NOT_ADVISED");
   });
 
   it("drops a bad field and keeps the route and the good fields", () => {
@@ -311,8 +310,8 @@ describe("parseRouteResponse: profile fields", () => {
     const warned: string[] = [];
     console.warn = (m: string) => void warned.push(String(m));
     try {
-      const r = parseRouteResponse({ ...valid(), ...extras(), status: "MAYBE", stats: { slope_class_pct: { ok: 50, caution: 10, avoid: 10 }, climb_m: 1, descent_m: 1 } });
-      assert.equal("status" in r, false);
+      const r = parseRouteResponse({ ...valid(), ...extras(), readiness: { level: "MAYBE", reasons: [] }, stats: { slope_class_pct: { ok: 50, caution: 10, avoid: 10 }, climb_m: 1, descent_m: 1 } });
+      assert.equal("readiness" in r, false);
       assert.equal("stats" in r, false, "percentages that do not add up to 100 are dropped");
       assert.equal(r.round_trip_time_s, 120);
       assert.equal(r.distance_m, 100);
@@ -320,6 +319,29 @@ describe("parseRouteResponse: profile fields", () => {
     } finally {
       console.warn = warn;
     }
+  });
+});
+
+describe("parseRouteResponse: the legacy status", () => {
+  it("is kept next to readiness for older clients", () => {
+    const r = parseRouteResponse({ ...valid(), ...extras(), status: "CAUTION", reasons: ["Steep."] });
+    assert.equal(r.status, "CAUTION");
+    assert.deepEqual(r.reasons, ["Steep."]);
+    assert.equal(r.readiness?.level, "NOMINAL", "readiness is read on its own, whatever status says");
+  });
+
+  it("is optional, and a bad value is dropped without hiding the route or readiness", () => {
+    const warn = console.warn;
+    console.warn = () => undefined;
+    try {
+      const r = parseRouteResponse({ ...valid(), ...extras(), status: "MAYBE", reasons: "no" });
+      assert.equal("status" in r, false);
+      assert.equal("reasons" in r, false);
+      assert.equal(r.readiness?.level, "NOMINAL");
+    } finally {
+      console.warn = warn;
+    }
+    assert.equal("status" in parseRouteResponse({ ...valid(), ...extras() }), false);
   });
 });
 
