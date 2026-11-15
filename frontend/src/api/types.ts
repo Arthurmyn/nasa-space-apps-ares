@@ -127,6 +127,12 @@ export interface RouteNavigation {
  */
 export type ReadinessLevel = "NOMINAL" | "MARGINAL" | "NOT_ADVISED";
 
+/**
+ * The older name for the same judgement, still sent next to `readiness` for older clients:
+ * "GO", "CAUTION" or "NO-GO". The web app reads `readiness` and never shows this value.
+ */
+export type LegacyStatus = "GO" | "CAUTION" | "NO-GO";
+
 export interface Readiness {
   level: ReadinessLevel;
   /** Plain sentences behind the level. */
@@ -185,6 +191,9 @@ export interface RouteResponse {
   /** The EVA time limit behind `status`, seconds. Null when the site has none. */
   eva_limit_s?: number | null;
   readiness?: Readiness;
+  /** Legacy fields, kept in the type for older clients and old saved responses. Not shown anywhere. */
+  status?: LegacyStatus;
+  reasons?: string[];
 }
 
 // ---- POST /route/sensitivity -----------------------------------------------
