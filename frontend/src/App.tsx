@@ -1,10 +1,9 @@
 import { Suspense, lazy, useEffect, useState } from "react";
-import { ConditionsPanel, Disclaimer } from "./components/ConditionsPanel.tsx";
+import { Disclaimer } from "./components/ConditionsPanel.tsx";
 import { ElevationProfile } from "./components/ElevationProfile.tsx";
-import { LeftPanel } from "./components/LeftPanel.tsx";
+import { LeftPanel, SideRail } from "./components/LeftPanel.tsx";
 import { PanelToggle } from "./components/PanelToggle.tsx";
 import { MobileSummary, RouteSummary } from "./components/RouteSummary.tsx";
-import { SiteContextNote } from "./components/SiteContextNote.tsx";
 import { StopCard } from "./components/StopCard.tsx";
 import { StopsPanel } from "./components/StopsPanel.tsx";
 import { TopBar, type Drawer, type Mode } from "./components/TopBar.tsx";
@@ -13,7 +12,7 @@ import { HudView } from "./modes/HudView.tsx";
 import { startMode } from "./lib/startMode.ts";
 import { PlannerProvider, usePlanner } from "./state/PlannerContext.tsx";
 import { SiteProvider, useSite } from "./state/SiteContext.tsx";
-import { useUi } from "./state/uiStore.ts";
+import { uiStore, useUi } from "./state/uiStore.ts";
 
 // The map pulls in MapLibre (large), so it loads after the first paint.
 const MapView = lazy(() => import("./map/MapView.tsx"));
@@ -37,25 +36,28 @@ function PlanView({ drawer, onDrawer }: { drawer: Drawer; onDrawer: (d: Drawer) 
   const profile = showProfile ? "full" : "hidden";
   return (
     <div className="shell__body" data-drawer={drawer ?? undefined} data-profile={profile}
-      data-left={ui.leftCollapsed ? "collapsed" : undefined}
+      data-left={ui.leftPanel ? undefined : "collapsed"}
       data-right={ui.rightCollapsed ? "collapsed" : undefined}
     >
-      <aside id="layers-drawer" className="shell__left" aria-label="Layers">
-        <LeftPanel />
+      <SideRail />
+      <aside id="layers-drawer" className="shell__left" aria-label="Layers, sites and site conditions">
+        <LeftPanel
+          onClose={() => {
+            uiStore.showSidePanel(null);
+            onDrawer(null);
+          }}
+        />
       </aside>
       <main className="shell__map">
         <Suspense fallback={<MapFallback />}>
           <MapView />
         </Suspense>
-        <PanelToggle side="left" />
-        <PanelToggle side="right" />
+        <PanelToggle />
       </main>
       <aside id="route-drawer" className="shell__right" aria-label="Route details">
         <RouteSummary />
         <StopsPanel />
         <StopCard />
-        <SiteContextNote />
-        <ConditionsPanel />
         <Disclaimer />
       </aside>
       <MobileSummary onOpen={() => onDrawer("route")} />

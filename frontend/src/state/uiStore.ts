@@ -1,33 +1,39 @@
 import { useSyncExternalStore } from "react";
 
+/** What the left flyout shows; picked from the icon rail (desktop) or the drawer tabs (narrow). */
+export type SidePanel = "layers" | "sites" | "conditions" | "method";
+
 /**
  * Small UI choices that must survive switching between Plan, HUD and Card (each mode unmounts
  * the others). Kept outside React state, like hoverStore.
  */
 interface UiState {
-  /** The "Method and references" drawer. */
-  howComputedOpen: boolean;
   /** The slope-limit sensitivity drawer. Closed by default: opening it asks the backend for three more routes. */
   sensitivityOpen: boolean;
   /** The full drive path from the NASA traverse file (msl_traverse.json) on the Plan map. Off by default. */
   drivePathOn: boolean;
-  /** Desktop side panels folded away to give the map the width. */
-  leftCollapsed: boolean;
+  /** The open left flyout, or null when only the rail shows and the map takes the width. */
+  leftPanel: SidePanel | null;
+  /** Desktop route column folded away to give the map the width. */
   rightCollapsed: boolean;
   /** Curiosity's own traverse drawn on the map. Frontend-only layer, not in the API layer list. */
   traverseOn: boolean;
 }
 
-let current: UiState = { howComputedOpen: false, sensitivityOpen: false, drivePathOn: false, leftCollapsed: false, rightCollapsed: false, traverseOn: true };
+let current: UiState = { sensitivityOpen: false, drivePathOn: false, leftPanel: null, rightCollapsed: false, traverseOn: true };
 const listeners = new Set<() => void>();
 
 export const uiStore = {
   get: (): UiState => current,
-  setHowComputedOpen(open: boolean) {
-    this.patch({ howComputedOpen: open });
+  /** A rail button: opens its panel, or closes it when it is already the open one. */
+  toggleSidePanel(panel: SidePanel) {
+    this.patch({ leftPanel: current.leftPanel === panel ? null : panel });
   },
-  togglePanel(side: "left" | "right") {
-    this.patch(side === "left" ? { leftCollapsed: !current.leftCollapsed } : { rightCollapsed: !current.rightCollapsed });
+  showSidePanel(panel: SidePanel | null) {
+    this.patch({ leftPanel: panel });
+  },
+  toggleRight() {
+    this.patch({ rightCollapsed: !current.rightCollapsed });
   },
   toggleTraverse() {
     this.patch({ traverseOn: !current.traverseOn });

@@ -245,3 +245,9 @@
   border-color: var(--accent);
   border-top-width: 2px;
 }
+
+/* The method in the left flyout: same rhythm as it had inside its old drawer. */
+.method-panel {
+  display: grid;
+  gap: var(--space-5);
+}

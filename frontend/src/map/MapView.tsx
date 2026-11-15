@@ -153,7 +153,7 @@ export default function MapView() {
     if (!map) return;
     const frame = requestAnimationFrame(() => map.resize());
     return () => cancelAnimationFrame(frame);
-  }, [map, ui.leftCollapsed, ui.rightCollapsed]);
+  }, [map, ui.leftPanel === null, ui.rightCollapsed]);
   usePinMarkers(map, entries, state.selectedId, { select: planner.select, move: planner.movePoint });
   useHoverMarker(map, route && !planner.stale ? route : null);
   useMapInteractions(map, {
