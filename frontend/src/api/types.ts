@@ -44,6 +44,10 @@ export interface PointInput {
   name?: string;
 }
 
+/** Route cost profile (docs/api.md): "balanced" is the default and the original cost. */
+export type RouteProfileId = "fast" | "balanced" | "safe";
+export const ROUTE_PROFILE_IDS: readonly RouteProfileId[] = ["fast", "balanced", "safe"];
+
 export interface RouteRequest {
   /** Which site's terrain to plan on; the backend uses its default site when omitted. */
   site_id?: string;
@@ -51,6 +55,8 @@ export interface RouteRequest {
   /** Ordered science stops, 1 to MAX_STOPS. */
   stops: PointInput[];
   constraints: { max_slope_deg: number };
+  /** Cost profile. Left out for "balanced", so an older backend sees the request it knows. */
+  profile?: RouteProfileId;
   /** Ask for one alternative route in `alternative`. */
   compare?: boolean;
 }
@@ -115,6 +121,28 @@ export interface RouteNavigation {
   heading_segments: number[];
 }
 
+/** Mission status of a route: GO, CAUTION, or NO-GO (no path, or the round trip is over the EVA limit). */
+export type RouteStatusCode = "GO" | "CAUTION" | "NO-GO";
+
+/** Share of the distance in each slope class, in percent; the three add up to 100. */
+export interface SlopeClassPct {
+  ok: number;
+  caution: number;
+  avoid: number;
+}
+
+export interface RouteStats {
+  slope_class_pct: SlopeClassPct;
+  climb_m: number;
+  descent_m: number;
+}
+
+/** The walk back along the same stops, reversed. */
+export interface ReturnTrip {
+  distance_m: number;
+  est_time_s: number;
+}
+
 export interface RouteResponse {
   /** ISO 8601 UTC timestamp of when the backend computed this route. */
   computed_at: string;
@@ -137,7 +165,65 @@ export interface RouteResponse {
   navigation?: RouteNavigation | null;
   /** Route-service capability, independent of layer-list availability. */
   supports_alternatives?: boolean;
+  // Added with route profiles. All optional: an older backend does not send them.
+  route_profile?: RouteProfileId;
+  /** True when "safe" found no path under the caution threshold and the normal limit was used. */
+  profile_fallback?: boolean;
+  stats?: RouteStats;
+  /** Null when there is no path back. */
+  return?: ReturnTrip | null;
+  round_trip_time_s?: number | null;
+  /** The EVA time limit behind `status`, seconds. Null when the site has none. */
+  eva_limit_s?: number | null;
+  status?: RouteStatusCode;
+  reasons?: string[];
 }
+
+// ---- POST /route/sensitivity -----------------------------------------------
+
+export interface SensitivityResult {
+  limit_deg: number;
+  reachable: boolean;
+  distance_m: number | null;
+  est_time_s: number | null;
+  max_slope_deg: number | null;
+  /** Why the plan fails at this limit; null when it is reachable. */
+  reason: string | null;
+}
+
+export interface SensitivityResponse {
+  site_id: string;
+  results: SensitivityResult[];
+}
+
+// ---- GET /conditions -------------------------------------------------------
+
+/** Curiosity REMS weather at the rover's own position (newest sol). A value the feed lacks is null. */
+export interface ConditionsData {
+  available: true;
+  provider: string;
+  /** The feed's own terms, shown with the data. */
+  disclaimer: string;
+  source_url: string;
+  sol: number | null;
+  earth_date: string | null;
+  ls_deg: number | null;
+  season: string | null;
+  air_temp_min_c: number | null;
+  air_temp_max_c: number | null;
+  ground_temp_min_c: number | null;
+  ground_temp_max_c: number | null;
+  pressure_pa: number | null;
+  pressure_note: string | null;
+  sunrise: string | null;
+  sunset: string | null;
+  uv_index: string | null;
+  opacity: string | null;
+  wind_speed: number | null;
+  fetched_at: string | null;
+}
+
+export type ConditionsResponse = ConditionsData | { available: false; reason: string };
 
 // ---- Site data: docs/DATA_CONTRACT.md -----------------------------------------
 
