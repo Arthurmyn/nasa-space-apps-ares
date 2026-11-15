@@ -14,12 +14,11 @@ export const LAYER_META: readonly LayerMeta[] = [
   { id: "slope", label: "Slope", description: "Slope from HiRISE DTM (MRO), ~5 m baseline. Thresholds are lunar analogs, not Mars suit limits.", isEstimate: false },
   { id: "optical", label: "Optical", description: "HiRISE orthoimage PSP_009149_1750 (MRO), same stereo pair as the DTM, acquired 9 Jul 2008.", isEstimate: false },
   { id: "thermal", label: "Thermal inertia", description: "Thermal inertia (NOT surface temperature), THEMIS/Mars Odyssey, 100 m/px, ~20 % absolute accuracy. Context only, coarser than the route grid.", isEstimate: false },
-  { id: "geology", label: "Geology", description: "No public vector map of the boxwork boundary exists.", isEstimate: false },
   { id: "radiation", label: "Radiation", description: "Radiation dose (published mean, not live): 0.64 ± 0.12 mSv/day, GCR only, MSL/RAD 2012-13 at solar maximum. 2026 values are likely higher.", isEstimate: false },
 ];
 
 /** Layers shown as a card in the panel instead of a map image. The values are for this site only. */
-export const CARD_LAYERS: readonly LayerId[] = ["thermal", "geology", "radiation"];
+export const CARD_LAYERS: readonly LayerId[] = ["thermal", "radiation"];
 export const CARD_LAYERS_SITE_ID = "gale-bx";
 
 /**
