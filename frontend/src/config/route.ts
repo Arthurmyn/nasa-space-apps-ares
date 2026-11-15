@@ -31,3 +31,7 @@ export const HUD_RANGE_M = 400;
 
 /** Furthest straight-line distance from the start the plan should stay within, metres. Mirrors "Max distance from lander" in assumptions.json. */
 export const MAX_DISTANCE_FROM_START_M = 2000;
+
+/** Planned minutes at each stop, sent as `stop_time_min` and added to the EVA time. ARES planning input, not a NASA value. */
+export const DEFAULT_STOP_TIME_MIN = 15;
+export const STOP_TIME_OPTIONS_MIN = [0, 5, 10, 15, 20, 30, 45, 60, 90, 120] as const;

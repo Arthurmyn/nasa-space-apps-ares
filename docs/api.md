@@ -82,6 +82,7 @@ Request:
 | `constraints.max_slope_deg` | number | Positive hard slope limit, capped at `assumptions.json`'s `slope_limit_deg` |
 | `profile` | `"fast" \| "balanced" \| "safe"`, optional | Cost profile, default `balanced` (the original cost). `fast`: step cost `length * (1 + 0.5 * (slope / limit)^2)`, so steeper shortcuts win more often. `safe`: the hard limit is `slope_caution_deg` (10 degrees); if no path exists under it, the normal limit is used and the response says so (`profile_fallback`). An unknown value is `422`. |
 | `compare` | boolean, optional | Accepted; this implementation returns `alternative: null` |
+| `stop_time_min` | number, optional | Planned minutes at each stop, 0 to 240, default 0. Adds `stops_time_s` to the EVA time checked against `eva_limit_s`. ARES planning input, not a NASA value; the web app sends 15 by default and leaves the field out at 0 |
 
 Response `200` (example values only):
 
@@ -142,8 +143,11 @@ Response `200` (example values only):
 | `stats` | `{ slope_class_pct: { ok, caution, avoid }, climb_m, descent_m }`, optional | Share of the distance in each slope class (up to `slope_caution_deg`, up to the route limit, above it; adds up to 100) and the summed climb and descent of the walked cells |
 | `return` | `{ distance_m, est_time_s }` \| null, optional | The walk back along the same stops, reversed, from the last stop to the start; null if there is no path back |
 | `round_trip_time_s` | number \| null, optional | `est_time_s` plus `return.est_time_s` |
-| `eva_limit_s` | number \| null, optional | The EVA time limit used for `status`, from `assumptions.json` (`eva_limit_s`, marked TO VERIFY); null when the site has none |
-| `status` | `"GO" \| "CAUTION" \| "NO-GO"`, optional | `NO-GO`: no path, or the round trip exceeds `eva_limit_s`. `CAUTION`: the maximum slope is above `slope_caution_deg`, or `safe` fell back. Otherwise `GO` |
+| `eva_limit_s` | number \| null, optional | The EVA time limit used for `status`, from `assumptions.json` (`eva_limit_s`, 8 h, NASA EVA-EXP-0075 [1]); null when the site has none |
+| `stops_time_s` | number, optional | Number of stops × `stop_time_min` × 60 |
+| `eva_time_s` | number \| null, optional | `round_trip_time_s + stops_time_s`, the time checked against `eva_limit_s`; null with no path back |
+| `return_check` | object \| null, optional | Longest walk back to the start from any route point, see below; null when the site sets no return limit |
+| `status` | `"GO" \| "CAUTION" \| "NO-GO"`, optional | `NO-GO`: no path, `eva_time_s` exceeds `eva_limit_s`, or `return_check.ok` is false. `CAUTION`: the maximum slope is above `slope_caution_deg`, or `safe` fell back. Otherwise `GO` |
 | `reasons` | string[], optional | Plain sentences behind `status`; for `GO` they say what was checked |
 | `readiness` | `{ level, reasons }`, optional | The same judgement as `status` under other names, next to it (`status` stays for compatibility). `level`: `NOT_ADVISED` (no path, or `round_trip_time_s` is over `eva_limit_s`; the `status` is `NO-GO`), `MARGINAL` (the maximum slope is above `slope_caution_deg`, or the `safe` profile fell back; `CAUTION`), otherwise `NOMINAL` (`GO`). `reasons` are the same sentences as the top-level `reasons` |
 
@@ -165,7 +169,9 @@ Notes for the backend:
 - Errors: `422` for invalid input (for example no stops, or more than five), `5xx` otherwise. The UI shows a plain-language message. For 422, a string `detail` is shown as text; validation arrays and non-JSON bodies use a generic points-rejected message. Other status codes use generic messages.
 - CORS: allow the frontend origin (`http://localhost:5173` in dev).
 
-**What the web app shows from these fields** (`frontend/src/components/`): `route_profile` and `profile` in the request become a Fast / Balanced / Safe selector (Balanced is not sent); `readiness` an "EVA readiness" badge (NOMINAL, MARGINAL or NOT ADVISED, shown with an icon and the reasons; the app does not read `status` and `reasons`, and never shows the words GO and NO-GO); `round_trip_time_s`, `return`, `stats` and `eva_limit_s` the round-trip, way-back, climb, descent and slope-class bar, with a "TO VERIFY" tag while the EVA limit is unverified. `POST /route/sensitivity` fills the "Slope limit sensitivity" table, requested only while its drawer is open; `GET /conditions` the "Mars weather" card, which is not drawn when `available` is false. A malformed value in one of the added route fields is dropped with a console warning; the route itself stays usable.
+**Return check** (`backend/app/services/eva.py`). For every polyline vertex the backend finds the shortest walkable way back to the start: Dijkstra in metres from the start cell over the cells the route may use (valid, slope at or below the route's hard limit, 8 neighbours, no diagonal squeeze between blocked cells), plus the short click-to-cell connectors. It is the shortest way home, not the gentlest, and it does not follow the stops. `return_check` = `{ ok, worst_return_m, worst_return_s, worst_point: [lon, lat], worst_route_dist_m, limit_m, limit_s }`: the vertex with the longest walk back, where it is along the route, and the limits from `assumptions.json` (`return_limit_m` 2000, `return_limit_s` 3600). Time is distance / walking speed. `ok` is true when the walk back is within both limits. Limits from NASA EVA-EXP-0075 [1]: "Walking Range 2 km" and "Secondary O2 on suit provides an additional hour of gas"; lunar Artemis values, no Mars standard was found.
+
+**What the web app shows from these fields** (`frontend/src/components/`): `route_profile` and `profile` in the request become a Fast / Balanced / Safe selector (Balanced is not sent); `readiness` an "EVA readiness" badge (NOMINAL, MARGINAL or NOT ADVISED, shown with an icon and the reasons; the app does not read `status` and `reasons`, and never shows the words GO and NO-GO); `round_trip_time_s`, `return`, `stats` and `eva_limit_s` the round-trip, way-back, climb, descent and slope-class bar, with a "TO VERIFY" tag while the EVA limit is unverified; `return_check` a "Return to start" row with a time-at-stop selector, and `eva_time_s` / `stops_time_s` the EVA time line. `POST /route/sensitivity` fills the "Slope limit sensitivity" table, requested only while its drawer is open; `GET /conditions` the "Mars weather" card, which is not drawn when `available` is false. A malformed value in one of the added route fields is dropped with a console warning; the route itself stays usable.
 
 ### `POST /route/sensitivity`
 
