@@ -10,14 +10,16 @@ import { StopsPanel } from "./components/StopsPanel.tsx";
 import { TopBar, type Drawer, type Mode } from "./components/TopBar.tsx";
 import { CardView } from "./modes/CardView.tsx";
 import { HudView } from "./modes/HudView.tsx";
+import { startMode } from "./lib/startMode.ts";
 import { PlannerProvider, usePlanner } from "./state/PlannerContext.tsx";
-import { SiteProvider } from "./state/SiteContext.tsx";
+import { SiteProvider, useSite } from "./state/SiteContext.tsx";
 import { useUi } from "./state/uiStore.ts";
 
 // The map pulls in MapLibre (large), so it loads after the first paint.
 const MapView = lazy(() => import("./map/MapView.tsx"));
+const OverviewView = lazy(() => import("./modes/OverviewView.tsx"));
 
-const MODES: readonly Mode[] = ["plan", "hud", "card"];
+const MODES: readonly Mode[] = ["overview", "plan", "hud", "card"];
 
 function MapFallback() {
   return (
@@ -67,9 +69,33 @@ function PlanView({ drawer, onDrawer }: { drawer: Drawer; onDrawer: (d: Drawer) 
   );
 }
 
+/** Opening an ARES site from the overview: load its grid (if it is not the open one), then go to the planner. */
+function OverviewRoute({ resetSignal, onPlan }: { resetSignal: number; onPlan: () => void }) {
+  const { site, switchSite } = useSite();
+  return (
+    <Suspense fallback={<MapFallback />}>
+      <OverviewView
+        resetSignal={resetSignal}
+        onOpenSite={(id) => {
+          if (id !== site.id) switchSite(id);
+          onPlan();
+        }}
+      />
+    </Suspense>
+  );
+}
+
 export default function App() {
-  const [mode, setMode] = useState<Mode>("plan");
+  // The mode lives above SiteProvider: switching site remounts everything below it.
+  const [mode, setMode] = useState<Mode>(() => startMode(window.location.search, window.location.hash));
   const [drawer, setDrawer] = useState<Drawer>(null);
+  const [overviewReset, setOverviewReset] = useState(0);
+  const chooseMode = (next: Mode) => {
+    // Pressing "Mars overview" on the overview brings the whole planet back.
+    if (next === "overview" && mode === "overview") setOverviewReset((n) => n + 1);
+    setDrawer(null);
+    setMode(next);
+  };
 
   // Escape closes an open drawer on small screens.
   useEffect(() => {
@@ -85,7 +111,8 @@ export default function App() {
     <SiteProvider>
     <PlannerProvider>
       <div className="shell">
-        <TopBar mode={mode} modes={MODES} onMode={setMode} drawer={drawer} onDrawer={setDrawer} />
+        <TopBar mode={mode} modes={MODES} onMode={chooseMode} drawer={drawer} onDrawer={setDrawer} />
+        {mode === "overview" && <OverviewRoute resetSignal={overviewReset} onPlan={() => setMode("plan")} />}
         {mode === "plan" && <PlanView drawer={drawer} onDrawer={setDrawer} />}
         {mode === "hud" && <HudView onBackToPlan={() => setMode("plan")} />}
         {mode === "card" && <CardView onBackToPlan={() => setMode("plan")} />}
