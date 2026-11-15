@@ -147,6 +147,7 @@ def geology(
         "site_id": info["site_id"],
         **found,
         "scale": info["scale"],
+        "units_in_site": len({f["properties"]["unit"] for f in doc["features"]}),
         "source": {k: info["source"][k] for k in ("title", "url", "citation")},
         "note": info["note"],
     }

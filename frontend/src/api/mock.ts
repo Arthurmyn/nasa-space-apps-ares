@@ -17,6 +17,7 @@ import {
   type ReturnCheck,
   type ConditionsResponse,
   type ValidationResponse,
+  type GeologyResponse,
   type RouteProfileId,
   type RouteRequest,
   type RouteResponse,
@@ -339,6 +340,20 @@ export async function mockValidation(signal?: AbortSignal): Promise<ValidationRe
     raw: { mean_m: -1, std_m: 1, max_abs_m: 4, rmse_m: 1.4 },
     offset_corrected: { offset_m: -1, mean_m: 0, std_m: 1, max_abs_m: 3, rmse_m: 1 },
     source: { url: "https://example.org/sample-data", fetched_utc: "1970-01-01T00:00:00Z" },
+  };
+}
+
+/** Sample geology: one made-up unit, labelled as sample data. */
+export async function mockGeology(signal?: AbortSignal): Promise<GeologyResponse> {
+  await delay(250, signal);
+  return {
+    available: true,
+    site_id: "gale-bx",
+    unit: "Sample",
+    name: "Sample unit (mock data)",
+    scale: "1:20,000,000",
+    source: { title: "Sample data (mock)", url: "https://pubs.usgs.gov/sim/3292/", citation: "Sample data, not the USGS map" },
+    note: "Sample data for development.",
   };
 }
 

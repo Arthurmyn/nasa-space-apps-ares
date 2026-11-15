@@ -386,6 +386,24 @@ export interface ValidationResult {
 }
 
 export type ValidationResponse = ValidationResult | { available: false; reason: string };
+// ---- GET /geology ----------------------------------------------------------
+
+/** The geologic unit at a point, from the USGS global map (SIM 3292, 1:20,000,000): coarse, not site-scale. */
+export interface GeologyUnit {
+  available: true;
+  site_id: string;
+  /** The map's code, for example "Htu". */
+  unit: string;
+  /** The map's short unit description. */
+  name: string;
+  scale: string;
+  /** How many different units the site's geology file holds. Missing from an older backend. */
+  units_in_site?: number;
+  source: { title: string; url: string; citation: string };
+  note: string;
+}
+
+export type GeologyResponse = GeologyUnit | { available: false; reason: string };
 
 // ---- Client-side error model ----------------------------------------------
 
