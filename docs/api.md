@@ -70,6 +70,7 @@ Request:
     { "id": "stop-2", "lon": 77.52, "lat": 18.40, "name": "Optional name" }
   ],
   "constraints": { "max_slope_deg": 15 },
+  "profile": "balanced",
   "compare": true
 }
 ```
@@ -79,6 +80,7 @@ Request:
 | `site_id` | string, optional | The site whose terrain is used. Omitted means the default site `gale-bx`; an unknown id is `404`. Points outside that site's grid are `422`. |
 | `start`, `stops[]` | `{ id, lon, lat, name? }` | 1 to 5 stops, in visiting order. `id` is client-generated and stable ("start", "stop-1", ...); echo it back. |
 | `constraints.max_slope_deg` | number | Positive hard slope limit, capped at `assumptions.json`'s `slope_limit_deg` |
+| `profile` | `"fast" \| "balanced" \| "safe"`, optional | Cost profile, default `balanced` (the original cost). `fast`: step cost `length * (1 + 0.5 * (slope / limit)^2)`, so steeper shortcuts win more often. `safe`: the hard limit is `slope_caution_deg` (10 degrees); if no path exists under it, the normal limit is used and the response says so (`profile_fallback`). An unknown value is `422`. |
 | `compare` | boolean, optional | Accepted; this implementation returns `alternative: null` |
 
 Response `200` (example values only):
@@ -135,6 +137,16 @@ Response `200` (example values only):
 | `profile[]` | `{ dist_m, elev_m, slope_deg }` | `dist_m` strictly increasing from 0. `slope_deg` is the absolute local slope at the sample. Aim for a sample every 10 to 50 m |
 | `assumptions[]` | `{ name, value, source }` | Listed under "How this is computed" |
 | `alternative` | object \| null | Only when `compare: true`. Null if no alternative exists |
+| `route_profile` | `"fast" \| "balanced" \| "safe"`, optional | The profile asked for |
+| `profile_fallback` | boolean, optional | True when `safe` found no path under the caution threshold and the normal limit was used |
+| `stats` | `{ slope_class_pct: { ok, caution, avoid }, climb_m, descent_m }`, optional | Share of the distance in each slope class (up to `slope_caution_deg`, up to the route limit, above it; adds up to 100) and the summed climb and descent of the walked cells |
+| `return` | `{ distance_m, est_time_s }` \| null, optional | The walk back along the same stops, reversed, from the last stop to the start; null if there is no path back |
+| `round_trip_time_s` | number \| null, optional | `est_time_s` plus `return.est_time_s` |
+| `eva_limit_s` | number \| null, optional | The EVA time limit used for `status`, from `assumptions.json` (`eva_limit_s`, marked TO VERIFY); null when the site has none |
+| `status` | `"GO" \| "CAUTION" \| "NO-GO"`, optional | `NO-GO`: no path, or the round trip exceeds `eva_limit_s`. `CAUTION`: the maximum slope is above `slope_caution_deg`, or `safe` fell back. Otherwise `GO` |
+| `reasons` | string[], optional | Plain sentences behind `status`; for `GO` they say what was checked |
+
+All the fields from `route_profile` to `reasons` are additive: nothing above was renamed or removed, and `safety` and `safety_reason` keep their meaning. When there is no route at all, the `422` body also carries `"status": "NO-GO"` and `"reasons": [<the same text as detail>]`.
 
 `navigation.vertex_dist_m` has one cumulative distance in backend metres per polyline vertex, beginning at 0 and ending at `distance_m`. `navigation.heading_segments[i]` is the zero-based index of the edge whose direction applies while traversing edge `i` (vertex `i` to vertex `i+1`). A normal A* edge references itself. The backend assigns departure/arrival connectors to the first/last actual A* edge of their own leg, including at intermediate stops. Genuine movement within a single cell references itself. No cell-size or length heuristic is used by the HUD.
 
@@ -145,8 +157,47 @@ Notes for the backend:
 - Routes use eight-neighbour A*, with cost `step_length * (1 + (destination_slope / effective_limit)^2)`. No-data cells and cells over the effective limit are blocked. Diagonal movement cannot cut through blocked corners.
 - Stops are visited in request order. Requested ids, coordinates and names are echoed; note/image are attached only when the requested position matches a catalog stop (within `1e-8` degrees), so moving a point does not keep stale science information.
 - Profile samples come from the same traversed cells as the polyline, approximately every 20 m plus the endpoints, stop boundaries and the steepest sample in each interval of each leg. The maximum slope considers every traversed cell. Time uses `distance_m / (speed_kmh / 3.6)`. Assumptions contain `assumptions.json.items` plus an effective route slope limit, showing both the requested and site limits and their minimum. Safety uses the data's caution threshold; `safety_reason` also states the effective route limit. A successful route cannot be `avoid`: cells above the effective limit are blocked, so an impossible route returns 422. `alternative` is null, including when `compare: true`. `hazards` holds the steep-slope zones: the 4-connected groups of cells steeper than the effective route slope limit, which are the cells the router cannot cross. Groups under 10 cells are dropped, at most 8 are returned (the ones nearest to the route first), outlines are simplified, and no zone contains a point of the returned `polyline`. Ids are `hazard-1` to `hazard-8`, label `Slope over <limit> deg` (`backend/app/services/hazards.py`).
+- With `profile: "safe"` or `"fast"` the `assumptions` list gets one more item, "Route profile". Hazard zones are built from the hard limit the route actually used.
 - A point outside the grid, in no-data, above the limit, or a disconnected leg returns `422` with a plain-language `detail` naming the point or leg. Input validation also returns `422`.
 - The UI colours slope classes itself using two thresholds from `frontend/src/config/route.ts` (`cautionDeg`, `maxDeg`). **They are placeholders until the team confirms them.** If the backend should own the thresholds, add them to the response (for example `slope_limits: { caution_deg, max_deg }`) and the UI will read them from there.
 - `profile` and `polyline` describe the same route. The HUD uses exact `navigation.vertex_dist_m`; other map/profile interactions retain fraction-based interpolation.
 - Errors: `422` for invalid input (for example no stops, or more than five), `5xx` otherwise. The UI shows a plain-language message. For 422, a string `detail` is shown as text; validation arrays and non-JSON bodies use a generic points-rejected message. Other status codes use generic messages.
 - CORS: allow the frontend origin (`http://localhost:5173` in dev).
+
+### `POST /route/sensitivity`
+
+Same body as `POST /route`. Plans the same stops with hard slope limits of 10, 15 and 20 degrees and reports what each limit costs:
+
+```json
+{
+  "site_id": "gale-bx",
+  "results": [
+    { "limit_deg": 10, "reachable": true, "distance_m": 1419.5, "est_time_s": 2555.2, "max_slope_deg": 10.0, "reason": null },
+    { "limit_deg": 15, "reachable": true, "distance_m": 1281.5, "est_time_s": 2306.8, "max_slope_deg": 13.0, "reason": null },
+    { "limit_deg": 20, "reachable": false, "distance_m": null, "est_time_s": null, "max_slope_deg": null, "reason": "No route from 'start' to 'stop-1': ..." }
+  ]
+}
+```
+
+The limits are used as given: this is an analysis, so 20 degrees is tried although the site data caps real routes at its own limit (15). The cost is `balanced`, or `fast` when the request says `fast`; `safe` is treated as `balanced`, because the limit is what varies. A point that is above a limit that is tried makes that limit unreachable (`reason`); a point outside the grid or on no-data is `422` with `status: "NO-GO"`, like `/route`.
+
+### `GET /conditions`
+
+Curiosity REMS weather, proxied from `https://mars.nasa.gov/rss/api/?feed=weather&category=msl&feedtype=json` (provided by the Centro de Astrobiologia, for outreach) and cached in memory for one hour. Always `200`.
+
+```json
+{
+  "available": true,
+  "provider": "Centro de Astrobiologia (CAB, CSIC-INTA), Rover Environmental Monitoring Station, Mars Science Laboratory",
+  "disclaimer": "Provided by CAB for outreach purposes only. ...",
+  "source_url": "https://mars.nasa.gov/rss/api/?feed=weather&category=msl&feedtype=json",
+  "sol": 4995, "earth_date": "2026-08-25", "ls_deg": 341, "season": "Month 12",
+  "air_temp_min_c": -71, "air_temp_max_c": -5, "ground_temp_min_c": -84, "ground_temp_max_c": 4,
+  "pressure_pa": 777, "pressure_note": "Higher", "sunrise": "06:46", "sunset": "18:51",
+  "uv_index": "Moderate", "opacity": "Sunny", "wind_speed": null,
+  "fetched_at": "2026-11-15T05:34:50Z"
+}
+```
+
+The newest sol of the feed. A value the feed gives as `--` is `null`. The numbers are measured at the rover's own position, are not a forecast, and do not describe a planned route. On any failure (network, status, bad JSON, unexpected shape) the answer is `{ "available": false, "reason": "..." }`; a failure is retried after one minute, a success after one hour.
+
