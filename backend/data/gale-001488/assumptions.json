@@ -2,6 +2,7 @@
   "slope_limit_deg": 15,
   "slope_caution_deg": 10,
   "speed_kmh": 2,
+  "eva_limit_s": 28800,
   "items": [
     {
       "name": "Max slope",
@@ -32,6 +33,11 @@
       "name": "Radiation dose rate",
       "value": "0.67 mSv/day",
       "source": "Average galactic cosmic ray dose equivalent rate at the Gale surface, Curiosity RAD, August 2012 to June 2013 [5]. Excludes solar particle events."
+    },
+    {
+      "name": "EVA time limit",
+      "value": "8 h",
+      "source": "TO VERIFY: document supporting the 8 h limit on one EVA. The MARSWALK project notes list 8 h (reference architecture, Rucker & Hoffman 2020, HEOMD-415) but it was not checked against those documents."
     }
   ]
 }

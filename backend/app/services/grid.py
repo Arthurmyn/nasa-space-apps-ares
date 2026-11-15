@@ -57,6 +57,12 @@ class Grid:
         ):
             raise ValueError("Invalid slope thresholds or walking speed")
         self.items = [Assumption.model_validate(item) for item in a["items"]]
+        # Optional: the longest EVA, in seconds, the round trip is checked against.
+        self.eva_limit_s = float(a["eva_limit_s"]) if "eva_limit_s" in a else None
+        if self.eva_limit_s is not None and not (
+            math.isfinite(self.eva_limit_s) and self.eva_limit_s > 0
+        ):
+            raise ValueError("eva_limit_s must be a positive number of seconds")
         self.layers = read_layer_files(directory, m)
         stops = read("stops")
         self.site = Site(id=m["site_id"], name=m["name"], **stops)
