@@ -1,7 +1,9 @@
 import { dataSource } from "../api/client.ts";
 import { formatUtcTime } from "../lib/format.ts";
+import { DESKTOP_QUERY, useMediaQuery } from "../lib/useMediaQuery.ts";
 import { usePlanner } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
+import { uiStore, useUi } from "../state/uiStore.ts";
 import { Icon } from "./Icon.tsx";
 import { UtcClock } from "./UtcClock.tsx";
 
@@ -42,7 +44,19 @@ export function TopBar({ mode, modes, onMode, drawer, onDrawer }: TopBarProps) {
   const { state } = usePlanner();
   const { site } = useSite();
   const computed = state.route ? formatUtcTime(state.route.computed_at) : null;
-  const toggle = (d: Exclude<Drawer, null>) => onDrawer(drawer === d ? null : d);
+  const ui = useUi();
+  const desktop = useMediaQuery(DESKTOP_QUERY);
+  // Wide screens fold the column away; narrow screens slide it over the map.
+  const toggle = (side: "left" | "right") => {
+    if (desktop) {
+      uiStore.togglePanel(side);
+      return;
+    }
+    const d = side === "left" ? "layers" : "route";
+    onDrawer(drawer === d ? null : d);
+  };
+  const open = (side: "left" | "right") =>
+    desktop ? !(side === "left" ? ui.leftCollapsed : ui.rightCollapsed) : drawer === (side === "left" ? "layers" : "route");
 
   return (
     <header className="topbar">
@@ -51,12 +65,13 @@ export function TopBar({ mode, modes, onMode, drawer, onDrawer }: TopBarProps) {
           <button
             type="button"
             className="btn btn--icon topbar__drawer-btn"
-            aria-expanded={drawer === "layers"}
+            aria-expanded={open("left")}
             aria-controls="layers-drawer"
-            aria-label="Layers"
-            onClick={() => toggle("layers")}
+            aria-label="Layers and sites"
+            title="Layers and sites"
+            onClick={() => toggle("left")}
           >
-            <Icon name="layers" />
+            <Icon name="menu" />
           </button>
         )}
         <h1 className="topbar__brand">ARES</h1>
@@ -79,10 +94,11 @@ export function TopBar({ mode, modes, onMode, drawer, onDrawer }: TopBarProps) {
           <button
             type="button"
             className="btn btn--icon topbar__drawer-btn"
-            aria-expanded={drawer === "route"}
+            aria-expanded={open("right")}
             aria-controls="route-drawer"
-            aria-label="Route"
-            onClick={() => toggle("route")}
+            aria-label="Route details"
+            title="Route details"
+            onClick={() => toggle("right")}
           >
             <Icon name="route" />
           </button>
