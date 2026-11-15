@@ -16,11 +16,13 @@ interface UiState {
   leftPanel: SidePanel | null;
   /** Desktop route column folded away to give the map the width. */
   rightCollapsed: boolean;
+  /** The point inspector: a click on the map shows elevation, slope and geology instead of adding a point. */
+  inspectOn: boolean;
   /** Curiosity's own traverse drawn on the map. Frontend-only layer, not in the API layer list. */
   traverseOn: boolean;
 }
 
-let current: UiState = { sensitivityOpen: false, drivePathOn: false, leftPanel: null, rightCollapsed: false, traverseOn: true };
+let current: UiState = { sensitivityOpen: false, drivePathOn: false, leftPanel: null, rightCollapsed: false, inspectOn: false, traverseOn: true };
 const listeners = new Set<() => void>();
 
 export const uiStore = {
@@ -37,6 +39,9 @@ export const uiStore = {
   },
   toggleTraverse() {
     this.patch({ traverseOn: !current.traverseOn });
+  },
+  setInspectOn(on: boolean) {
+    this.patch({ inspectOn: on });
   },
   setSensitivityOpen(open: boolean) {
     this.patch({ sensitivityOpen: open });

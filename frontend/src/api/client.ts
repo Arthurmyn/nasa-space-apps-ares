@@ -1,10 +1,11 @@
 // Types mirror backend/app/schemas/. Route types live in ./types.ts (proposal, see docs/api.md).
 import { requestJson } from "./request.ts";
 import { siteFileUrl } from "./siteFiles.ts";
-import { parseConditions, parseValidation, parseLayersResponse, parseRouteResponse, parseSensitivityResponse, parseSiteMeta, parseSitesResponse, parseThermalInfo } from "./validate.ts";
+import { parseConditions, parseGeology, parseValidation, parseLayersResponse, parseRouteResponse, parseSensitivityResponse, parseSiteMeta, parseSitesResponse, parseThermalInfo } from "./validate.ts";
 import {
   ApiError,
   type ConditionsResponse,
+  type GeologyResponse,
   type ValidationResponse,
   type LayersResponse,
   type RouteRequest,
@@ -107,6 +108,22 @@ export const api = {
       console.warn("Validation request failed", e);
       const older = e instanceof ApiError && e.status === 404;
       return { available: false, reason: older ? "This server has no validation endpoint yet" : "The validation service could not be reached" };
+    }
+  },
+
+  /** The geologic unit at a point. Never throws for "no data": a failure comes back as { available: false }. */
+  geology: async (lon: number, lat: number, siteId: string, signal?: AbortSignal): Promise<GeologyResponse> => {
+    if (dataSource === "mock") {
+      const { mockGeology } = await import("./mock.ts");
+      return mockGeology(signal);
+    }
+    const query = `lon=${encodeURIComponent(lon)}&lat=${encodeURIComponent(lat)}&site_id=${encodeURIComponent(siteId)}`;
+    try {
+      return await requestJson(`${BASE}/geology?${query}`, undefined, signal, parseGeology);
+    } catch (e) {
+      if (signal?.aborted) throw e;
+      console.warn("Geology request failed", e);
+      return { available: false, reason: "The geology service could not be reached" };
     }
   },
 

@@ -13,6 +13,7 @@ import {
   type ConditionsResponse,
   type DifferenceStats,
   type ValidationResponse,
+  type GeologyResponse,
   type RouteAlternative,
   type RouteProfileId,
   type RouteResponse,
@@ -381,6 +382,28 @@ export function parseValidation(raw: unknown): ValidationResponse {
       raw: ok ? differenceStats(raw.raw, "raw") : null,
       offset_corrected: corrected ? { ...differenceStats(corrected, "offset_corrected"), offset_m: num(corrected.offset_m, "offset_corrected.offset_m") } : null,
       source: { url: str(source.url, "source.url"), fetched_utc: str(source.fetched_utc, "source.fetched_utc") },
+    };
+  } catch (e) {
+    if (!(e instanceof ApiError)) throw e;
+    return { available: false, reason: e.message };
+  }
+}
+
+/** The geologic unit at a point. Like the weather, a wrong shape is "not available", never an error. */
+export function parseGeology(raw: unknown): GeologyResponse {
+  if (!isObj(raw)) return { available: false, reason: "The geology answer was not an object" };
+  if (raw.available !== true) return { available: false, reason: typeof raw.reason === "string" ? raw.reason : "No reason given" };
+  try {
+    const source = obj(raw.source, "source");
+    return {
+      available: true,
+      site_id: str(raw.site_id, "site_id"),
+      unit: str(raw.unit, "unit"),
+      name: str(raw.name, "name"),
+      scale: str(raw.scale, "scale"),
+      ...(Number.isInteger(raw.units_in_site) && (raw.units_in_site as number) > 0 ? { units_in_site: raw.units_in_site as number } : {}),
+      source: { title: str(source.title, "source.title"), url: str(source.url, "source.url"), citation: str(source.citation, "source.citation") },
+      note: str(raw.note, "note"),
     };
   } catch (e) {
     if (!(e instanceof ApiError)) throw e;
