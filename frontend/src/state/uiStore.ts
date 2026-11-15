@@ -9,9 +9,11 @@ interface UiState {
   /** Desktop side panels folded away to give the map the width. */
   leftCollapsed: boolean;
   rightCollapsed: boolean;
+  /** Curiosity's own traverse drawn on the map. Frontend-only layer, not in the API layer list. */
+  traverseOn: boolean;
 }
 
-let current: UiState = { howComputedOpen: false, leftCollapsed: false, rightCollapsed: false };
+let current: UiState = { howComputedOpen: false, leftCollapsed: false, rightCollapsed: false, traverseOn: true };
 const listeners = new Set<() => void>();
 
 export const uiStore = {
@@ -22,9 +24,12 @@ export const uiStore = {
   togglePanel(side: "left" | "right") {
     this.patch(side === "left" ? { leftCollapsed: !current.leftCollapsed } : { rightCollapsed: !current.rightCollapsed });
   },
+  toggleTraverse() {
+    this.patch({ traverseOn: !current.traverseOn });
+  },
   patch(next: Partial<UiState>) {
     const merged = { ...current, ...next };
-    if (merged.howComputedOpen === current.howComputedOpen && merged.leftCollapsed === current.leftCollapsed && merged.rightCollapsed === current.rightCollapsed) return;
+    if ((Object.keys(merged) as (keyof UiState)[]).every((k) => merged[k] === current[k])) return;
     current = merged;
     listeners.forEach((l) => l());
   },

@@ -15,6 +15,7 @@ import { ApiError } from "../api/types.ts";
 import { stopLabel } from "../lib/format.ts";
 import { decodePlan, encodePlan } from "../lib/planUrl.ts";
 import { checkStopPoint, clampToBbox, insideBbox } from "../lib/siteGeo.ts";
+import { parseTraverse, type TraverseStop } from "../lib/traverse.ts";
 import { siteFileUrl } from "../api/siteFiles.ts";
 import { useSite } from "./SiteContext.tsx";
 import type { LayerId, LayerInfo } from "../api/types.ts";
@@ -64,6 +65,10 @@ export interface PlannerModel {
 interface AppModel {
   planner: PlannerModel;
   layers: LayersModel;
+  /** slope.bin of the open site, or null while loading or when it is missing. */
+  slope: Uint8Array | null;
+  /** Curiosity stops on this site in drive order, or null when the site has no traverse.geojson. */
+  traverse: readonly TraverseStop[] | null;
 }
 
 const Ctx = createContext<AppModel | null>(null);
@@ -149,6 +154,22 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       });
     return () => ctrl.abort();
   }, [site]);
+
+  // Curiosity's traverse is optional: a site without traverse.geojson simply has no such layer.
+  const [traverse, setTraverse] = useState<readonly TraverseStop[] | null>(null);
+  useEffect(() => {
+    setTraverse(null);
+    const ctrl = new AbortController();
+    fetch(siteFileUrl(site.id, "traverse.geojson"), { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json: unknown) => {
+        const stops = parseTraverse(json);
+        if (!ctrl.signal.aborted && stops.length > 0) setTraverse(stops);
+      })
+      // Missing file, or the dev server's HTML fallback that is not JSON: no layer, no error.
+      .catch(() => undefined);
+    return () => ctrl.abort();
+  }, [site.id]);
 
   /** Null when a stop may go at (lon, lat), otherwise the message to show. */
   const blockReason = useCallback(
@@ -263,6 +284,6 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
   );
 
   const layers = useLayersModel();
-  const value = useMemo(() => ({ planner, layers }), [planner, layers]);
+  const value = useMemo(() => ({ planner, layers, slope, traverse }), [planner, layers, slope, traverse]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
