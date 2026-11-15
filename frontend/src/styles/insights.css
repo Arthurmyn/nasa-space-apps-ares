@@ -363,3 +363,18 @@
   color: var(--text-muted);
   font-size: var(--fs-sm);
 }
+
+/* ---- Imagery legend ---- */
+.imagery-legend__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--space-2);
+}
+
+.imagery-legend__name {
+  font-weight: 500;
+}
+
+.imagery-legend__item .legend__text {
+  grid-column: 1 / -1;
+}

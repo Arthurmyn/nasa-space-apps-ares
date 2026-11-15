@@ -1,24 +1,34 @@
 import { addProtocol } from "maplibre-gl";
-import type { LayerId } from "../api/types.ts";
-import { TILE_SOURCES } from "../config/tiles.ts";
-import { equirectFootprint, TILE_PX } from "../lib/equirect.ts";
+import { EQ_SOURCES, type EqSourceId } from "../config/tiles.ts";
+import { boxesOverlap, eqTileBounds, equirectFootprint, TILE_PX } from "../lib/equirect.ts";
 
-/** Custom tile scheme: `ares-eq://<layerId>/<z>/<x>/<y>` with Web Mercator z/x/y. */
+/** Custom tile scheme: `ares-eq://<sourceId>/<z>/<x>/<y>` with Web Mercator z/x/y; the id is a key of EQ_SOURCES. */
 export const EQUIRECT_SCHEME = "ares-eq";
 
 const fill = (template: string, z: number, row: number, col: number) =>
   template.replace("{z}", String(z)).replace("{y}", String(row)).replace("{x}", String(col));
 
-/** Fetch one source tile. 404 means "no coverage here" and yields null; anything else throws. */
-async function fetchTile(url: string, signal: AbortSignal): Promise<ImageBitmap | null> {
-  const res = await fetch(url, { signal });
+/**
+ * Fetch one source tile. 404 means "no coverage here" and yields null. For a layer with a coverage
+ * box (`soft`), a tile that cannot be read at all (the server's 404 carries no CORS header, so the
+ * browser reports it as a failed request) is also "no coverage": the overlay is left transparent there
+ * and the layer below shows. A cancelled request is never turned into a missing tile.
+ */
+async function fetchTile(url: string, signal: AbortSignal, soft: boolean): Promise<ImageBitmap | null> {
+  let res: Response;
+  try {
+    res = await fetch(url, { signal });
+  } catch (e) {
+    if (soft && !signal.aborted) return null;
+    throw e;
+  }
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Tile request failed (${res.status}): ${url}`);
   return createImageBitmap(await res.blob());
 }
 
-async function loadEquirectTile(layer: LayerId, z: number, x: number, y: number, signal: AbortSignal): Promise<ImageBitmap> {
-  const cfg = TILE_SOURCES[layer];
+async function loadEquirectTile(layer: EqSourceId, z: number, x: number, y: number, signal: AbortSignal): Promise<ImageBitmap> {
+  const cfg = EQ_SOURCES[layer];
   if (cfg.url === null) throw new Error(`No tile URL configured for layer ${layer}`);
   const fp = equirectFootprint(z, x, y, cfg.maxLevel);
 
@@ -33,9 +43,13 @@ async function loadEquirectTile(layer: LayerId, z: number, x: number, y: number,
   const jobs: Promise<void>[] = [];
   for (let r = 0; r < rows; r += 1) {
     for (let c = 0; c < cols; c += 1) {
-      const url = fill(cfg.url, fp.level, fp.rowMin + r, fp.colMin + c);
+      const row = fp.rowMin + r;
+      const col = fp.colMin + c;
+      // A source tile outside the layer's coverage is not asked for: it can only be a 404.
+      if (cfg.bounds && !boxesOverlap(eqTileBounds(fp.level, row, col), cfg.bounds)) continue;
+      const url = fill(cfg.url, fp.level, row, col);
       jobs.push(
-        fetchTile(url, signal).then((bmp) => {
+        fetchTile(url, signal, cfg.bounds !== null).then((bmp) => {
           if (bmp) {
             mctx.drawImage(bmp, c * TILE_PX, r * TILE_PX);
             bmp.close();
@@ -66,8 +80,8 @@ export function registerEquirectProtocol(): void {
   registered = true;
   addProtocol(EQUIRECT_SCHEME, async (params, abort) => {
     const m = /^ares-eq:\/\/([a-z]+)\/(\d+)\/(\d+)\/(\d+)$/.exec(params.url);
-    if (!m) throw new Error(`Bad equirect tile URL: ${params.url}`);
-    const data = await loadEquirectTile(m[1] as LayerId, Number(m[2]), Number(m[3]), Number(m[4]), abort.signal);
+    if (!m || !(m[1]! in EQ_SOURCES)) throw new Error(`Bad equirect tile URL: ${params.url}`);
+    const data = await loadEquirectTile(m[1] as EqSourceId, Number(m[2]), Number(m[3]), Number(m[4]), abort.signal);
     return { data };
   });
 }

@@ -18,7 +18,7 @@ import { getMapTheme, prefersReducedMotion } from "./theme.ts";
 import { useGridModel } from "./useGridModel.ts";
 import { useHoverMarker, usePinMarkers } from "./useMarkers.ts";
 import { useMapInteractions } from "./useMapInteractions.ts";
-import { useRasterLayers } from "./useRasterLayers.ts";
+import { useRasterLayers, useTrekImagery } from "./useRasterLayers.ts";
 import { useRouteOverlay } from "./useRouteOverlay.ts";
 import { useDrivePathLayer } from "./useDrivePathLayer.ts";
 import { useTraverseLayer } from "./useTraverseLayer.ts";
@@ -149,6 +149,7 @@ export default function MapView() {
 
   useRouteOverlay(map, { route, stale: planner.stale, compare: state.compare, slopeOn });
   useRasterLayers(map, layers, site);
+  useTrekImagery(map);
   useTraverseLayer(map, { stops: traverse, on: ui.traverseOn, site, slope });
   useDrivePathLayer(map, site);
 

@@ -63,3 +63,23 @@ export function equirectFootprint(z: number, x: number, y: number, maxLevel: num
 
   return { level, colMin, colMax, rowMin, rowMax, x0: sx0 - colMin * TILE_PX, width: sx1 - sx0, rowEdges };
 }
+
+/** West, south, east, north of tile (row, col) of equirectangular level `level`, in degrees (rows count from the top). */
+export function eqTileBounds(level: number, row: number, col: number): [west: number, south: number, east: number, north: number] {
+  const cols = 2 ** (level + 1);
+  const rows = 2 ** level;
+  return [(col / cols) * 360 - 180, 90 - ((row + 1) / rows) * 180, ((col + 1) / cols) * 360 - 180, 90 - (row / rows) * 180];
+}
+
+/** True when two west, south, east, north boxes overlap (touching edges do not count). */
+export function boxesOverlap(
+  a: readonly [number, number, number, number],
+  b: readonly [number, number, number, number],
+): boolean {
+  return a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
+}
+
+/** Ground size of one pixel at the equator, in metres, at equatorial level `level` (a 2^(level+1) by 2^level grid of 256 px tiles). */
+export function metresPerPixelAtLevel(level: number, radiusM: number): number {
+  return (2 * Math.PI * radiusM) / (TILE_PX * 2 ** (level + 1));
+}
