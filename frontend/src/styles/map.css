@@ -58,10 +58,10 @@
 .map-tick {
   position: absolute;
   padding: 1px 4px;
-  background: rgb(5 5 7 / 0.8);
-  border: 1px solid var(--line-strong);
+  background: rgb(5 5 7 / 0.55);
   border-radius: 3px;
   white-space: nowrap;
+  opacity: 0.7;
 }
 
 .map-tick--top {
@@ -192,7 +192,7 @@
 
 .map-key__line {
   width: 22px;
-  border-top: 4px solid var(--accent);
+  border-top: 4px solid var(--cyan);
 }
 
 .map-key__line--alt {
@@ -209,7 +209,7 @@
   padding: 0;
   border: 2px solid var(--bg);
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--cyan);
   color: var(--text-on-accent);
   font-family: var(--font-mono);
   font-size: var(--fs-sm);
@@ -227,32 +227,20 @@
 
 .pin-marker--start {
   background: var(--bg);
-  color: var(--accent);
-  border-color: var(--accent);
+  color: var(--cyan);
+  border-color: var(--cyan);
 }
 
 .pin-marker--selected {
-  box-shadow: 0 0 0 3px var(--cyan);
+  box-shadow: 0 0 0 3px var(--text);
 }
 
 .pin-marker:focus-visible {
-  box-shadow: 0 0 0 2px var(--bg), 0 0 0 5px var(--cyan);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 5px var(--text);
 }
 
 .pin-marker:active {
   cursor: grabbing;
-}
-
-.hazard-label {
-  padding: 2px 6px;
-  background: rgb(5 5 7 / 0.88);
-  border: 1px solid var(--hazard);
-  border-radius: 3px;
-  color: var(--text);
-  font-size: 11px;
-  font-weight: 500;
-  white-space: nowrap;
-  pointer-events: none;
 }
 
 .hover-marker {
@@ -260,7 +248,7 @@
   height: 14px;
   border: 2px solid var(--bg);
   border-radius: 50%;
-  background: var(--cyan);
+  background: var(--text);
   pointer-events: none;
 }
 
