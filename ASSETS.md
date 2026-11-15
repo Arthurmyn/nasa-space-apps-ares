@@ -88,6 +88,19 @@ Mars Trek optical basemap, as read from its WMTS GetCapabilities (`https://trek.
 - The server sends `Access-Control-Allow-Origin: *`, which the canvas reprojection needs.
 - Our DTM-derived layers (slope, route, grid) are drawn above this basemap.
 
+### Mars Trek imagery above Viking (CTX and the HiRISE mosaic)
+
+Two more Mars Trek tile sets, read exactly like Viking (same EPSG:104905 grid, matrix set `default028mm`, 256 px tiles, `{level}/{row}/{col}` from the top, same protocol and reprojection in `frontend/src/map/equirectProtocol.ts`), PNG. Values below are from their WMTS GetCapabilities, read on 15 November 2026, and are kept in `frontend/src/config/tiles.ts`.
+
+| Layer | URL | Coverage and levels | Resolution | Where used |
+|-------|-----|---------------------|------------|------------|
+| CTX, `Gale_CTX_BlockAdj_dd` | `https://trek.nasa.gov/tiles/Mars/EQ/Gale_CTX_BlockAdj_dd/1.0.0//default/default028mm/{z}/{y}/{x}.png`; capabilities `https://trek.nasa.gov/tiles/Mars/EQ/Gale_CTX_BlockAdj_dd/1.0.0/WMTSCapabilities.xml` | bbox 135.1842593 -6.5732988 139.2413012 -2.8077809; levels 0 to 12 (MapLibre zoom 13) | The deepest level has 8192 x 4096 tiles: 10.18 m per pixel at the equator. The capabilities do not state the source pixel size; CTX is nominally about 6 m per pixel, so the finest level served is a little coarser than the camera's own | Imagery switch in the layers panel; drawn from map zoom 8 |
+| HiRISE mosaic, `curiosity_hirise_mosaic` | `https://trek.nasa.gov/tiles/Mars/EQ/curiosity_hirise_mosaic/1.0.0//default/default028mm/{z}/{y}/{x}.png`; capabilities `https://trek.nasa.gov/tiles/Mars/EQ/curiosity_hirise_mosaic/1.0.0/WMTSCapabilities.xml` | bbox 137.1224669 -4.9254743 137.7298129 -4.2489588; levels 0 to 16 (MapLibre zoom 17) | The deepest level has 131072 x 65536 tiles: 0.64 m per pixel at the equator | Imagery switch in the layers panel; drawn from map zoom 13 |
+
+- License and credit: NASA/JPL imagery; the same terms status as the Viking row above (NASA media guidelines quoted there; no Mars Trek-specific terms found). TODO(team) confirm with JPL Mars Trek before submission. Credit shown in the panel and on the map: "NASA/JPL-Caltech, Mars Trek" (the HiRISE mosaic adds "University of Arizona", the HiRISE team).
+- Both servers send `Access-Control-Allow-Origin: *` on a tile; the 404 answer outside the coverage has no CORS header, so the browser would report it as a failed request. The loader therefore never asks for a source tile outside the bbox above, and treats a tile it cannot read inside it as transparent. The Viking layer stays underneath, so there is no gap.
+- Stack, bottom to top: Viking, CTX, HiRISE mosaic, the site's own optical image, then the slope and other data layers, the route last.
+
 ## Data layers
 
 The app itself ships no scientific data. Layers (slope, optical, thermal, geology, radiation) are reported by the backend (`GET /layers`) and drawn from tiles in `tiles.ts`.
