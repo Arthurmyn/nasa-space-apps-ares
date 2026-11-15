@@ -37,8 +37,12 @@
   --doc-ink: #000;
   --doc-muted: #4a4a55;
   --doc-line: #b8b8c4;
-  width: 210mm;
-  min-height: 297mm;
+  /* --doc-fit (0.7 to 1) is set by CardView when the content is taller than one sheet. zoom shrinks the
+     card; the width and height are divided by it so the card still measures exactly 210 x 297 mm. */
+  --doc-fit: 1;
+  zoom: var(--doc-fit);
+  width: calc(210mm / var(--doc-fit));
+  min-height: calc(297mm / var(--doc-fit));
   padding: 7mm 11mm;
   background: #fff;
   color: var(--doc-ink);
@@ -372,8 +376,8 @@
 
   /* The page margin is the card's own padding, so the card is exactly one A4 sheet. */
   .doc {
-    width: 210mm;
-    height: 297mm;
+    width: calc(210mm / var(--doc-fit));
+    height: calc(297mm / var(--doc-fit));
     min-height: 0;
     overflow: hidden;
     break-inside: avoid;
@@ -393,6 +397,7 @@
   }
 
   .doc {
+    zoom: 1;
     padding: 5mm;
     font-size: 9pt;
   }

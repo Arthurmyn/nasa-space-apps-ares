@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, type CSSProperties } from "react";
 import { dataSource } from "../api/client.ts";
 import type { SafetyLevel } from "../api/types.ts";
 import { Icon } from "../components/Icon.tsx";
 import { RouteSketch } from "../components/RouteSketch.tsx";
+import { ReadinessBadge } from "../components/RouteStatus.tsx";
 import { formatLimitDuration, returnLimitText } from "../components/ReturnCheck.tsx";
 import { LEVEL_ICON, SafetyBadge } from "../components/SafetyBadge.tsx";
 import { SourceText } from "../components/SourceText.tsx";
@@ -24,6 +25,7 @@ import {
   formatUtcStamp,
   stopLabel,
 } from "../lib/format.ts";
+import { fitScale, stillOverflows } from "../lib/fitPage.ts";
 import { routeLegs } from "../lib/legs.ts";
 import { estimatedDoseMsv, formatDose } from "../lib/radiation.ts";
 import { sectionStats } from "../lib/profile.ts";
@@ -55,6 +57,26 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
   const { site } = useSite();
   const context = useSiteScienceContext();
   const route = state.route;
+
+  // One A4 sheet is 297 mm. When the content is taller (more stops, longer sources) the whole card is
+  // scaled to fit, so nothing is cut off at the bottom; the preview on screen shows the same.
+  const docRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = docRef.current;
+    if (!el) return;
+    const fit = () => {
+      el.style.setProperty("--doc-fit", "1");
+      // 1.5 % of margin: the print layout can differ from the screen one by a few pixels.
+      const page = ((297 * 96) / 25.4) * 0.985;
+      const content = el.scrollHeight;
+      el.style.setProperty("--doc-fit", String(fitScale(content, page)));
+      if (stillOverflows(content, page)) console.warn("The route card is too long for one page even when scaled down");
+    };
+    fit();
+    void document.fonts?.ready.then(fit);
+    window.addEventListener("beforeprint", fit);
+    return () => window.removeEventListener("beforeprint", fit);
+  }, [route, stale, context, site]);
 
   const model = useMemo(() => {
     if (!route) return null;
@@ -115,7 +137,7 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
         </button>
       </div>
 
-      <article className="doc" aria-label="ARES route card">
+      <article ref={docRef} className="doc" aria-label="ARES route card" style={{ "--doc-fit": 1 } as CSSProperties}>
         <header className="doc__head">
           <div>
             <h2 className="doc__title">ARES ROUTE CARD</h2>
@@ -175,6 +197,14 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
             <SafetyBadge level={route.safety} label={CARD_STATUS[route.safety]} />
             <span>{route.safety_reason}</span>
           </div>
+          {route.readiness && (
+            <div className="doc__status doc__status--readiness">
+              <ReadinessBadge level={route.readiness.level} />
+              <span>
+                <strong>EVA readiness.</strong> {route.readiness.reasons.join(" ")}
+              </span>
+            </div>
+          )}
         </section>
 
         <div className="doc__cols">
