@@ -4,7 +4,8 @@ import { LAYER_IDS, type LayerId } from "../api/types.ts";
 import { dataSource } from "../api/client.ts";
 import { siteFileUrl, siteImageryUrl } from "../api/siteFiles.ts";
 import type { SiteConfig } from "../config/site.ts";
-import { gridImagesForSite, TILE_SOURCES } from "../config/tiles.ts";
+import { EQ_SOURCES, gridImagesForSite, IMAGERY_STACK, TILE_SOURCES } from "../config/tiles.ts";
+import { useUi } from "../state/uiStore.ts";
 import { imageCorners } from "../lib/siteGeo.ts";
 import type { LayersModel } from "../state/PlannerContext.tsx";
 import { EQUIRECT_SCHEME, registerEquirectProtocol } from "./equirectProtocol.ts";
@@ -12,9 +13,25 @@ import { LYR } from "./layers.ts";
 
 const tileId = (id: LayerId) => `ares-tiles-${id}`;
 const imageId = (id: LayerId) => `ares-image-${id}`;
+const imageryId = (id: (typeof IMAGERY_STACK)[number]) => `ares-imagery-${id}`;
 
 /** Draw order, bottom first. Optical is the base image; the rest are overlays. */
 const ORDER: readonly LayerId[] = ["optical", "geology", "thermal", "radiation", "slope"];
+
+/**
+ * Bottom to top, each just under the coordinate grid: the Viking basemap, the CTX and HiRISE mosaic
+ * imagery, the site's own optical image, then the other data layers (slope last). Called after any
+ * layer is added, so the order never depends on which switch was flipped first.
+ */
+function restack(map: MapLibreMap): void {
+  const order: string[] = [tileId("optical"), ...IMAGERY_STACK.map(imageryId), imageId("optical")];
+  for (const id of ORDER) {
+    if (id !== "optical") order.push(tileId(id), imageId(id));
+  }
+  for (const id of order) {
+    if (map.getLayer(id)) map.moveLayer(id, LYR.grid);
+  }
+}
 
 /**
  * Add or remove the raster layers of every data layer that is switched on and available:
@@ -66,10 +83,44 @@ export function useRasterLayers(map: MapLibreMap | null, layers: LayersModel, si
       }
     }
 
-    // Keep the stacking order stable regardless of toggle order.
-    for (const id of ORDER) {
-      if (map.getLayer(tileId(id))) map.moveLayer(tileId(id), LYR.grid);
-      if (map.getLayer(imageId(id))) map.moveLayer(imageId(id), LYR.grid);
-    }
+    restack(map);
   }, [map, info, active, site]);
+}
+
+/**
+ * The Mars Trek CTX and HiRISE mosaic imagery above the Viking basemap, switched together. Each
+ * source only asks for tiles inside its own coverage box (config/tiles.ts), and only from the zoom
+ * where it is finer than the layer under it, so there is nothing to fail outside them and the layer
+ * below shows through everywhere else.
+ */
+export function useTrekImagery(map: MapLibreMap | null): void {
+  const { imageryOn } = useUi();
+
+  useEffect(() => {
+    if (!map) return;
+    registerEquirectProtocol();
+    for (const id of IMAGERY_STACK) {
+      const cfg = EQ_SOURCES[id];
+      const present = map.getLayer(imageryId(id)) !== undefined;
+      if (imageryOn && !present && cfg.url !== null) {
+        map.addSource(imageryId(id), {
+          type: "raster",
+          tiles: [`${EQUIRECT_SCHEME}://${id}/{z}/{x}/{y}`],
+          tileSize: cfg.tileSize,
+          minzoom: cfg.minzoom,
+          maxzoom: cfg.maxzoom,
+          attribution: cfg.attribution,
+          ...(cfg.bounds ? { bounds: [...cfg.bounds] as [number, number, number, number] } : {}),
+        });
+        map.addLayer(
+          { id: imageryId(id), type: "raster", source: imageryId(id), minzoom: cfg.minzoom, paint: { "raster-opacity": cfg.opacity, "raster-fade-duration": 0 } },
+          LYR.grid,
+        );
+      } else if (!imageryOn && present) {
+        map.removeLayer(imageryId(id));
+        map.removeSource(imageryId(id));
+      }
+    }
+    restack(map);
+  }, [map, imageryOn]);
 }
