@@ -15,7 +15,8 @@ import {
   type RouteProfileId,
   type RouteResponse,
   type RouteStats,
-  type RouteStatusCode,
+  type Readiness,
+  type ReadinessLevel,
   type ReturnTrip,
   type SensitivityResponse,
   ROUTE_PROFILE_IDS,
@@ -202,7 +203,7 @@ function optionalNavigation(v: unknown, polyline: readonly LonLat[], distance: n
   }
 }
 
-const STATUS_CODES: readonly RouteStatusCode[] = ["GO", "CAUTION", "NO-GO"];
+const READINESS_LEVELS: readonly ReadinessLevel[] = ["NOMINAL", "MARGINAL", "NOT_ADVISED"];
 
 /**
  * The fields added with route profiles are analysis on top of a usable route. One that does not
@@ -241,6 +242,14 @@ function returnTrip(v: unknown): ReturnTrip | null {
   return { distance_m: num(o.distance_m, "return.distance_m"), est_time_s: num(o.est_time_s, "return.est_time_s") };
 }
 
+function readiness(v: unknown): Readiness {
+  const o = obj(v, "readiness");
+  return {
+    level: oneOf<ReadinessLevel>(o.level, READINESS_LEVELS, "readiness.level"),
+    reasons: arr(o.reasons, "readiness.reasons").map((r, i) => str(r, `readiness.reasons[${i}]`)),
+  };
+}
+
 function profileExtras(o: Obj): Partial<RouteResponse> {
   const out: Partial<RouteResponse> = {};
   const set = <K extends keyof RouteResponse>(key: K, present: boolean, read: () => RouteResponse[K]) => {
@@ -256,8 +265,7 @@ function profileExtras(o: Obj): Partial<RouteResponse> {
   set("return", o.return !== undefined, () => returnTrip(o.return));
   set("round_trip_time_s", o.round_trip_time_s !== undefined, () => (o.round_trip_time_s === null ? null : num(o.round_trip_time_s, "round_trip_time_s")));
   set("eva_limit_s", o.eva_limit_s !== undefined, () => (o.eva_limit_s === null ? null : num(o.eva_limit_s, "eva_limit_s")));
-  set("status", o.status !== undefined, () => oneOf<RouteStatusCode>(o.status, STATUS_CODES, "status"));
-  set("reasons", o.reasons !== undefined, () => arr(o.reasons, "reasons").map((r, i) => str(r, `reasons[${i}]`)));
+  set("readiness", o.readiness !== undefined, () => readiness(o.readiness));
   return out;
 }
 

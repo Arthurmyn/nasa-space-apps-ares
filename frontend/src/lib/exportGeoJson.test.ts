@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { RouteResponse } from "../api/types.ts";
 import { exportFileName, routeToGeoJson } from "./exportGeoJson.ts";
-import { evaShare, formatPct, slopeSegments, STATUS_TONE } from "./routeInsight.ts";
+import { evaShare, formatPct, READINESS_LABEL, READINESS_TONE, slopeSegments } from "./routeInsight.ts";
 
 const route = {
   computed_at: "2026-11-15T05:45:00Z",
@@ -25,8 +25,7 @@ const route = {
   assumptions: [],
   alternative: null,
   route_profile: "safe",
-  status: "CAUTION",
-  reasons: ["Steep."],
+  readiness: { level: "MARGINAL", reasons: ["Steep."] },
   round_trip_time_s: 4600,
   stats: { slope_class_pct: { ok: 70, caution: 30, avoid: 0 }, climb_m: 40.04, descent_m: 12 },
 } as unknown as RouteResponse;
@@ -48,11 +47,12 @@ describe("routeToGeoJson", () => {
 
   it("carries the analysis fields when the route has them", () => {
     const p = fc.features[0]!.properties as Record<string, unknown>;
-    assert.equal(p.status, "CAUTION");
+    assert.equal(p.readiness, "MARGINAL");
     assert.equal(p.profile, "safe");
     assert.equal(p.round_trip_time_s, 4600);
     assert.equal(p.climb_m, 40);
-    assert.deepEqual(p.reasons, ["Steep."]);
+    assert.deepEqual(p.readiness_reasons, ["Steep."]);
+    assert.equal("status" in p, false, "the wire word status is not exported");
   });
 
   it("names stops, with a fallback label for an unnamed one", () => {
@@ -66,9 +66,9 @@ describe("routeToGeoJson", () => {
   });
 
   it("leaves the analysis fields out for an older route", () => {
-    const old = { ...route, status: undefined, reasons: undefined, stats: undefined, round_trip_time_s: undefined, route_profile: undefined } as unknown as RouteResponse;
+    const old = { ...route, readiness: undefined, stats: undefined, round_trip_time_s: undefined, route_profile: undefined } as unknown as RouteResponse;
     const p = routeToGeoJson(old, { siteId: "a", siteName: "A" }).features[0]!.properties as Record<string, unknown>;
-    for (const k of ["status", "reasons", "slope_class_pct", "round_trip_time_s", "profile"]) assert.equal(k in p, false, k);
+    for (const k of ["readiness", "readiness_reasons", "slope_class_pct", "round_trip_time_s", "profile"]) assert.equal(k in p, false, k);
   });
 });
 
@@ -82,8 +82,9 @@ describe("exportFileName", () => {
 });
 
 describe("routeInsight", () => {
-  it("maps status to the three tones", () => {
-    assert.deepEqual([STATUS_TONE.GO, STATUS_TONE.CAUTION, STATUS_TONE["NO-GO"]], ["ok", "caution", "avoid"]);
+  it("maps readiness to the three tones and to words with no underscore", () => {
+    assert.deepEqual([READINESS_TONE.NOMINAL, READINESS_TONE.MARGINAL, READINESS_TONE.NOT_ADVISED], ["ok", "caution", "avoid"]);
+    assert.deepEqual(Object.values(READINESS_LABEL), ["NOMINAL", "MARGINAL", "NOT ADVISED"]);
   });
   it("formats percentages", () => {
     assert.equal(formatPct(80), "80%");

@@ -1,7 +1,10 @@
-import type { RouteProfileId, RouteStatusCode, SafetyLevel, SlopeClassPct } from "../api/types.ts";
+import type { ReadinessLevel, RouteProfileId, SafetyLevel, SlopeClassPct } from "../api/types.ts";
 
-/** Which colour and icon a mission status wears: the same three tones as the slope safety level. */
-export const STATUS_TONE: Record<RouteStatusCode, SafetyLevel> = { GO: "ok", CAUTION: "caution", "NO-GO": "avoid" };
+/** Which colour and icon a readiness level wears: the same three tones as the slope safety level. */
+export const READINESS_TONE: Record<ReadinessLevel, SafetyLevel> = { NOMINAL: "ok", MARGINAL: "caution", NOT_ADVISED: "avoid" };
+
+/** The words on screen. The wire value NOT_ADVISED has an underscore; people read "NOT ADVISED". */
+export const READINESS_LABEL: Record<ReadinessLevel, string> = { NOMINAL: "NOMINAL", MARGINAL: "MARGINAL", NOT_ADVISED: "NOT ADVISED" };
 
 export const PROFILE_INFO: Record<RouteProfileId, { label: string; hint: string }> = {
   fast: { label: "Fast", hint: "Shorter walk. Accepts steeper ground up to the route limit." },

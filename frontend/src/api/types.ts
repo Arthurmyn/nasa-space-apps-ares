@@ -121,8 +121,17 @@ export interface RouteNavigation {
   heading_segments: number[];
 }
 
-/** Mission status of a route: GO, CAUTION, or NO-GO (no path, or the round trip is over the EVA limit). */
-export type RouteStatusCode = "GO" | "CAUTION" | "NO-GO";
+/**
+ * How ready the route is for an EVA. NOT_ADVISED: no path, or the round trip is over the EVA limit.
+ * MARGINAL: steeper than the caution slope, or the safe profile fell back. Otherwise NOMINAL.
+ */
+export type ReadinessLevel = "NOMINAL" | "MARGINAL" | "NOT_ADVISED";
+
+export interface Readiness {
+  level: ReadinessLevel;
+  /** Plain sentences behind the level. */
+  reasons: string[];
+}
 
 /** Share of the distance in each slope class, in percent; the three add up to 100. */
 export interface SlopeClassPct {
@@ -175,8 +184,7 @@ export interface RouteResponse {
   round_trip_time_s?: number | null;
   /** The EVA time limit behind `status`, seconds. Null when the site has none. */
   eva_limit_s?: number | null;
-  status?: RouteStatusCode;
-  reasons?: string[];
+  readiness?: Readiness;
 }
 
 // ---- POST /route/sensitivity -----------------------------------------------
