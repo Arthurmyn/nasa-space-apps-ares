@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { SiteGrid } from "../api/types.ts";
 import { parseGeology } from "../api/validate.ts";
-import { geologyLabel, terrainAt } from "./inspect.ts";
+import { geologyCaveat, geologyLabel, geologyScope, terrainAt } from "./inspect.ts";
 import type { GridMeta } from "./terrain.ts";
 
 const meta: GridMeta = { width: 4, height: 4, cellM: 10, xMinM: -20, yMaxM: 20, radiusM: 3_396_190, centre: { lon: 137, lat: -4.8 } };
@@ -39,6 +39,20 @@ describe("geologyLabel and parseGeology", () => {
   });
   it("never throws on a wrong shape: that is no data", () => {
     for (const bad of [null, [], "x", { available: true }, { ...ok, unit: 5 }, { ...ok, source: null }]) assert.equal(parseGeology(bad).available, false);
+  });
+  it("always qualifies a unit with the map's own scale, from the answer", () => {
+    assert.equal(geologyCaveat(parseGeology(ok)), "Coarse global map (1:20,000,000), not site-scale.");
+    assert.equal(geologyCaveat(parseGeology({ ...ok, scale: "1:5,000,000" })), "Coarse global map (1:5,000,000), not site-scale.");
+  });
+  it("has no caveat when there is no unit to qualify", () => {
+    assert.equal(geologyCaveat(parseGeology({ available: false, reason: "x" })), null);
+    assert.equal(geologyCaveat(null), null);
+  });
+  it("says in words when the whole site is one unit, and only then", () => {
+    assert.match(geologyScope(parseGeology({ ...ok, units_in_site: 1 })) ?? "", /whole site lies in this one unit/);
+    assert.equal(geologyScope(parseGeology({ ...ok, units_in_site: 3 })), null);
+    assert.equal(geologyScope(parseGeology(ok)), null, "an older backend does not say, so nothing is claimed");
+    assert.equal(geologyScope(parseGeology({ ...ok, units_in_site: 0 })), null);
   });
   it("keeps the reason of an unavailable answer", () => {
     assert.deepEqual(parseGeology({ available: false, reason: "No geology data for this site" }), { available: false, reason: "No geology data for this site" });

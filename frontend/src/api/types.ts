@@ -375,6 +375,8 @@ export interface GeologyUnit {
   /** The map's short unit description. */
   name: string;
   scale: string;
+  /** How many different units the site's geology file holds. Missing from an older backend. */
+  units_in_site?: number;
   source: { title: string; url: string; citation: string };
   note: string;
 }

@@ -212,12 +212,12 @@ The geologic unit at a point of a site, from the USGS Geologic Map of Mars (SIM 
 {
   "available": true, "site_id": "gale-bx",
   "unit": "Htu", "name": "Hesperian transition undivided unit",
-  "scale": "1:20,000,000",
+  "scale": "1:20,000,000", "units_in_site": 1,
   "source": { "title": "Geologic Map of Mars (SIM 3292)", "url": "https://pubs.usgs.gov/sim/3292/", "citation": "Tanaka, K.L., ..." },
   "note": "Global map at 1:20,000,000: ..."
 }
 ```
 
-`unit` is the map's code and `name` its short unit description (the database field `UnitDesc`); the long descriptions are in the map's Description of Map Units, linked from `geology.json`. At this scale a site of a few square kilometres lies inside one unit, so the answer is a regional context, not a local mapping. When there is nothing to say the answer is `{ "available": false, "reason": "..." }`: the site has no `geology.json` (or it is malformed or for another bbox), the point is outside the site's bbox, or no mapped unit holds the point. `GET /layers` still reports `geology` as "No data for this site": there is no map image for it.
+`unit` is the map's code, `units_in_site` how many different units the site's file holds (1 for both shipped sites), and `name` the short unit description (the database field `UnitDesc`); the long descriptions are in the map's Description of Map Units, linked from `geology.json`. At this scale a site of a few square kilometres lies inside one unit, so the answer is a regional context, not a local mapping. When there is nothing to say the answer is `{ "available": false, "reason": "..." }`: the site has no `geology.json` (or it is malformed or for another bbox), the point is outside the site's bbox, or no mapped unit holds the point. `GET /layers` still reports `geology` as "No data for this site": there is no map image for it.
 
 The web app calls it from the point inspector (the "Inspect" button on the Plan map): a click then shows elevation and slope from the site files and the unit from this endpoint, with the note "Coarse global map, not site-scale." Any answer with `available: false`, or a failed request, is shown as "No data".

@@ -32,5 +32,18 @@ export function geologyLabel(g: GeologyResponse | null): string {
   return g && g.available ? `${g.unit}, ${g.name}` : "No data";
 }
 
-/** What the geology row must always carry: the map is a global one, so it says so. */
-export const GEOLOGY_CAVEAT = "Coarse global map, not site-scale.";
+/**
+ * The words that go with a unit, always: the map is a global one, and says so with its own scale (the
+ * `scale` field of the answer, not a number typed here). Null when there is no unit to qualify.
+ */
+export function geologyCaveat(g: GeologyResponse | null): string | null {
+  return g && g.available ? `Coarse global map (${g.scale}), not site-scale.` : null;
+}
+
+/**
+ * When the site's whole file is one unit, the unit says nothing about this exact spot: it is the
+ * region the site sits in. Said in words, so the result is not read as a detailed local mapping.
+ */
+export function geologyScope(g: GeologyResponse | null): string | null {
+  return g && g.available && g.units_in_site === 1 ? "The whole site lies in this one unit, so it describes the region, not this spot." : null;
+}

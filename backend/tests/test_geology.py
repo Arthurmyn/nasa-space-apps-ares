@@ -131,6 +131,7 @@ def test_the_endpoint_names_the_unit_at_a_point_of_the_site(real):
         "https://pubs.usgs.gov/"
     )
     assert "Tanaka" in body["source"]["citation"] and body["site_id"] == "gale-bx"
+    assert body["units_in_site"] == 1  # the whole site is one polygon of the 1:20,000,000 map
 
 
 def test_the_endpoint_says_so_outside_the_covered_area(real):
