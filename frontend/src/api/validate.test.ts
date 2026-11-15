@@ -322,6 +322,29 @@ describe("parseRouteResponse: profile fields", () => {
   });
 });
 
+describe("parseRouteResponse: the legacy status", () => {
+  it("is kept next to readiness for older clients", () => {
+    const r = parseRouteResponse({ ...valid(), ...extras(), status: "CAUTION", reasons: ["Steep."] });
+    assert.equal(r.status, "CAUTION");
+    assert.deepEqual(r.reasons, ["Steep."]);
+    assert.equal(r.readiness?.level, "NOMINAL", "readiness is read on its own, whatever status says");
+  });
+
+  it("is optional, and a bad value is dropped without hiding the route or readiness", () => {
+    const warn = console.warn;
+    console.warn = () => undefined;
+    try {
+      const r = parseRouteResponse({ ...valid(), ...extras(), status: "MAYBE", reasons: "no" });
+      assert.equal("status" in r, false);
+      assert.equal("reasons" in r, false);
+      assert.equal(r.readiness?.level, "NOMINAL");
+    } finally {
+      console.warn = warn;
+    }
+    assert.equal("status" in parseRouteResponse({ ...valid(), ...extras() }), false);
+  });
+});
+
 describe("parseSensitivityResponse", () => {
   const ok = {
     site_id: "gale-bx",

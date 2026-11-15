@@ -15,6 +15,7 @@ import {
   type RouteProfileId,
   type RouteResponse,
   type RouteStats,
+  type LegacyStatus,
   type Readiness,
   type ReadinessLevel,
   type ReturnTrip,
@@ -203,6 +204,7 @@ function optionalNavigation(v: unknown, polyline: readonly LonLat[], distance: n
   }
 }
 
+const LEGACY_STATUSES: readonly LegacyStatus[] = ["GO", "CAUTION", "NO-GO"];
 const READINESS_LEVELS: readonly ReadinessLevel[] = ["NOMINAL", "MARGINAL", "NOT_ADVISED"];
 
 /**
@@ -266,6 +268,9 @@ function profileExtras(o: Obj): Partial<RouteResponse> {
   set("round_trip_time_s", o.round_trip_time_s !== undefined, () => (o.round_trip_time_s === null ? null : num(o.round_trip_time_s, "round_trip_time_s")));
   set("eva_limit_s", o.eva_limit_s !== undefined, () => (o.eva_limit_s === null ? null : num(o.eva_limit_s, "eva_limit_s")));
   set("readiness", o.readiness !== undefined, () => readiness(o.readiness));
+  // The legacy pair is kept for older clients; a bad value is dropped like any other added field.
+  set("status", o.status !== undefined, () => oneOf<LegacyStatus>(o.status, LEGACY_STATUSES, "status"));
+  set("reasons", o.reasons !== undefined, () => arr(o.reasons, "reasons").map((r, i) => str(r, `reasons[${i}]`)));
   return out;
 }
 

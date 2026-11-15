@@ -244,6 +244,9 @@ export async function mockRoute(req: RouteRequest, signal?: AbortSignal): Promis
     round_trip_time_s: roundTrip,
     eva_limit_s: MOCK_EVA_LIMIT_S,
     readiness: { level, reasons },
+    // The old pair, as the backend still sends it next to `readiness`.
+    status: level === "NOT_ADVISED" ? "NO-GO" : level === "MARGINAL" ? "CAUTION" : "GO",
+    reasons,
     navigation: { vertex_dist_m: dist, heading_segments: main.polyline.slice(1).map((_, i) => i) },
     computed_at: new Date().toISOString(),
     distance_m: distance,
