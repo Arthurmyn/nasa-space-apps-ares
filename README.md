@@ -25,7 +25,7 @@ ARES plans a Marswalk route at Gale crater (boxwork, Mount Sharp):
   - **Plan** also has a Fast / Balanced / Safe route profile, an EVA readiness badge (NOMINAL, MARGINAL or NOT ADVISED, with its reasons), a return check (longest walk back to the start from any route point, 2 km / 60 min), the EVA time with the time at stops (8 h), the round trip with the way back, climb and descent, a slope-class bar, a slope-limit sensitivity table (10, 15 and 20 degrees), a Mars weather card from Curiosity's REMS station when the backend has it, GeoJSON export of the route, and an optional "Full drive path" overlay of the whole Curiosity drive.
   - On a phone (under 768 px) the Plan map is full screen and the planner is a bottom sheet with three heights (peek, half, full): drag its handle, or press Enter on it. The Method panel then takes the whole screen.
   - **HUD:** a heads-up view with compass, next stop and slope. The position moves with a slider (simulated).
-  - **Card:** a printable one-page A4 route card with the map, stops, slope by leg, safety margins, the estimated radiation dose and the sources.
+  - **Card:** a printable one-page A4 route card with the map, stops, slope by leg, safety margins, the EVA readiness, the estimated radiation dose, the assumptions and the sources. If the content is taller than one sheet, the whole card is scaled down (to 70 % at most) so nothing is cut off.
 
 ## Data and sources
 
