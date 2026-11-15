@@ -17,24 +17,24 @@
       "coordinates": [
         [
           [
-            137.3762,
-            -4.7802
+            137.40507636904135,
+            -4.820583530351145
           ],
           [
-            137.3984,
-            -4.7802
+            137.40507636904135,
+            -4.7709164696488555
           ],
           [
-            137.3984,
-            -4.8113
+            137.36952363095867,
+            -4.7709164696488555
           ],
           [
-            137.3762,
-            -4.8113
+            137.36952363095867,
+            -4.820583530351145
           ],
           [
-            137.3762,
-            -4.7802
+            137.40507636904135,
+            -4.820583530351145
           ]
         ]
       ]
@@ -51,9 +51,55 @@
       "label": "team decision"
     },
     "center_method": "centre of the team AOI rectangle (ares_layers/config.py AOI, 15 Nov 2026)",
-    "extent_sha256": "6aa3e90a2cb6ded9f96627f64b40cf281b703276ee9a5d0a20c7805e8675da0b",
     "planning_points_sha256": null,
-    "planning_approval": null
+    "planning_approval": null,
+    "size_m": [
+      2100.0,
+      2944.0
+    ],
+    "enlarged": {
+      "requested_m": [
+        2500.0,
+        3500.0
+      ],
+      "written_m": [
+        2100.0,
+        2944.0
+      ],
+      "request_fits": false,
+      "margin_to_footprint_m": 20.0,
+      "ratio_kept": true,
+      "previous_aoi_geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              137.3762,
+              -4.7802
+            ],
+            [
+              137.3984,
+              -4.7802
+            ],
+            [
+              137.3984,
+              -4.8113
+            ],
+            [
+              137.3762,
+              -4.8113
+            ],
+            [
+              137.3762,
+              -4.7802
+            ]
+          ]
+        ]
+      },
+      "previous_extent_sha256": "6aa3e90a2cb6ded9f96627f64b40cf281b703276ee9a5d0a20c7805e8675da0b",
+      "footprint": "docs/research/r0/DTEEC_009149_1750_009294_1750_U01_footprint.geojson",
+      "method": "same centre; the largest rectangle of the requested width to height ratio that lies inside the valid footprint with the margin to spare"
+    }
   },
   "native_dtm": {
     "crs_wkt": "PROJCRS[\"EQUIRECTANGULAR MARS\",BASEGEOGCRS[\"GCS_MARS\",DATUM[\"D_MARS\",ELLIPSOID[\"MARS_localRadius\",3396190,0,LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]]],PRIMEM[\"Reference_Meridian\",0,ANGLEUNIT[\"degree\",0.0174532925199433,ID[\"EPSG\",9122]]]],CONVERSION[\"unnamed\",METHOD[\"Equidistant Cylindrical (Spherical)\",ID[\"EPSG\",1029]],PARAMETER[\"Latitude of 1st standard parallel\",0,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8823]],PARAMETER[\"Longitude of natural origin\",137.41,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8802]],PARAMETER[\"False easting\",0,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8806]],PARAMETER[\"False northing\",0,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8807]]],CS[Cartesian,2],AXIS[\"easting\",east,ORDER[1],LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]],AXIS[\"northing\",north,ORDER[2],LENGTHUNIT[\"metre\",1,ID[\"EPSG\",9001]]]]",
