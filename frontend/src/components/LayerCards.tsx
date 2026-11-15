@@ -20,15 +20,6 @@ export function ThermalInertiaCard() {
   );
 }
 
-export function GeologyCard() {
-  return (
-    <p className="legend__note">
-      No published vector map exists. A boxwork boundary drawn by the team from the HiRISE orthoimage would be a team
-      interpretation, not an official geologic map.
-    </p>
-  );
-}
-
 const DOSE_HOURS = [4, 8] as const;
 
 /** Dose for an EVA of `hours` at the published mean rate: D = r * t / 24, sigma_D = sigma_r * t / 24. */
