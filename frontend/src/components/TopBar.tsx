@@ -7,9 +7,9 @@ import { uiStore, useUi } from "../state/uiStore.ts";
 import { Icon } from "./Icon.tsx";
 import { UtcClock } from "./UtcClock.tsx";
 
-export type Mode = "plan" | "hud" | "card";
+export type Mode = "overview" | "plan" | "hud" | "card";
 
-const MODE_LABEL: Record<Mode, string> = { plan: "Plan", hud: "HUD", card: "Card" };
+const MODE_LABEL: Record<Mode, string> = { overview: "Mars", plan: "Plan", hud: "HUD", card: "Card" };
 
 export type Drawer = "layers" | "route" | null;
 
@@ -75,13 +75,22 @@ export function TopBar({ mode, modes, onMode, drawer, onDrawer }: TopBarProps) {
           </button>
         )}
         <h1 className="topbar__brand">ARES</h1>
-        <span className="topbar__site">{site.name}</span>
+        <span className="topbar__site">{mode === "overview" ? "Mars, whole planet" : site.name}</span>
       </div>
 
       <nav className="topbar__modes" aria-label="Mode">
         {modes.map((m) => (
-          <button key={m} type="button" className="seg" aria-pressed={mode === m} onClick={() => onMode(m)}>
-            {MODE_LABEL[m]}
+          <button
+            key={m}
+            type="button"
+            className={m === "overview" ? "seg seg--overview" : "seg"}
+            aria-pressed={mode === m}
+            aria-label={m === "overview" ? "Mars overview" : undefined}
+            title={m === "overview" ? "Mars overview: the whole planet" : undefined}
+            onClick={() => onMode(m)}
+          >
+            {m === "overview" && <Icon name="globe" size={14} />}
+            <span className={m === "overview" ? "seg__text" : undefined}>{MODE_LABEL[m]}</span>
           </button>
         ))}
       </nav>
@@ -89,7 +98,8 @@ export function TopBar({ mode, modes, onMode, drawer, onDrawer }: TopBarProps) {
       <div className="topbar__right">
         {site.isTestData && <TestDataBadge />}
         {dataSource === "mock" && <SampleDataBadge />}
-        {mode === "hud" ? <UtcClock /> : <span className="topbar__time mono">{computed ? `Computed ${computed}` : "No route computed"}</span>}
+        {mode === "hud" && <UtcClock />}
+        {(mode === "plan" || mode === "card") && <span className="topbar__time mono">{computed ? `Computed ${computed}` : "No route computed"}</span>}
         {mode === "plan" && (
           <button
             type="button"

@@ -19,7 +19,8 @@ ARES plans a Marswalk route at Gale crater (boxwork, Mount Sharp):
 - **Terrain.** A 2 m grid of elevation and slope built from a HiRISE digital terrain model (DTM).
 - **Routing.** The backend runs A* over the slope grid (8 neighbours). A cell steeper than the slope limit cannot be crossed. The route goes from a start through up to 5 stops.
 - **Limits with sources.** The slope limits, walking speed and maximum distance from the start are listed with their sources in `backend/data/gale-bx/assumptions.json`. They cite NASA and JPL documents [1] to [5], also listed in `frontend/src/config/references.ts`.
-- **Three modes** in the web app:
+- **Four views** in the web app. The app opens on the Mars overview; a link with a plan or a site (`#s=...`, `?site=...`) opens the planner instead:
+  - **Mars:** the whole planet on the Viking mosaic, with markers for the ARES sites, mission landing sites and landmarks, a legend with layer toggles and an optional globe view. An ARES marker opens the planner on that site. The Mars button is always in the top bar.
   - **Plan:** map with the layers that have data (slope, hillshade over Mars imagery, thermal), stops, route summary with the estimated radiation dose of the walk, elevation profile and a "How this is computed" panel. Layers without data are marked "No data for this site".
   - **HUD:** a heads-up view with compass, next stop and slope. The position moves with a slider (simulated).
   - **Card:** a printable one-page A4 route card with the map, stops, slope by leg, safety margins, the estimated radiation dose and the sources.
