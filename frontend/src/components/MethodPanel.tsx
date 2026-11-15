@@ -2,7 +2,9 @@ import type { RouteResponse } from "../api/types.ts";
 import { fillMethodText, METHOD, type MethodValues } from "../content/method.ts";
 import { REFERENCES } from "../config/references.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
+import { validationView } from "../lib/validationView.ts";
 import { useSite } from "../state/SiteContext.tsx";
+import { useValidation } from "../state/useValidation.ts";
 import { SourceText } from "./SourceText.tsx";
 
 function valuesFor(site: ReturnType<typeof useSite>["site"]): MethodValues {
@@ -48,6 +50,7 @@ export function MethodPanel({ route }: { route: RouteResponse | null }) {
             </ul>
           )}
           {s.id === "limits" && <Assumptions route={route} />}
+          {s.id === "validation" && <Validation siteId={site.id} />}
         </section>
       ))}
 
@@ -111,5 +114,59 @@ function Assumptions({ route }: { route: RouteResponse | null }) {
         ))}
       </tbody>
     </table>
+  );
+}
+
+/** The comparison with Curiosity's traverse, read from GET /validation: its own numbers, or why there are none. */
+function Validation({ siteId }: { siteId: string }) {
+  const view = validationView(useValidation(siteId));
+  if (view.kind === "unavailable") {
+    return (
+      <p className="validation__none" role="status">
+        <span className="tag">Not available</span> {view.reason}
+      </p>
+    );
+  }
+  if (view.kind === "not-computed") {
+    return (
+      <p className="validation__none" role="status">
+        <span className="tag tag--warn">No result</span> {view.reason}
+      </p>
+    );
+  }
+  return (
+    <div className="validation">
+      <p className="muted">
+        {view.n.toLocaleString("en-GB")} points of the traverse inside the site. Differences are the traverse height minus our elevation, in metres. Offset between the two references: <span className="mono">{view.offset}</span>.
+      </p>
+      <table className="table">
+        <caption className="sr-only">Our elevation against the heights of Curiosity's traverse</caption>
+        <thead>
+          <tr>
+            <th scope="col">Difference</th>
+            <th scope="col">Mean</th>
+            <th scope="col">RMSE</th>
+            <th scope="col">Largest</th>
+          </tr>
+        </thead>
+        <tbody>
+          {view.rows.map((r) => (
+            <tr key={r.label}>
+              <th scope="row">{r.label}</th>
+              <td className="mono">{r.mean}</td>
+              <td className="mono">{r.rmse}</td>
+              <td className="mono">{r.max}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="muted">
+        Source:{" "}
+        <a href={view.sourceUrl} target="_blank" rel="noreferrer">
+          NASA/JPL MSL traverse
+        </a>
+        , fetched {view.fetched}.
+      </p>
+    </div>
   );
 }
