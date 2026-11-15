@@ -8,7 +8,7 @@ import { uiStore, useUi } from "../state/uiStore.ts";
 import type { TraverseStop } from "../lib/traverse.ts";
 import { Icon } from "./Icon.tsx";
 import { DrivePathRow } from "./DrivePathRow.tsx";
-import { GeologyCard, RadiationCard, ThermalInertiaCard } from "./LayerCards.tsx";
+import { RadiationCard, ThermalInertiaCard } from "./LayerCards.tsx";
 
 interface RowState {
   disabled: boolean;
@@ -76,7 +76,6 @@ function LayerLegend({ meta, source }: { meta: LayerMeta; source: string | null 
     <div className="layer-row__legend">
       {meta.id === "slope" && <SlopeLegend />}
       {meta.id === "thermal" && <ThermalInertiaCard />}
-      {meta.id === "geology" && <GeologyCard />}
       {meta.id === "radiation" && <RadiationCard />}
       {meta.isEstimate && <p className="legend__note">Estimate. Modelled, not measured.</p>}
       {(LAYER_SOURCE_LABEL[meta.id] ?? source) && <SourceNote source={LAYER_SOURCE_LABEL[meta.id] ?? source ?? ""} />}
