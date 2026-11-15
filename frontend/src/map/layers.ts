@@ -11,6 +11,7 @@ export const SRC = {
   hazards: "ares-hazards",
   traverseLine: "ares-traverse",
   traverseStops: "ares-traverse-points",
+  drivePath: "ares-drive-path",
 } as const;
 
 export const LYR = {
@@ -20,6 +21,8 @@ export const LYR = {
   alt: "ares-alt-line",
   traverseLine: "ares-traverse-line",
   traverseStops: "ares-traverse-stops",
+  drivePathCasing: "ares-drive-path-casing",
+  drivePath: "ares-drive-path-line",
   routeGlow: "ares-route-glow",
   routeCasing: "ares-route-casing",
   route: "ares-route-line",
@@ -108,6 +111,21 @@ export function addAresLayers(map: MapLibreMap, theme: MapTheme): void {
       source: SRC.route,
       layout: { "line-cap": "round", "line-join": "round" },
       paint: { "line-color": theme.cyan, "line-width": 16, "line-blur": 8, "line-opacity": 0.45 },
+    },
+    // The full drive path from the NASA traverse file, solid violet with a dark casing, under the waypoint traverse.
+    {
+      id: LYR.drivePathCasing,
+      type: "line",
+      source: SRC.drivePath,
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-color": theme.bg, "line-width": 4.5, "line-opacity": 0.8 },
+    },
+    {
+      id: LYR.drivePath,
+      type: "line",
+      source: SRC.drivePath,
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-color": theme.accent, "line-width": 2 },
     },
     // Curiosity's own drive, yellow and dashed, under the route casing so the mint route stays on top.
     {
