@@ -700,7 +700,7 @@
 
 .select {
   width: 100%;
-  min-height: 36px;
+  min-height: max(36px, var(--hit));
   padding: 0 var(--space-3);
   background: var(--panel-raised);
   color: var(--text);
