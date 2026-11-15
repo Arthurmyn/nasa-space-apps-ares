@@ -59,6 +59,7 @@ export interface PlannerModel {
   select: (id: string | null) => void;
   setCompare: (value: boolean) => void;
   setProfile: (profile: RouteProfileId) => void;
+  setStopTime: (minutes: number) => void;
   recalculate: () => void;
   reset: () => void;
 }
@@ -279,6 +280,7 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       select: (id) => dispatch({ type: "select", id }),
       setCompare: (value) => dispatch({ type: "compare/set", value }),
       setProfile: (profile) => dispatch({ type: "profile/set", profile }),
+      setStopTime: (minutes) => dispatch({ type: "stopTime/set", minutes }),
       recalculate: () => void fetchRoute(),
       reset: () => dispatch({ type: "reset" }),
     }),

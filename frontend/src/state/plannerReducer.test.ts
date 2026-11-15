@@ -212,3 +212,29 @@ describe("route profile", () => {
     assert.equal(run([{ type: "profile/set", profile: "safe" }, { type: "reset" }], placed).profile, "safe");
   });
 });
+
+describe("plannerReducer stopTime/set", () => {
+  it("sends the stop time and asks for a new route when it changes", () => {
+    const s = run([add(0), add(1)]);
+    assert.equal(buildRouteRequest(s)?.stop_time_min, 15);
+    const next = run([{ type: "stopTime/set", minutes: 30 }], s);
+    assert.equal(next.stopTimeMin, 30);
+    assert.equal(next.planVersion, s.planVersion + 1);
+    assert.equal(buildRouteRequest(next)?.stop_time_min, 30);
+  });
+  it("leaves the field out at 0, so an older backend sees the request it knows", () => {
+    const s = run([add(0), add(1), { type: "stopTime/set", minutes: 0 }]);
+    const req = buildRouteRequest(s);
+    assert.equal(req && "stop_time_min" in req, false);
+  });
+  it("ignores the same value and clamps out-of-range input", () => {
+    const s = run([add(0), add(1)]);
+    assert.equal(run([{ type: "stopTime/set", minutes: 15 }], s), s);
+    assert.equal(run([{ type: "stopTime/set", minutes: 999 }], s).stopTimeMin, 240);
+    assert.equal(run([{ type: "stopTime/set", minutes: -5 }], s).stopTimeMin, 0);
+    assert.equal(run([{ type: "stopTime/set", minutes: Number.NaN }], s), s);
+  });
+  it("keeps the stop time through a reset", () => {
+    assert.equal(run([{ type: "stopTime/set", minutes: 45 }, { type: "reset" }]).stopTimeMin, 45);
+  });
+});

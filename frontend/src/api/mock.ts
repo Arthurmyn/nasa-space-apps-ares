@@ -14,6 +14,7 @@ import {
   type LonLat,
   type PointInput,
   type ProfilePoint,
+  type ReturnCheck,
   type ConditionsResponse,
   type RouteProfileId,
   type RouteRequest,
@@ -227,10 +228,12 @@ export async function mockRoute(req: RouteRequest, signal?: AbortSignal): Promis
 
   const estTime = distance / SAMPLE_SPEED_MPS;
   const roundTrip = estTime * 2;
-  const status = roundTrip > MOCK_EVA_LIMIT_S ? "NO-GO" : maxSlope > SLOPE_LIMITS.cautionDeg ? "CAUTION" : "GO";
+  const stopsTime = req.stops.length * (req.stop_time_min ?? 0) * 60;
+  const returnCheck = sampleReturnCheck(main.polyline, dist);
+  const status = roundTrip + stopsTime > MOCK_EVA_LIMIT_S || !returnCheck.ok ? "NO-GO" : maxSlope > SLOPE_LIMITS.cautionDeg ? "CAUTION" : "GO";
   const reasons =
     status === "NO-GO"
-      ? ["Sample data: the round trip is longer than the sample EVA limit."]
+      ? ["Sample data: the EVA time or the walk back is over the sample limit."]
       : status === "CAUTION"
         ? [`Sample data: the steepest section is above the ${SLOPE_LIMITS.cautionDeg}° caution threshold.`]
         : ["Sample data: the round trip fits the sample EVA limit and the slope is within the caution threshold."];
@@ -243,6 +246,9 @@ export async function mockRoute(req: RouteRequest, signal?: AbortSignal): Promis
     return: { distance_m: distance, est_time_s: estTime },
     round_trip_time_s: roundTrip,
     eva_limit_s: MOCK_EVA_LIMIT_S,
+    return_check: returnCheck,
+    stops_time_s: stopsTime,
+    eva_time_s: roundTrip + stopsTime,
     status,
     reasons,
     navigation: { vertex_dist_m: dist, heading_segments: main.polyline.slice(1).map((_, i) => i) },
@@ -340,5 +346,25 @@ export async function mockSites(signal?: AbortSignal): Promise<SitesResponse> {
         stops: [at("s1", -120, 90), at("s2", 40, -60), at("s3", 160, 110)],
       },
     ],
+  };
+}
+
+/** Sample return check: straight line back to the start, the only "terrain" the mock has. */
+function sampleReturnCheck(polyline: readonly LonLat[], along: readonly number[]): ReturnCheck {
+  const start = polyline[0] ?? [0, 0];
+  const back = polyline.map((p) => haversine(start, p));
+  let worst = 0;
+  back.forEach((d, i) => {
+    if (d > (back[worst] ?? 0)) worst = i;
+  });
+  const worstM = back[worst] ?? 0;
+  return {
+    ok: worstM <= 2000 && worstM / SAMPLE_SPEED_MPS <= 3600,
+    worst_return_m: worstM,
+    worst_return_s: worstM / SAMPLE_SPEED_MPS,
+    worst_point: polyline[worst] ?? start,
+    worst_route_dist_m: along[worst] ?? 0,
+    limit_m: 2000,
+    limit_s: 3600,
   };
 }

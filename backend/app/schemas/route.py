@@ -29,6 +29,8 @@ class RouteRequest(Model):
     stops: list[PointInput] = Field(min_length=1, max_length=5)
     constraints: Constraints
     compare: bool = False
+    # Planned minutes at each stop. Added to the round trip for the EVA time check.
+    stop_time_min: float = Field(default=0, ge=0, le=240)
 
 
 class StopImage(Model):
@@ -101,6 +103,18 @@ class ReturnTrip(Model):
     est_time_s: float
 
 
+class ReturnCheck(Model):
+    """Longest shortest walk back to the start from any route point."""
+
+    ok: bool
+    worst_return_m: float
+    worst_return_s: float
+    worst_point: tuple[float, float]
+    worst_route_dist_m: float
+    limit_m: float | None
+    limit_s: float | None
+
+
 class RouteResponse(Model):
     model_config = ConfigDict(allow_inf_nan=False, populate_by_name=True)
 
@@ -126,6 +140,10 @@ class RouteResponse(Model):
     return_trip: ReturnTrip | None = Field(default=None, alias="return")
     round_trip_time_s: float | None = None
     eva_limit_s: float | None = None
+    # Return check from every route point, and the EVA time: round trip + time at stops.
+    return_check: ReturnCheck | None = None
+    stops_time_s: float = 0
+    eva_time_s: float | None = None
     status: Literal["GO", "CAUTION", "NO-GO"] = "GO"
     reasons: list[str] = Field(default_factory=list)
 

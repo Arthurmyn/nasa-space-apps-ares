@@ -106,6 +106,9 @@ def test_route_avoids_hill_and_matches_contract(terrain):
         "return",
         "round_trip_time_s",
         "eva_limit_s",
+        "return_check",
+        "stops_time_s",
+        "eva_time_s",
         "status",
         "reasons",
     }
@@ -942,11 +945,15 @@ def test_no_path_is_a_422_that_says_no_go(terrain):
     )
 
 
-def test_the_real_gale_data_has_an_eva_limit_marked_to_verify():
-    data = json.loads((DATA_ROOT / "gale-bx" / "assumptions.json").read_text())
+@pytest.mark.parametrize("site", ["gale-bx", "gale-001488"])
+def test_the_real_gale_data_cites_the_eva_and_return_limits(site):
+    data = json.loads((DATA_ROOT / site / "assumptions.json").read_text())
     assert data["eva_limit_s"] == 28800
-    item = next(i for i in data["items"] if i["name"] == "EVA time limit")
-    assert item["source"].startswith("TO VERIFY")
+    assert (data["return_limit_m"], data["return_limit_s"]) == (2000, 3600)
+    names = {i["name"]: i["source"] for i in data["items"]}
+    # Checked against NASA EVA-EXP-0075: "Supports EVAs of up to 8 hours in duration".
+    assert "8 hours" in names["EVA time limit"] and "[1]" in names["EVA time limit"]
+    assert "2 km" in names["Return limit"] and "[1]" in names["Return limit"]
 
 
 def test_real_route_answers_with_every_new_field():
@@ -1010,3 +1017,80 @@ def test_sensitivity_uses_the_requested_site():
         }
         data = client.post("/api/v1/route/sensitivity", json=body).json()
     assert data["site_id"] == "gale-001488" and len(data["results"]) == 3
+
+
+def with_return_limits(path, limit_m=2000, limit_s=3600, eva_limit_s=28800):
+    file = path / "assumptions.json"
+    data = json.loads(file.read_text())
+    data.update(return_limit_m=limit_m, return_limit_s=limit_s, eva_limit_s=eva_limit_s)
+    file.write_text(json.dumps(data), encoding="utf-8")
+
+
+def test_return_check_walks_around_terrain_from_every_point(terrain):
+    path, meta, _ = terrain
+    with_return_limits(path)
+    with TestClient(create_app(path)) as client:
+        data = client.post("/api/v1/route", json=request(meta)).json()
+    check = data["return_check"]
+    # The hill blocks the 52 m straight line, so the way back is a real detour.
+    assert check["worst_return_m"] > 52
+    assert check["worst_return_m"] <= data["distance_m"] + 1e-6
+    assert check["worst_return_s"] == pytest.approx(check["worst_return_m"] / (2 / 3.6))
+    assert check["ok"] is True and (check["limit_m"], check["limit_s"]) == (2000, 3600)
+    assert 0 <= check["worst_route_dist_m"] <= data["distance_m"]
+    assert any("within the return limit" in r for r in data["reasons"])
+    assert data["stops_time_s"] == 0
+    assert data["eva_time_s"] == pytest.approx(data["round_trip_time_s"])
+
+
+def test_return_check_reports_worst_point_of_a_loop(terrain):
+    path, meta, _ = terrain
+    with_return_limits(path)
+    payload = request(meta)
+    # Out to the far side, then back next to the start: the far point is the worst.
+    payload["stops"] = [point(meta, 15, 28, "far"), point(meta, 15, 4, "near")]
+    with TestClient(create_app(path)) as client:
+        data = client.post("/api/v1/route", json=payload).json()
+    check = data["return_check"]
+    assert check["worst_return_m"] > 52
+    assert check["worst_route_dist_m"] == pytest.approx(data["stops"][0]["dist_m"], abs=6)
+
+
+def test_return_check_over_limit_is_no_go(terrain):
+    path, meta, _ = terrain
+    with_return_limits(path, limit_m=30)
+    with TestClient(create_app(path)) as client:
+        data = client.post("/api/v1/route", json=request(meta)).json()
+    assert data["return_check"]["ok"] is False
+    assert data["status"] == "NO-GO"
+    assert any("over the 0.03 km / 60 min return limit" in r for r in data["reasons"])
+
+
+def test_time_at_stops_counts_toward_the_eva_limit(terrain):
+    path, meta, _ = terrain
+    with_return_limits(path, eva_limit_s=1800)
+    payload = {**request(meta), "stop_time_min": 20}
+    payload["stops"] = [point(meta, 15, 28, "a"), point(meta, 15, 4, "b")]
+    with TestClient(create_app(path)) as client:
+        data = client.post("/api/v1/route", json=payload).json()
+    assert data["stops_time_s"] == 2 * 20 * 60
+    assert data["eva_time_s"] == pytest.approx(data["round_trip_time_s"] + 2400)
+    # The walk alone is minutes; with 40 min at stops it is over the 30 min test limit.
+    assert data["round_trip_time_s"] < 1800 and data["status"] == "NO-GO"
+    assert any(r.startswith("EVA time (round trip + time at stops)") for r in data["reasons"])
+    assert any(a["name"] == "Time at each stop" for a in data["assumptions"])
+
+
+def test_no_return_limit_means_no_return_check(terrain):
+    path, meta, _ = terrain
+    with TestClient(create_app(path)) as client:
+        data = client.post("/api/v1/route", json=request(meta)).json()
+    assert data["return_check"] is None
+
+
+@pytest.mark.parametrize("minutes, status", [(0, 200), (240, 200), (-1, 422), (241, 422)])
+def test_stop_time_validation(terrain, minutes, status):
+    path, meta, _ = terrain
+    with TestClient(create_app(path)) as client:
+        response = client.post("/api/v1/route", json={**request(meta), "stop_time_min": minutes})
+    assert response.status_code == status, response.text
