@@ -83,7 +83,13 @@ def sites(request: Request):
 def no_go(detail: str) -> JSONResponse:
     """422 with the reason; `status` and `reasons` say the same as a route response would."""
     return JSONResponse(
-        status_code=422, content={"detail": detail, "status": "NO-GO", "reasons": [detail]}
+        status_code=422,
+        content={
+            "detail": detail,
+            "status": "NO-GO",
+            "reasons": [detail],
+            "readiness": {"level": "NOT_ADVISED", "reasons": [detail]},
+        },
     )
 
 
@@ -113,3 +119,4 @@ def route_sensitivity(body: RouteRequest, request: Request):
 def conditions():
     """Curiosity REMS weather, cached an hour. Always 200; {"available": false} on failure."""
     return get_conditions()
+
