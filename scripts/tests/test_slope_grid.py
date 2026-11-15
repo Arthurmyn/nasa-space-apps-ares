@@ -98,7 +98,22 @@ def test_fake_cli_and_contract_coordinates(tmp_path):
         assert (meta["y_max_m"] - y) / cell == pytest.approx(expected_row, abs=1e-7)
     row, col = h // 3, w // 3
     assert np.fromfile(backend / "elevation.bin", dtype="<f4")[row*w+col] == z[row, col]
-    assert sum(p.stat().st_size for p in tmp_path.rglob("*") if p.is_file()) <= 3_000_000
+    assert_within_budgets(tmp_path)
+
+
+def folder_bytes(directory, skip=()):
+    return sum(p.stat().st_size for p in directory.rglob("*") if p.is_file() and p.name not in skip)
+
+
+def assert_within_budgets(root, site="gale-bx"):
+    """The two budgets of docs/data-grid.md: what the browser downloads, and what only the backend reads.
+
+    The HUD's copy of elevation.bin in the frontend folder is outside both, like the optical image.
+    """
+    browser = folder_bytes(root / f"frontend/public/data/{site}", skip=("elevation.bin",))
+    backend = folder_bytes(root / f"backend/data/{site}")
+    assert browser <= slope_grid.BROWSER_MAX_BYTES == 3_000_000
+    assert backend <= slope_grid.BACKEND_MAX_BYTES == 12_000_000
 
 
 @pytest.mark.parametrize("cell", [1.0, 2.0, 3.0])
@@ -114,7 +129,7 @@ def test_smoothed_plane_slope_and_nodata(cell):
     assert slope.dtype == np.uint8
 
 
-@pytest.mark.parametrize("cell, box, window", [(1.0, 5, 6.0), (2.0, 3, 8.0), (3.0, 1, 6.0)])
+@pytest.mark.parametrize("cell, box, window", [(1.0, 5, 6.0), (2.0, 3, 8.0), (3.0, 1, 6.0), (4.0, 1, 8.0)])
 def test_slope_window_follows_cell_size(cell, box, window):
     # Box filter nearest 5 m, then a central difference: span = (box + 1) * cell.
     assert slope_grid.smoothing_cells(cell) == box
@@ -169,34 +184,64 @@ def test_polygon_clipping_nodata_and_transparent_pngs(tmp_path):
 def test_size_fallback_and_failure_do_not_publish_oversized_files(tmp_path, capsys):
     handoff = json.loads(HANDOFF.read_text())
     meta = generate(handoff, tmp_path, cell=0.5, fake=True)
-    assert meta["cell_m"] == 3                   # 0.5 m -> 2 m -> 3 m for the full team AOI
+    # 0.5 m and 1 m are over a budget for the enlarged AOI (about 2.1 x 2.9 km); 2 m fits both.
+    assert meta["cell_m"] == 2
     out = capsys.readouterr().out
-    assert "--cell 2" in out and "--cell 3" in out
+    assert "--cell 2" in out and "--cell 3" not in out
+    assert_within_budgets(tmp_path)
     backend = tmp_path / "backend/data/gale-bx"
+    frontend = tmp_path / "frontend/public/data/gale-bx"
     before = (backend / "meta.json").read_bytes()
-    (backend / "stops.json").write_bytes(b" " * 3_000_000)
-    with pytest.raises(ValueError, match="3 MB"):
+    # A companion file that fills the browser budget: no cell size helps, nothing is written.
+    (frontend / "companion.bin").write_bytes(b" " * 3_000_000)
+    with pytest.raises(ValueError, match="browser limit 3 MB"):
+        generate(handoff, tmp_path, cell=1, fake=True)
+    (frontend / "companion.bin").unlink()
+    # The same for the backend budget.
+    (backend / "companion.bin").write_bytes(b" " * 12_000_000)
+    with pytest.raises(ValueError, match="backend limit 12 MB"):
         generate(handoff, tmp_path, cell=1, fake=True)
     assert (backend / "meta.json").read_bytes() == before
+
+
+def test_the_backend_budget_is_separate_and_larger():
+    assert slope_grid.BROWSER_MAX_BYTES == 3_000_000
+    assert slope_grid.BACKEND_MAX_BYTES == 12_000_000 > slope_grid.BROWSER_MAX_BYTES
+    assert slope_grid.RESERVE_BYTES == 100_000
+    assert not hasattr(slope_grid, "MAX_BYTES"), "one MAX_BYTES hid which budget a file counted against"
+
+
+def test_backend_only_files_do_not_count_against_the_browser_budget(tmp_path, monkeypatch):
+    handoff = json.loads(HANDOFF.read_text())
+    grid = build_grid(handoff, 2)
+    grid.meta["is_test_data"] = True
+    files = encode_files(grid, fake_elevation(grid))
+    browser = sum(len(d) for p, d in files.items() if p.startswith("frontend/") and not p.endswith("/elevation.bin"))
+    backend = sum(len(d) for p, d in files.items() if p.startswith("backend/"))
+    # A browser limit just above the browser files and below the backend ones: the old single budget would have refused it.
+    assert backend > browser
+    monkeypatch.setattr(slope_grid, "BROWSER_MAX_BYTES", browser + slope_grid.RESERVE_BYTES + 10_000)
+    meta = generate(handoff, tmp_path, cell=2, fake=True)
+    assert meta["cell_m"] == 2
 
 
 def test_reserve_triggers_fallback_even_when_grid_fits_total_limit(tmp_path, capsys, monkeypatch):
     assert slope_grid.RESERVE_BYTES == 100_000
     handoff = json.loads(HANDOFF.read_text())
-    grid = build_grid(handoff, 1)
+    grid = build_grid(handoff, 2)
     grid.meta["is_test_data"] = True
     grid.meta["sources"] = ["Synthetic inclined plane, two hills and a ravine; NOT HiRISE terrain"]
     files = encode_files(grid, fake_elevation(grid))
     # The HUD's frontend elevation.bin copy is outside the budget.
     hud_copy = "frontend/public/data/gale-bx/elevation.bin"
     assert files[hud_copy] == files["backend/data/gale-bx/elevation.bin"]
-    size = sum(len(data) for path, data in files.items() if path != hud_copy)
-    # Place the total ceiling above the 1 m grid but its reserved ceiling below it.
-    monkeypatch.setattr(slope_grid, "MAX_BYTES", size + 50_000)
-    meta = generate(handoff, tmp_path, fake=True)
-    assert meta["cell_m"] == 2
-    assert "--cell 2" in capsys.readouterr().out
-    written = [p for p in tmp_path.rglob("*") if p.is_file() and p.relative_to(tmp_path).as_posix() != hud_copy]
+    size = sum(len(data) for path, data in files.items() if path.startswith("frontend/") and path != hud_copy)
+    # Place the browser ceiling above the 2 m files but its reserved ceiling below them.
+    monkeypatch.setattr(slope_grid, "BROWSER_MAX_BYTES", size + 50_000)
+    meta = generate(handoff, tmp_path, cell=2, fake=True)
+    assert meta["cell_m"] == 3
+    assert "--cell 3" in capsys.readouterr().out
+    written = [p for p in (tmp_path / "frontend").rglob("*") if p.is_file() and p.relative_to(tmp_path).as_posix() != hud_copy]
     assert sum(p.stat().st_size for p in written) <= size - 50_000
 
 
@@ -287,12 +332,12 @@ def test_committed_real_grid_stops_and_assumptions_match_contract():
         selected_components.append(components[row, col])
     for first, second in zip(selected_components, selected_components[1:]):
         assert first == second and first != 0
-    generated = [backend / name for name in ["meta.json", "elevation.bin", "slope.bin"]]
-    generated += [ROOT / "frontend/public/data/gale-bx" / name for name in ["meta.json", "hillshade.png", "slope.png"]]
-    assert sum(p.stat().st_size for p in generated) <= 3_000_000 - 100_000
-    all_files = [p for directory in [backend, ROOT / "frontend/public/data/gale-bx"]
-                 for p in directory.rglob("*") if p.is_file()]
-    assert sum(p.stat().st_size for p in all_files) <= 3_000_000
+    # The two budgets: what the browser downloads (without the HUD's elevation.bin copy) and what only the backend reads.
+    frontend = ROOT / "frontend/public/data/gale-bx"
+    browser_generated = [frontend / name for name in ["meta.json", "slope.bin", "hillshade.png", "slope.png"]]
+    assert sum(p.stat().st_size for p in browser_generated) <= slope_grid.BROWSER_MAX_BYTES - slope_grid.RESERVE_BYTES
+    assert_within_budgets(ROOT)
+    assert (frontend / "elevation.bin").read_bytes() == (backend / "elevation.bin").read_bytes()
 
 
 @pytest.mark.parametrize("cell", [0, -1, float("nan"), float("inf")])

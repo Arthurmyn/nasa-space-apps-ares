@@ -28,13 +28,18 @@ from shapely.ops import transform as transform_geometry
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_HANDOFF = ROOT / "docs/research/r0/gale_bx_handoff.json"
 RADIUS = 3396190
-MAX_BYTES = 3_000_000
+# Two budgets (docs/data-grid.md). The browser downloads the files of frontend/public/data/<site>/ (the
+# PNG layers, meta.json, the slope.bin copy that checks a click), so they stay small. The backend
+# reads its own folder at start, once, so its files (elevation.bin above all) may be larger.
+BROWSER_MAX_BYTES = 3_000_000
+BACKEND_MAX_BYTES = 12_000_000
+# Part of the browser budget kept free for companion files (stops.json, thermal.json and so on).
 RESERVE_BYTES = 100_000
 # Target width of the box filter that smooths DTM noise before the slope is taken.
 SMOOTH_TARGET_M = 5
-# Cell sizes tried in turn when the grid does not fit the 3 MB budget.
-# The full team AOI (about 1.3 x 1.8 km) needs 3 m.
-FALLBACK_CELLS = (2.0, 3.0)
+# Cell sizes tried in turn when the grid does not fit a budget. The enlarged Gale AOI
+# (about 2.1 x 2.9 km) is built at 4 m.
+FALLBACK_CELLS = (2.0, 3.0, 4.0, 5.0)
 # Upper display break of the slope layer (NASA EVA-EXP-0075 lunar suit design case, 20 deg).
 STEEP_DEG = 20
 
@@ -143,7 +148,7 @@ def fake_elevation(grid):
 
 
 def smoothing_cells(cell):
-    """Odd box-filter width in cells nearest SMOOTH_TARGET_M (5 at 1 m, 3 at 2 m, 1 at 3 m: no smoothing)."""
+    """Odd box-filter width in cells nearest SMOOTH_TARGET_M (5 at 1 m, 3 at 2 m, 1 at 3 m and at 4 m: no smoothing)."""
     return max(1, int(math.floor(SMOOTH_TARGET_M/cell/2))*2+1)
 
 
@@ -152,7 +157,7 @@ def slope_window_m(cell):
 
     The slope is a central difference (np.gradient) of box means, so along each axis it uses
     DTM cells from -(box+1)/2 to +(box+1)/2 around the cell. The span between the centres of
-    those outermost cells is (box + 1) * cell: 6 m at 1 m, 8 m at 2 m, 6 m at 3 m.
+    those outermost cells is (box + 1) * cell: 6 m at 1 m, 8 m at 2 m, 6 m at 3 m, 8 m at 4 m.
     """
     return float((smoothing_cells(cell) + 1) * cell)
 
@@ -264,30 +269,40 @@ def generate(handoff, output_root, cell=1.0, dtm=None, fake=False):
         # The HUD's frontend elevation.bin is a byte-for-byte copy of the backend file, so it is
         # kept outside both budgets, like the optical image.
         hud_copy = f"frontend/public/data/{sid}/elevation.bin"
-        grid_bytes = sum(len(data) for path, data in files.items() if path != hud_copy)
-        total = grid_bytes
+        browser_dir, backend_dir = f"frontend/public/data/{sid}/", f"backend/data/{sid}/"
+        browser_grid = sum(len(data) for path, data in files.items() if path.startswith(browser_dir) and path != hud_copy)
+        backend_grid = sum(len(data) for path, data in files.items() if path.startswith(backend_dir))
+        browser_total, backend_total = browser_grid, backend_grid
         # Include companion files such as stops.json and assumptions.json, if present.
-        for directory in [f"backend/data/{sid}", f"frontend/public/data/{sid}"]:
+        for directory in [backend_dir, browser_dir]:
             for path in (output_root / directory).rglob("*"):
-                if path.is_file() and path.relative_to(output_root).as_posix() not in files:
-                    total += path.stat().st_size
-        if grid_bytes <= MAX_BYTES - RESERVE_BYTES and total <= MAX_BYTES:
+                relative = path.relative_to(output_root).as_posix()
+                if path.is_file() and relative not in files:
+                    if directory == browser_dir:
+                        browser_total += path.stat().st_size
+                    else:
+                        backend_total += path.stat().st_size
+        if (browser_grid <= BROWSER_MAX_BYTES - RESERVE_BYTES and browser_total <= BROWSER_MAX_BYTES
+                and backend_total <= BACKEND_MAX_BYTES):
             break
         larger = [c for c in FALLBACK_CELLS if c > cell]
+        report = (f"browser files={browser_grid} bytes (budget {BROWSER_MAX_BYTES - RESERVE_BYTES}, reserve "
+                  f"{RESERVE_BYTES}), browser total={browser_total} (limit {BROWSER_MAX_BYTES}); "
+                  f"backend total={backend_total} (limit {BACKEND_MAX_BYTES})")
         if not larger:
-            raise ValueError(f"3 MB limit or {RESERVE_BYTES}-byte reserve exceeded at cell={cell}: "
-                             f"grid={grid_bytes}, total={total} bytes; nothing written")
-        print(f"Grid={grid_bytes} bytes (budget {MAX_BYTES - RESERVE_BYTES}, "
-              f"reserve {RESERVE_BYTES}); total={total} bytes (limit {MAX_BYTES}); "
-              f"rebuilding with --cell {larger[0]:g}")
+            raise ValueError(f"size budget exceeded at cell={cell:g}: {report}; nothing written "
+                             f"(browser limit {BROWSER_MAX_BYTES // 1_000_000} MB, "
+                             f"backend limit {BACKEND_MAX_BYTES // 1_000_000} MB)")
+        print(f"{report}; rebuilding with --cell {larger[0]:g}")
         cell = larger[0]
     # Do not publish the oversized first attempt.
     for relative, data in files.items():
         path = output_root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
-    print(f"Wrote {grid.meta['width']} x {grid.meta['height']}, cell={cell:g} m, "
-          f"{total} bytes, is_test_data={fake}")
+    print(f"Wrote {grid.meta['width']} x {grid.meta['height']}, cell={cell:g} m, browser {browser_total} bytes "
+          f"(limit {BROWSER_MAX_BYTES}), backend {backend_total} bytes (limit {BACKEND_MAX_BYTES}), "
+          f"is_test_data={fake}")
     return grid.meta
 
 
