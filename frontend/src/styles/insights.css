@@ -239,3 +239,9 @@
   text-align: right;
   overflow-wrap: anywhere;
 }
+
+/* ---- Full drive path overlay (the switch sits with the other layers) ---- */
+.legend__swatch--drive {
+  border-color: var(--accent);
+  border-top-width: 2px;
+}
