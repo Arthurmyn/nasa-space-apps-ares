@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import type { Snap } from "../lib/sheet.ts";
 
 /** What the left flyout shows; picked from the icon rail (desktop) or the drawer tabs (narrow). */
 export type SidePanel = "layers" | "sites" | "conditions" | "method";
@@ -18,11 +19,13 @@ interface UiState {
   rightCollapsed: boolean;
   /** The point inspector: a click on the map shows elevation, slope and geology instead of adding a point. */
   inspectOn: boolean;
+  /** Phones: how far the planner sheet is open. */
+  sheetSnap: Snap;
   /** Curiosity's own traverse drawn on the map. Frontend-only layer, not in the API layer list. */
   traverseOn: boolean;
 }
 
-let current: UiState = { sensitivityOpen: false, drivePathOn: false, leftPanel: null, rightCollapsed: false, inspectOn: false, traverseOn: true };
+let current: UiState = { sensitivityOpen: false, drivePathOn: false, leftPanel: null, rightCollapsed: false, inspectOn: false, sheetSnap: "peek", traverseOn: true };
 const listeners = new Set<() => void>();
 
 export const uiStore = {
@@ -39,6 +42,9 @@ export const uiStore = {
   },
   toggleTraverse() {
     this.patch({ traverseOn: !current.traverseOn });
+  },
+  setSheetSnap(snap: Snap) {
+    this.patch({ sheetSnap: snap });
   },
   setInspectOn(on: boolean) {
     this.patch({ inspectOn: on });
