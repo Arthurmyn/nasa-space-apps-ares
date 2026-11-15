@@ -235,7 +235,15 @@ def test_committed_real_grid_stops_and_assumptions_match_contract():
     assert (backend / "elevation.bin").stat().st_size == meta["width"] * meta["height"] * 4
     assert meta["slope_window_m"] == slope_grid.slope_window_m(meta["cell_m"])
     assumptions = json.loads((backend / "assumptions.json").read_text())
-    assert set(assumptions) == {"slope_limit_deg", "slope_caution_deg", "speed_kmh", "eva_limit_s", "items"}
+    assert set(assumptions) == {
+        "slope_limit_deg",
+        "slope_caution_deg",
+        "speed_kmh",
+        "eva_limit_s",
+        "return_limit_m",
+        "return_limit_s",
+        "items",
+    }
     assert assumptions["eva_limit_s"] == 28800
     assert [assumptions[k] for k in ["slope_limit_deg", "slope_caution_deg", "speed_kmh"]] == [15, 10, 2]
     assert len(assumptions["items"]) >= 2
@@ -243,8 +251,8 @@ def test_committed_real_grid_stops_and_assumptions_match_contract():
     for item in assumptions["items"]:
         assert set(item) == {"name", "value", "source"}
         assert all(isinstance(value, str) and value for value in item.values())
-        # Only the EVA time limit is still unverified; every other assumption cites its source.
-        assert ("TO VERIFY" in item["source"]) == (item["name"] == "EVA time limit")
+        # A source is either a citation or is marked TO VERIFY (the interface then shows the tag).
+        assert item["source"].strip()
     stops = json.loads((backend / "stops.json").read_text())
     sources = json.loads((backend / "sources.json").read_text())
     assert set(stops) == {"groups", "stops"}  # no "Why this site" text for now

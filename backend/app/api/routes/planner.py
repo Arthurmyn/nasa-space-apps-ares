@@ -150,3 +150,9 @@ def geology(
         "source": {k: info["source"][k] for k in ("title", "url", "citation")},
         "note": info["note"],
     }
+
+
+@router.get("/validation")
+def validation(grid: GridDependency):
+    """Our elevation against Curiosity's measured traverse, from validation.json. Always 200."""
+    return grid.validation
