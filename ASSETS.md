@@ -143,6 +143,10 @@ Planning assumptions (`assumptions.json`) are a copy of the `gale-bx` ones: the 
 - **@types/three** 0.187.0, MIT, TypeScript types for three.js (development only).
 - **Terrain data** for the 3D view: `elevation.bin`, `hillshade.png` and `slope.png` of the open site from `frontend/public/data/<site>/` (sources in the site grid sections above). `elevation.bin` is a byte-for-byte copy of the backend file, written by `scripts/make_slope_grid.py`.
 
+## Weather (REMS)
+
+`GET /api/v1/conditions` proxies the Curiosity REMS (Rover Environmental Monitoring Station) weather feed, `https://mars.nasa.gov/rss/api/?feed=weather&category=msl&feedtype=json`, read on 15 November 2026 (4,745 sols, the newest sol 4995). The feed states: "The information contained into this file is provided by Centro de Astrobiologia (CAB) and is intended for outreach purposes only. Any other use is discouraged." The app shows that disclaimer with the data. Credit used: Centro de Astrobiologia (CAB, CSIC-INTA) and NASA, Mars Science Laboratory REMS. No license text beyond that disclaimer was found; TODO(team) confirm the terms before the data is shown to users. Nothing from the feed is stored in the repository: the backend caches it in memory for an hour. The values describe the rover's own position, not a planned route.
+
 ## Stop images
 
 One Curiosity raw image per science stop `bx-1` to `bx-6`, chosen from the Navcam frames of the stop's own sol (the sol in the stop's name). They come from the NASA Curiosity raw images service (`https://mars.nasa.gov/msl/multimedia/raw-images/`, API `https://mars.nasa.gov/api/v1/raw_image_items/`). Every image was opened and looked at before it was chosen: each shows the terrain around the rover and the horizon. The files are copies served by this site, not hotlinks (`image.url` in `backend/data/gale-bx/stops.json` is `/app/stops/<file>`, `/app/` being the Vite `base`).
