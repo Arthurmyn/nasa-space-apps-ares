@@ -16,7 +16,7 @@ import { uiStore, useUi } from "../state/uiStore.ts";
 import { useSensitivity } from "../state/useSensitivity.ts";
 import { Drawer } from "./Drawer.tsx";
 import { ProfileSelector } from "./ProfileSelector.tsx";
-import { EvaReadiness } from "./RouteStatus.tsx";
+import { EvaReadiness, ReadinessBadge } from "./RouteStatus.tsx";
 import { SensitivityTable } from "./SensitivityTable.tsx";
 import { TripStats } from "./TripStats.tsx";
 import { Icon } from "./Icon.tsx";
@@ -261,5 +261,23 @@ export function MobileSummary({ onOpen }: { onOpen: () => void }) {
       <span className="sr-only">Open route details</span>
       <Icon name="chevron" className="mobile-summary__chev" />
     </button>
+  );
+}
+
+/** What shows when the phone's planner sheet is at peek: the result in one line, or what to do next. */
+export function SheetSummary() {
+  const { state, stale, fetching } = usePlanner();
+  const route = state.route;
+  if (!route) {
+    const hint = !state.start ? "Tap the map to set a start" : state.stops.length === 0 ? "Tap the map to add a stop" : fetching ? "Computing route" : "Route";
+    return <p className="sheet__hint">{hint}</p>;
+  }
+  return (
+    <div className={`sheet__line${stale ? " sheet__line--stale" : ""}`}>
+      {route.readiness && <ReadinessBadge level={route.readiness.level} />}
+      <span className="mono">{formatDistance(route.distance_m)}</span>
+      <span className="mono">{formatDuration(route.est_time_s)}</span>
+      {stale && <span className="tag tag--warn">Out of date</span>}
+    </div>
   );
 }

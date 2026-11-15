@@ -13,6 +13,7 @@ import "./styles/card.css";
 import "./styles/hud.css";
 import "./styles/hud3d.css";
 import "./styles/overview.css";
+import "./styles/mobile.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

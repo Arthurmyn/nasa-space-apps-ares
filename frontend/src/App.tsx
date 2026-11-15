@@ -1,15 +1,17 @@
-import { Suspense, lazy, useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { BottomSheet } from "./components/BottomSheet.tsx";
 import { Disclaimer } from "./components/ConditionsPanel.tsx";
 import { ElevationProfile } from "./components/ElevationProfile.tsx";
 import { LeftPanel, SideRail } from "./components/LeftPanel.tsx";
 import { PanelToggle } from "./components/PanelToggle.tsx";
-import { MobileSummary, RouteSummary } from "./components/RouteSummary.tsx";
+import { MobileSummary, RouteSummary, SheetSummary } from "./components/RouteSummary.tsx";
 import { StopCard } from "./components/StopCard.tsx";
 import { StopsPanel } from "./components/StopsPanel.tsx";
 import { TopBar, type Drawer, type Mode } from "./components/TopBar.tsx";
 import { CardView } from "./modes/CardView.tsx";
 import { HudView } from "./modes/HudView.tsx";
 import { startMode } from "./lib/startMode.ts";
+import { useMediaQuery, MOBILE_QUERY } from "./lib/useMediaQuery.ts";
 import { PlannerProvider, usePlanner } from "./state/PlannerContext.tsx";
 import { SiteProvider, useSite } from "./state/SiteContext.tsx";
 import { uiStore, useUi } from "./state/uiStore.ts";
@@ -28,7 +30,60 @@ function MapFallback() {
   );
 }
 
+/** Phones: a full-screen map with the planner as a bottom sheet. The layers drawer stays a drawer. */
+function PhonePlanView({ drawer, onDrawer }: { drawer: Drawer; onDrawer: (d: Drawer) => void }) {
+  const { state } = usePlanner();
+  const ui = useUi();
+  const hasRoute = Boolean(state.route);
+
+  // The first route that arrives lifts the sheet to half height, so the result is readable without a tap.
+  const hadRoute = useRef(hasRoute);
+  useEffect(() => {
+    if (hasRoute && !hadRoute.current && uiStore.get().sheetSnap === "peek") uiStore.setSheetSnap("half");
+    hadRoute.current = hasRoute;
+  }, [hasRoute]);
+
+  // "Method" in the route summary opens the left drawer on its Method tab.
+  useEffect(() => {
+    if (ui.leftPanel === "method" && drawer === null) onDrawer("layers");
+  }, [ui.leftPanel]);
+
+  const closeDrawer = () => {
+    uiStore.showSidePanel(null);
+    onDrawer(null);
+  };
+  return (
+    <div className="shell__body shell__body--phone" data-drawer={drawer ?? undefined} data-left-panel={ui.leftPanel ?? undefined}>
+      <aside id="layers-drawer" className="shell__left" aria-label="Layers, sites and site conditions">
+        <LeftPanel onClose={closeDrawer} />
+      </aside>
+      <main className="shell__map">
+        <Suspense fallback={<MapFallback />}>
+          <MapView />
+        </Suspense>
+      </main>
+      <BottomSheet summary={<SheetSummary />}>
+        <RouteSummary />
+        {hasRoute && (
+          <div className="sheet__profile">
+            <ElevationProfile />
+          </div>
+        )}
+        <StopsPanel />
+        <StopCard />
+        <Disclaimer />
+      </BottomSheet>
+      {drawer && <button type="button" className="shell__backdrop" aria-label="Close panel" onClick={closeDrawer} />}
+    </div>
+  );
+}
+
 function PlanView({ drawer, onDrawer }: { drawer: Drawer; onDrawer: (d: Drawer) => void }) {
+  const phone = useMediaQuery(MOBILE_QUERY);
+  return phone ? <PhonePlanView drawer={drawer} onDrawer={onDrawer} /> : <TabletDesktopPlanView drawer={drawer} onDrawer={onDrawer} />;
+}
+
+function TabletDesktopPlanView({ drawer, onDrawer }: { drawer: Drawer; onDrawer: (d: Drawer) => void }) {
   const { state } = usePlanner();
   const ui = useUi();
   // The profile stays hidden until a route is being computed or exists, then slides in.
