@@ -152,3 +152,9 @@ The base path is `/api/v1`. The response shapes are already described in `docs/a
 - Every written vertex is a vertex of the source, rounded to 1e-6 degrees. If the drive never enters the clip window, the part nearest to the AOI is written instead and `intersects_aoi` is false; the file is still shipped. The app compares the file with the open site's `bbox`: when no vertex is inside it says so, gives the distance to the nearest one, and frames the map on the site and that vertex.
 - The script exits with an error if the output would be over 150,000 bytes.
 
+## 11. Geology (`geology.json`)
+`backend/data/<site>/geology.json` holds the geologic unit of the site from the USGS Geologic Map of Mars (SIM 3292), clipped to the site `bbox` by `python -m scripts.make_geology --site <site>`. The backend reads it when the site loads and answers `GET /api/v1/geology` from it; the browser does not fetch it. Without the file, or with one that is malformed or made for another site or bbox, the endpoint answers `{ "available": false }`.
+- A GeoJSON `FeatureCollection` in `[lon, lat]` degrees on the Mars sphere (the same sphere as the grid, no reprojection). Each `Feature` is one unit polygon clipped to the bbox, with `properties`: `unit` (the map's code, field `Unit`), `name` (its short unit description, field `UnitDesc`) and `source_url`. Geometry is a `Polygon` or `MultiPolygon`.
+- The `ares` member: `schema: "ares.geology/v1"`, `site_id`, `bbox` (equal to the bbox in `meta.json`), `scale` (`1:20,000,000`), `source` (`title`, `url`, `citation`, `unit_descriptions` link to the Description of Map Units, `fetched_utc`, `shapefile_sha256`, `shapefile_bytes`) and a `note`.
+- The database has the code and the short description only. The long unit descriptions exist in the map's pamphlet and Description of Map Units, so they are linked and not copied. The script fails with an error, and writes nothing, if no unit covers the bbox.
+

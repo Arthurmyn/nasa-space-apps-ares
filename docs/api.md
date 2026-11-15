@@ -145,8 +145,9 @@ Response `200` (example values only):
 | `eva_limit_s` | number \| null, optional | The EVA time limit used for `status`, from `assumptions.json` (`eva_limit_s`, marked TO VERIFY); null when the site has none |
 | `status` | `"GO" \| "CAUTION" \| "NO-GO"`, optional | `NO-GO`: no path, or the round trip exceeds `eva_limit_s`. `CAUTION`: the maximum slope is above `slope_caution_deg`, or `safe` fell back. Otherwise `GO` |
 | `reasons` | string[], optional | Plain sentences behind `status`; for `GO` they say what was checked |
+| `readiness` | `{ level, reasons }`, optional | The same judgement as `status` under other names, next to it (`status` stays for compatibility). `level`: `NOT_ADVISED` (no path, or `round_trip_time_s` is over `eva_limit_s`; the `status` is `NO-GO`), `MARGINAL` (the maximum slope is above `slope_caution_deg`, or the `safe` profile fell back; `CAUTION`), otherwise `NOMINAL` (`GO`). `reasons` are the same sentences as the top-level `reasons` |
 
-All the fields from `route_profile` to `reasons` are additive: nothing above was renamed or removed, and `safety` and `safety_reason` keep their meaning. When there is no route at all, the `422` body also carries `"status": "NO-GO"` and `"reasons": [<the same text as detail>]`.
+All the fields from `route_profile` to `readiness` are additive: nothing above was renamed or removed, and `safety` and `safety_reason` keep their meaning. When there is no route at all, the `422` body also carries `"status": "NO-GO"`, `"reasons": [<the same text as detail>]` and `"readiness": { "level": "NOT_ADVISED", "reasons": [<the same text>] }`.
 
 `navigation.vertex_dist_m` has one cumulative distance in backend metres per polyline vertex, beginning at 0 and ending at `distance_m`. `navigation.heading_segments[i]` is the zero-based index of the edge whose direction applies while traversing edge `i` (vertex `i` to vertex `i+1`). A normal A* edge references itself. The backend assigns departure/arrival connectors to the first/last actual A* edge of their own leg, including at intermediate stops. Genuine movement within a single cell references itself. No cell-size or length heuristic is used by the HUD.
 
@@ -202,4 +203,20 @@ Curiosity REMS weather, proxied from `https://mars.nasa.gov/rss/api/?feed=weathe
 ```
 
 The newest sol of the feed. A value the feed gives as `--` is `null`. The numbers are measured at the rover's own position, are not a forecast, and do not describe a planned route. On any failure (network, status, bad JSON, unexpected shape) the answer is `{ "available": false, "reason": "..." }`; a failure is retried after one minute, a success after one hour.
+
+### `GET /geology`
+
+The geologic unit at a point of a site, from the USGS Geologic Map of Mars (SIM 3292, Tanaka and others, 2014, scale 1:20,000,000), read from the site's `geology.json` (`docs/DATA_CONTRACT.md`, section 11; made by `scripts/make_geology.py`). Query: `lon` (-180 to 180, east), `lat` (-90 to 90), optional `site_id` (default `gale-bx`, unknown id `404`). Out-of-range or missing numbers are `422`. Every other case is `200`:
+
+```json
+{
+  "available": true, "site_id": "gale-bx",
+  "unit": "Htu", "name": "Hesperian transition undivided unit",
+  "scale": "1:20,000,000",
+  "source": { "title": "Geologic Map of Mars (SIM 3292)", "url": "https://pubs.usgs.gov/sim/3292/", "citation": "Tanaka, K.L., ..." },
+  "note": "Global map at 1:20,000,000: ..."
+}
+```
+
+`unit` is the map's code and `name` its short unit description (the database field `UnitDesc`); the long descriptions are in the map's Description of Map Units, linked from `geology.json`. At this scale a site of a few square kilometres lies inside one unit, so the answer is a regional context, not a local mapping. When there is nothing to say the answer is `{ "available": false, "reason": "..." }`: the site has no `geology.json` (or it is malformed or for another bbox), the point is outside the site's bbox, or no mapped unit holds the point. `GET /layers` still reports `geology` as "No data for this site": there is no map image for it.
 
