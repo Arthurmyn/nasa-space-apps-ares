@@ -42,7 +42,9 @@ export function SlopeBar({ pct }: { pct: NonNullable<RouteResponse["stats"]>["sl
 export function TripStats({ route }: { route: RouteResponse }) {
   const { stats } = route;
   const hasReturn = route.return !== undefined;
-  const share = evaShare(route.round_trip_time_s, route.eva_limit_s);
+  const stopsS = route.stops_time_s ?? 0;
+  const evaS = route.eva_time_s !== undefined ? route.eva_time_s : route.round_trip_time_s;
+  const share = evaShare(evaS, route.eva_limit_s);
   const evaRow = route.assumptions.find((a) => /EVA/i.test(a.name));
   if (!stats && !hasReturn && route.round_trip_time_s === undefined) return null;
   return (
@@ -55,7 +57,14 @@ export function TripStats({ route }: { route: RouteResponse }) {
       </dl>
       {share !== null && route.eva_limit_s != null && (
         <p className="muted trip__eva">
-          Round trip is {formatPct(share)} of the {formatDuration(route.eva_limit_s)} EVA limit.
+          {stopsS > 0 && evaS != null ? (
+            <>
+              EVA time {formatDuration(evaS)} (round trip + {formatDuration(stopsS)} at stops) is {formatPct(share)} of the{" "}
+              {formatDuration(route.eva_limit_s)} EVA limit.
+            </>
+          ) : (
+            <>Round trip is {formatPct(share)} of the {formatDuration(route.eva_limit_s)} EVA limit.</>
+          )}
           {evaRow && isUnverified(evaRow.source) && <> <span className="tag tag--warn">TO VERIFY</span></>}
         </p>
       )}

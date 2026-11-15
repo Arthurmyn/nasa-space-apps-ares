@@ -390,3 +390,35 @@ describe("parseConditions", () => {
     }
   });
 });
+
+describe("parseRouteResponse return check and EVA time", () => {
+  const check = () => ({
+    ok: true,
+    worst_return_m: 743,
+    worst_return_s: 1337,
+    worst_point: [0.001, 0],
+    worst_route_dist_m: 400,
+    limit_m: 2000,
+    limit_s: 3600,
+  });
+  it("keeps the return check, the time at stops and the EVA time", () => {
+    const r = parseRouteResponse({ ...valid(), return_check: check(), stops_time_s: 900, eva_time_s: 1020 });
+    assert.equal(r.return_check?.worst_return_m, 743);
+    assert.deepEqual(r.return_check?.worst_point, [0.001, 0]);
+    assert.equal(r.stops_time_s, 900);
+    assert.equal(r.eva_time_s, 1020);
+  });
+  it("leaves the fields out on an older response and keeps null", () => {
+    const old = parseRouteResponse(valid());
+    for (const key of ["return_check", "stops_time_s", "eva_time_s"]) assert.equal(key in old, false, key);
+    const none = parseRouteResponse({ ...valid(), return_check: null, eva_time_s: null });
+    assert.equal(none.return_check, null);
+    assert.equal(none.eva_time_s, null);
+  });
+  it("drops a malformed check but keeps the route", () => {
+    const r = parseRouteResponse({ ...valid(), return_check: { ...check(), ok: "yes" }, stops_time_s: -1 });
+    assert.equal("return_check" in r, false);
+    assert.equal("stops_time_s" in r, false);
+    assert.equal(r.distance_m, 100);
+  });
+});

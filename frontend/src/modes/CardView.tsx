@@ -3,6 +3,7 @@ import { dataSource } from "../api/client.ts";
 import type { SafetyLevel } from "../api/types.ts";
 import { Icon } from "../components/Icon.tsx";
 import { RouteSketch } from "../components/RouteSketch.tsx";
+import { formatLimitDuration, returnLimitText } from "../components/ReturnCheck.tsx";
 import { LEVEL_ICON, SafetyBadge } from "../components/SafetyBadge.tsx";
 import { SourceText } from "../components/SourceText.tsx";
 import {
@@ -39,6 +40,14 @@ const CARD_STATUS: Record<SafetyLevel, string> = {
 };
 
 const dash = "–";
+
+function StatusMark({ ok }: { ok: boolean }) {
+  return (
+    <span className={`doc__class doc__class--${ok ? "ok" : "avoid"}`}>
+      <Icon name={ok ? "check" : "octagon"} size={10} /> {ok ? "Within limit" : "Over limit"}
+    </span>
+  );
+}
 
 /** One-page A4 route card. Every number on it comes from the route response or the site data. */
 export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
@@ -83,6 +92,7 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
 
   const { legs, whole, margins, speedKmh, walkBackS } = model;
   const start = route.polyline[0];
+  const returnCheck = route.return_check ?? null;
   const overLimit = margins ? margins.farthestM > MAX_DISTANCE_FROM_START_M : false;
   const dataNotes = [
     dataSource === "mock" && "Sample data",
@@ -265,10 +275,34 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
                     </span>
                   </td>
                 </tr>
-                <tr>
-                  <th scope="row">Walk back to start from there</th>
-                  <td className="mono">{walkBackS === null ? dash : formatDuration(walkBackS)}</td>
-                </tr>
+                {returnCheck ? (
+                  <tr>
+                    <th scope="row">Longest walk back to start</th>
+                    <td>
+                      <span className="mono">
+                        {formatDistance(returnCheck.worst_return_m)} · {formatDuration(returnCheck.worst_return_s)} of{" "}
+                        {returnLimitText(returnCheck)}
+                      </span>{" "}
+                      <StatusMark ok={returnCheck.ok} />
+                    </td>
+                  </tr>
+                ) : (
+                  <tr>
+                    <th scope="row">Walk back to start from there</th>
+                    <td className="mono">{walkBackS === null ? dash : formatDuration(walkBackS)}</td>
+                  </tr>
+                )}
+                {route.eva_time_s != null && route.eva_limit_s != null && (
+                  <tr>
+                    <th scope="row">EVA time</th>
+                    <td>
+                      <span className="mono">
+                        {formatDuration(route.eva_time_s)} of {formatLimitDuration(route.eva_limit_s)}
+                      </span>{" "}
+                      <StatusMark ok={route.eva_time_s <= route.eva_limit_s} />
+                    </td>
+                  </tr>
+                )}
                 <tr>
                   <th scope="row">{RADIATION_LABEL}</th>
                   <td className="mono">
@@ -278,8 +312,12 @@ export function CardView({ onBackToPlan }: { onBackToPlan: () => void }) {
               </tbody>
             </table>
             <p className="doc__note">
-              Walk back retraces the planned route at the route's own speed
-              {speedKmh === null ? "" : ` (${speedKmh.toFixed(1)} km/h)`}. Dose: {GCR_DOSE_EQUIVALENT_MSV_PER_DAY} mSv/day
+              {returnCheck
+                ? "Walk back: shortest walkable way to the start from every route point, same slope limit."
+                : `Walk back retraces the planned route at the route's own speed${speedKmh === null ? "" : ` (${speedKmh.toFixed(1)} km/h)`}.`}
+              {route.eva_time_s != null && route.round_trip_time_s != null
+                ? ` EVA time: round trip ${formatDuration(route.round_trip_time_s)} + ${(route.stops_time_s ?? 0) > 0 ? formatDuration(route.stops_time_s ?? 0) : "0 min"} at stops.`
+                : ""} Dose: {GCR_DOSE_EQUIVALENT_MSV_PER_DAY} mSv/day
               ({RADIATION_CITATION.period}) x walking time. {RADIATION_NOTE}
             </p>
           </section>
