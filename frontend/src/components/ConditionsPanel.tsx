@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiUrl } from "../api/client.ts";
+import { remsRows } from "../lib/conditions.ts";
+import { useConditions } from "../state/useConditions.ts";
 import { Icon } from "./Icon.tsx";
 
 /**
@@ -186,6 +188,49 @@ function WeatherCard() {
   );
 }
 
+/**
+ * Curiosity's weather station, newest sol, through GET /conditions. It is the rover's own position
+ * and not a forecast, so the card says so, and it carries the feed's outreach-only notice. When the
+ * backend has no reading the card is not drawn at all: an empty box would say nothing useful.
+ */
+function RemsCard() {
+  const conditions = useConditions();
+  if (conditions.status !== "ready") return null;
+  const d = conditions.data;
+  const rows = remsRows(d);
+  if (rows.length === 0) return null;
+  return (
+    <div className="conditions__card">
+      <h3 className="conditions__title">
+        Mars weather <span className="badge badge--ok conditions__badge">REMS</span>
+      </h3>
+      <p className="conditions__label">
+        Curiosity rover, sol {d.sol ?? "–"}
+        {d.earth_date ? `, ${dayLabel(d.earth_date)} ${d.earth_date.slice(0, 4)}` : ""}
+        {d.ls_deg !== null ? `, Ls ${d.ls_deg}°` : ""}
+      </p>
+      <table className="conditions__table mono">
+        <tbody>
+          {rows.map(([k, v]) => (
+            <tr key={k}>
+              <th scope="row">{k}</th>
+              <td>{v}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="legend__note">Measured at the rover's own position, not a forecast and not on your route.</p>
+      <p className="legend__note">{d.disclaimer}</p>
+      <p className="legend__source">
+        Source:{" "}
+        <a href={d.source_url} target="_blank" rel="noreferrer">
+          {d.provider}
+        </a>
+      </p>
+    </div>
+  );
+}
+
 export function ConditionsPanel() {
   return (
     <section className="panel__section conditions" aria-labelledby="conditions-title">
@@ -194,6 +239,7 @@ export function ConditionsPanel() {
           <Icon name="info" /> Site conditions
         </h2>
       </header>
+      <RemsCard />
       <SpaceWeatherCard />
       <WeatherCard />
     </section>
