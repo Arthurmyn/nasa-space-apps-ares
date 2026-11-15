@@ -59,6 +59,8 @@ export interface RouteRequest {
   profile?: RouteProfileId;
   /** Ask for one alternative route in `alternative`. */
   compare?: boolean;
+  /** Planned minutes at each stop, added to the EVA time. Left out for 0. */
+  stop_time_min?: number;
 }
 
 export interface StopImage {
@@ -158,6 +160,19 @@ export interface ReturnTrip {
   est_time_s: number;
 }
 
+/** Longest shortest walkable way back to the start from any route point. */
+export interface ReturnCheck {
+  ok: boolean;
+  worst_return_m: number;
+  worst_return_s: number;
+  /** The route point with the longest walk back. */
+  worst_point: LonLat;
+  /** Where that point is along the route, metres from the start. */
+  worst_route_dist_m: number;
+  limit_m: number | null;
+  limit_s: number | null;
+}
+
 export interface RouteResponse {
   /** ISO 8601 UTC timestamp of when the backend computed this route. */
   computed_at: string;
@@ -193,6 +208,13 @@ export interface RouteResponse {
   readiness?: Readiness;
   /** Legacy fields, kept in the type for older clients and old saved responses. Not shown anywhere. */
   status?: LegacyStatus;
+  // Added with the return check. Optional: an older backend does not send them.
+  /** Null when the site sets no return limit. */
+  return_check?: ReturnCheck | null;
+  /** Time at stops: stop count × stop_time_min. */
+  stops_time_s?: number;
+  /** Round trip + time at stops, the number checked against `eva_limit_s`. Null with no path back. */
+  eva_time_s?: number | null;
   reasons?: string[];
 }
 
