@@ -8,6 +8,7 @@ import { uiStore, useUi } from "../state/uiStore.ts";
 import type { TraverseStop } from "../lib/traverse.ts";
 import { Icon } from "./Icon.tsx";
 import { DrivePathRow } from "./DrivePathRow.tsx";
+import { ImageryRow } from "./ImageryRow.tsx";
 import { RadiationCard, ThermalInertiaCard } from "./LayerCards.tsx";
 
 interface RowState {
@@ -220,6 +221,7 @@ export function LayersPanel() {
           <LayerRow key={meta.id} meta={meta} />
         ))}
         {traverse && <TraverseRow stops={traverse} />}
+        <ImageryRow />
         <DrivePathRow />
       </ul>
     </section>

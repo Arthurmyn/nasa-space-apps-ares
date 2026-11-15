@@ -17,6 +17,8 @@ interface UiState {
   leftPanel: SidePanel | null;
   /** Desktop route column folded away to give the map the width. */
   rightCollapsed: boolean;
+  /** The CTX and HiRISE mosaic imagery (Mars Trek) drawn above the Viking basemap. On by default. */
+  imageryOn: boolean;
   /** The point inspector: a click on the map shows elevation, slope and geology instead of adding a point. */
   inspectOn: boolean;
   /** Phones: how far the planner sheet is open. */
@@ -25,7 +27,7 @@ interface UiState {
   traverseOn: boolean;
 }
 
-let current: UiState = { sensitivityOpen: false, drivePathOn: false, leftPanel: null, rightCollapsed: false, inspectOn: false, sheetSnap: "peek", traverseOn: true };
+let current: UiState = { sensitivityOpen: false, drivePathOn: false, leftPanel: null, rightCollapsed: false, imageryOn: true, inspectOn: false, sheetSnap: "peek", traverseOn: true };
 const listeners = new Set<() => void>();
 
 export const uiStore = {
@@ -45,6 +47,9 @@ export const uiStore = {
   },
   setSheetSnap(snap: Snap) {
     this.patch({ sheetSnap: snap });
+  },
+  setImageryOn(on: boolean) {
+    this.patch({ imageryOn: on });
   },
   setInspectOn(on: boolean) {
     this.patch({ inspectOn: on });
