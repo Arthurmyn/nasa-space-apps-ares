@@ -30,8 +30,9 @@ function MapFallback() {
 function PlanView({ drawer, onDrawer }: { drawer: Drawer; onDrawer: (d: Drawer) => void }) {
   const { state } = usePlanner();
   const ui = useUi();
-  // Without a route the profile only holds a hint, so it takes a thin strip instead of a quarter of the screen.
-  const profile = state.route || state.status === "loading" ? "full" : "empty";
+  // The profile stays hidden until a route is being computed or exists, then slides in.
+  const showProfile = Boolean(state.route) || state.status === "loading";
+  const profile = showProfile ? "full" : "hidden";
   return (
     <div className="shell__body" data-drawer={drawer ?? undefined} data-profile={profile}
       data-left={ui.leftCollapsed ? "collapsed" : undefined}
@@ -56,9 +57,11 @@ function PlanView({ drawer, onDrawer }: { drawer: Drawer; onDrawer: (d: Drawer) 
         <Disclaimer />
       </aside>
       <MobileSummary onOpen={() => onDrawer("route")} />
-      <div className="shell__profile">
-        <ElevationProfile />
-      </div>
+      {showProfile && (
+        <div className="shell__profile">
+          <ElevationProfile />
+        </div>
+      )}
       {drawer && <button type="button" className="shell__backdrop" aria-label="Close panel" onClick={() => onDrawer(null)} />}
     </div>
   );
