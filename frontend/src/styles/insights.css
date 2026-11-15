@@ -251,3 +251,99 @@
   display: grid;
   gap: var(--space-5);
 }
+
+/* ---- Method and references panel ---- */
+.method-panel {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.method-panel .method h3 {
+  margin-top: var(--space-2);
+}
+
+.route-method-btn {
+  margin-left: auto;
+}
+
+/* ---- Point inspector ---- */
+.map-inspect {
+  position: absolute;
+  right: 12px;
+  bottom: 124px;
+  z-index: 5;
+  background: rgb(11 11 15 / 0.92);
+}
+
+.map-inspect[aria-pressed="true"] {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.inspect-popup .maplibregl-popup-content {
+  box-sizing: border-box;
+  padding: var(--space-3);
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.55);
+  font-family: var(--font-sans);
+}
+
+.inspect-popup .maplibregl-popup-tip {
+  display: none;
+}
+
+.inspect {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 220px;
+}
+
+.inspect__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.inspect__coords {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.inspect__rows {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.inspect__rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-sm);
+}
+
+.inspect__rows dt {
+  color: var(--text-muted);
+}
+
+.inspect__rows dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.inspect__note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.inspect__note a {
+  color: var(--cyan);
+}
