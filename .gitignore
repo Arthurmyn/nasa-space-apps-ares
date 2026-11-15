@@ -38,6 +38,8 @@ wandb/
 
 # Original planetary rasters and download cache (R0)
 data/r0/raw/
+data/geology/
+data/validation/
 
 # Team layer pipeline: local env, raw rasters and generated outputs
 ares_layers/.venv/
