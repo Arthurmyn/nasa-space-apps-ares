@@ -477,6 +477,9 @@
     .cta .solid{
       width:calc(134 * var(--u));
     }
+    .cta .paper{
+      width:calc(150 * var(--u));
+    }
 
     @media (max-width: 1023px){
       :root{ --u: calc(100vw / 900); }
@@ -574,6 +577,7 @@
       .intro-play .hero p{ animation:i-sub .70s var(--e-soft) .86s both; }
       .intro-play .cta .btn:nth-child(1){ animation:i-btn .62s var(--e-soft) 1.00s both; }
       .intro-play .cta .btn:nth-child(2){ animation:i-btn .62s var(--e-soft) 1.07s both; }
+      .intro-play .cta .btn:nth-child(3){ animation:i-btn .62s var(--e-soft) 1.14s both; }
 
       /* The arrow draws itself once the intro has settled; the head lands after the line. */
       .da-line{ stroke-dasharray:1; stroke-dashoffset:1; animation:da-draw 1s var(--e-reveal) 2.1s forwards; }
@@ -626,6 +630,7 @@
         <div class="cta">
           <a class="btn ghost" href="/app/">Launch app</a>
           <a class="btn solid" href="#how">How it works</a>
+          <a class="btn ghost paper" href="/docs/ARES_research_paper.pdf" target="_blank" rel="noopener">Research paper</a>
         </div>
       </main>
     </div>
@@ -649,7 +654,7 @@
         <a href="#features">Features</a>
         <a href="#data">Data</a>
         <a href="#team">Team</a>
-        <a href="#sources">Sources</a>
+        <a href="/docs/ARES_research_paper.pdf" target="_blank" rel="noopener">Research paper</a>
       </nav>
 
       <div class="actions">
@@ -684,7 +689,7 @@
           <a href="#features">Features</a>
           <a href="#data">Data</a>
           <a href="#team">Team</a>
-          <a href="#sources">Sources</a>
+          <a href="/docs/ARES_research_paper.pdf" target="_blank" rel="noopener">Research paper</a>
           <a href="/app/">Launch app</a>
           <a class="btn solid" href="#demo">Get a demo</a>
         </nav>
@@ -948,26 +953,14 @@
       </div>
     </section>
 
-    <footer class="footer" id="sources">
+    <footer class="footer">
       <div class="wrap">
         <div class="footer__cols">
-          <div>
-            <h2>Sources</h2>
-            <ul>
-              <li><a href="https://www.spaceappschallenge.org/2026/" rel="noopener">NASA Space Apps Challenge 2026</a></li>
-              <li><a href="https://doi.org/10.1126/science.1244797" rel="noopener">Hassler et al. 2014, Science: radiation at Gale crater</a></li>
-              <li><a href="https://www.nasa.gov/wp-content/uploads/2017/02/eva-exp-0042_xeva_system_con_ops_rev_b_final_dtd_10192020_ref_doc.pdf" rel="noopener">xEVA ConOps EVA-EXP-0042 Rev B</a></li>
-              <li><a href="https://ntrs.nasa.gov/api/citations/20260003038/downloads/Final_ICES2026_Mars_Mass_1.pdf" rel="noopener">ICES-2026-127: Mars EVA assumptions</a></li>
-              <li><a href="https://boris.unibe.ch/194784" rel="noopener">Pe&ntilde;a-Asensio 2024: basis for the slope limit</a></li>
-              <li><a href="https://academic.oup.com/milmed/article/183/9-10/e357/5025891" rel="noopener">Looney et al. 2018, Military Medicine: effort model</a></li>
-              <li><a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html" rel="noopener">NASA NSSDC Mars fact sheet</a></li>
-              <li><a href="https://doi.org/10.17189/1520397" rel="noopener">MSL PLACES (Curiosity positions)</a></li>
-            </ul>
-          </div>
           <div>
             <h2>Project</h2>
             <ul>
               <li><a href="/app/">Launch the app</a></li>
+              <li><a href="/docs/ARES_research_paper.pdf" target="_blank" rel="noopener">Research paper (PDF)</a></li>
               <li><a href="https://github.com/Arthurmyn/nasa-space-apps-ares" rel="noopener">Source code on GitHub</a></li>
             </ul>
           </div>
