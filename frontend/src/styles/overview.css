@@ -1,0 +1,315 @@
+/* ---- Mars overview: the first page, the whole planet with markers ---- */
+
+.ov-map.ov-map .maplibregl-canvas {
+  cursor: grab;
+}
+
+.ov-map.ov-map .maplibregl-canvas:active {
+  cursor: grabbing;
+}
+
+.seg--overview {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ---- Markers (buttons placed by MapLibre) ---- */
+.ov-marker {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--hazard);
+  cursor: pointer;
+  /* A dark halo keeps every shape readable over the bright and the dark parts of the mosaic. */
+  filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 3px rgb(5 5 7 / 0.9));
+}
+
+.ov-marker svg {
+  display: block;
+  fill: currentColor;
+  stroke: var(--bg);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.ov-marker--active {
+  z-index: 3;
+  color: var(--accent);
+}
+
+.ov-marker--landing {
+  z-index: 2;
+  color: var(--cyan);
+}
+
+.ov-marker--landmark {
+  z-index: 1;
+  color: var(--amber);
+}
+
+.ov-marker:hover,
+.ov-marker.is-selected {
+  z-index: 4;
+}
+
+.ov-marker:hover svg,
+.ov-marker.is-selected svg {
+  transform: scale(1.25);
+}
+
+.ov-marker:focus-visible {
+  outline: none;
+}
+
+.ov-marker:focus-visible svg {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+.ov-marker__label {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-left: 6px;
+  transform: translateY(-50%);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: rgb(11 11 15 / 0.82);
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  filter: none;
+}
+
+/* Only the landmarks are named all the time; the others show their name on hover, focus or selection. */
+.ov-marker--landing .ov-marker__label,
+.ov-marker--active .ov-marker__label {
+  display: none;
+}
+
+.ov-marker--landing:hover .ov-marker__label,
+.ov-marker--landing:focus-visible .ov-marker__label,
+.ov-marker--landing.is-selected .ov-marker__label,
+.ov-marker--active:hover .ov-marker__label,
+.ov-marker--active:focus-visible .ov-marker__label,
+.ov-marker--active.is-selected .ov-marker__label {
+  display: block;
+}
+
+/* ---- Legend and layer toggles ---- */
+.ov-panel {
+  /* Bottom left, over the polar margin where no marker sits, so a popup never opens under it. */
+  position: absolute;
+  bottom: var(--space-5);
+  left: var(--space-3);
+  z-index: 5;
+  min-width: 200px;
+  max-width: calc(100% - 2 * var(--space-3) - 56px);
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+  background: rgb(11 11 15 / 0.9);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+}
+
+.ov-panel__status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.ov-legend {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ov-legend__row,
+.ov-globe {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--hit);
+  font-size: var(--fs-sm);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.ov-legend__row input,
+.ov-globe input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.ov-legend__row input:focus-visible,
+.ov-globe input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.ov-legend__label {
+  flex: 1;
+}
+
+.ov-legend__count {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.ov-globe {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--line);
+  color: var(--text-muted);
+}
+
+.ov-glyph {
+  flex: none;
+  fill: currentColor;
+}
+
+.ov-glyph--active {
+  color: var(--accent);
+}
+
+.ov-glyph--landing {
+  color: var(--cyan);
+}
+
+.ov-glyph--landmark {
+  color: var(--amber);
+}
+
+/* ---- Popup ---- */
+/* Above the markers, whose own stacking is set in the rules above. */
+.ov-map .maplibregl-popup {
+  z-index: 10;
+}
+
+.ov-map .maplibregl-popup-content {
+  box-sizing: border-box;
+  padding: var(--space-3) var(--space-4);
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.55);
+  font-family: var(--font-sans);
+}
+
+/* MapLibre colours the tip by the side it points from, with higher specificity than a plain class. */
+.ov-map .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.ov-map .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.ov-map .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+  border-top-color: var(--line-strong);
+}
+
+.ov-map .maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.ov-map .maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.ov-map .maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+  border-bottom-color: var(--line-strong);
+}
+
+.ov-map .maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: var(--line-strong);
+}
+
+.ov-map .maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: var(--line-strong);
+}
+
+.ov-map .maplibregl-popup-close-button {
+  width: var(--hit);
+  height: var(--hit);
+  color: var(--text-muted);
+  font-size: 20px;
+}
+
+.ov-map .maplibregl-popup-close-button:hover {
+  background: var(--panel-raised);
+  color: var(--text);
+}
+
+.ov-popup {
+  display: grid;
+  gap: var(--space-2);
+  padding-right: var(--space-4);
+}
+
+.ov-popup__name {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.ov-popup__coords {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.ov-popup__note {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+
+.ov-popup__source {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.ov-popup__source a {
+  color: var(--cyan);
+}
+
+.ov-popup__actions {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-1);
+}
+
+.ov-popup__todo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+@media (max-width: 520px) {
+  .seg--overview .seg__text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .ov-panel {
+    min-width: 0;
+  }
+}

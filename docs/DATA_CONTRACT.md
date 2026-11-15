@@ -128,3 +128,21 @@ The base path is `/api/v1`. The response shapes are already described in `docs/a
 
 ## 8. Test data
 `scripts/make_fake_grid.py` creates a grid in the **same format** (an inclined plane, two hills and a ravine) with `is_test_data: true`. This way the backend and the frontend work in parallel until the real DTM is available.
+
+## 9. Mars overview markers (`sites_global.json`)
+`frontend/public/data/sites_global.json` (served at `/app/data/sites_global.json`) lists the markers of the Mars overview, the first page of the web app. The frontend reads it at run time, so a data change needs no code change. It is not part of a site folder and not read by the backend.
+```json
+[
+  {
+    "id": "gale-bx", "name": "Gale crater: boxwork (Mount Sharp)", "type": "active",
+    "lon": 137.3873, "lat": -4.79575,
+    "note": "Short factual text.",
+    "source": { "title": "Where the numbers come from", "url": "https://example.org/page" }
+  }
+]
+```
+- `type` is `active` (an ARES site), `landing` (a landing site of a mission) or `landmark` (a named feature). Anything else is dropped, and the loader logs each dropped entry with the reason.
+- `lon` is degrees east, -180 to 180 (0 to 360 is accepted and shifted); `lat` is -90 to 90. For an `active` entry, `id` must be the `site_id` of a folder in `frontend/public/data/` and the point must lie on that site (a test checks both).
+- `source` is a link (a string) or `{ "title", "url" }`. Only http(s) links are kept. Every entry needs a source, and every source needs a row in `ASSETS.md`. A value we could not verify is left out; the file never carries a guess.
+- A marker of type `active` opens the planner on that site; the other types only show their note and "Terrain data not loaded yet".
+
