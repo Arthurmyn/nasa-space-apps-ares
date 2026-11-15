@@ -1,5 +1,5 @@
 import type { LayerId } from "../api/types.ts";
-import { CARD_LAYERS, LAYER_META, LAYER_SOURCE_LABEL, NO_DATA_REASON, type LayerMeta } from "../config/layers.ts";
+import { CARD_LAYERS, LAYER_META, NO_DATA_REASON, type LayerMeta } from "../config/layers.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
 import { layerHasImagery } from "../config/tiles.ts";
 import { useApp, useLayers, type LayersModel } from "../state/PlannerContext.tsx";
@@ -28,9 +28,9 @@ const STEEP_DEG = 20;
 
 function SlopeLegend() {
   const items = [
-    { cls: "ok", range: `≤${SLOPE_LIMITS.cautionDeg}°`, text: "display break only" },
+    { cls: "ok", range: `≤${SLOPE_LIMITS.cautionDeg}°`, text: "" },
     { cls: "caution", range: `${SLOPE_LIMITS.cautionDeg}–${SLOPE_LIMITS.maxDeg}°`, text: "" },
-    { cls: "avoid", range: `${SLOPE_LIMITS.maxDeg}–${STEEP_DEG}°`, text: "over the route limit" },
+    { cls: "avoid", range: `${SLOPE_LIMITS.maxDeg}–${STEEP_DEG}°`, text: `over ${SLOPE_LIMITS.maxDeg}° route limit` },
     { cls: "steep", range: `>${STEEP_DEG}°`, text: "" },
   ] as const;
   return (
@@ -44,42 +44,22 @@ function SlopeLegend() {
           </li>
         ))}
       </ul>
-      <p className="legend__note">
-        Thresholds are lunar analogs: {SLOPE_LIMITS.maxDeg}° Peña-Asensio et al. 2024 (route limit in this app), {STEEP_DEG}° NASA
-        EVA-EXP-0075 design case. Not Mars suit limits.
-      </p>
     </>
   );
 }
 
-function SourceNote({ source }: { source: string }) {
-  const parts = source
-    .split(";")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (parts.length <= 1) return <p className="legend__source">Source: {source}</p>;
-  return (
-    <div className="legend__source">
-      <span>Sources</span>
-      <ul className="legend__source-list">
-        {parts.map((p) => (
-          <li key={p}>{p}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function LayerLegend({ meta, source }: { meta: LayerMeta; source: string | null }) {
+function LayerLegend({ meta }: { meta: LayerMeta }) {
   const { site } = useSite();
+  const noImagery = !CARD_LAYERS.includes(meta.id) && !layerHasImagery(meta.id, site.id);
+  const hasContent = meta.id === "slope" || meta.id === "thermal" || meta.id === "radiation" || meta.isEstimate || noImagery;
+  if (!hasContent) return null;
   return (
     <div className="layer-row__legend">
       {meta.id === "slope" && <SlopeLegend />}
       {meta.id === "thermal" && <ThermalInertiaCard />}
       {meta.id === "radiation" && <RadiationCard />}
       {meta.isEstimate && <p className="legend__note">Estimate. Modelled, not measured.</p>}
-      {(LAYER_SOURCE_LABEL[meta.id] ?? source) && <SourceNote source={LAYER_SOURCE_LABEL[meta.id] ?? source ?? ""} />}
-      {!CARD_LAYERS.includes(meta.id) && !layerHasImagery(meta.id, site.id) && (
+      {noImagery && (
         <p className="legend__note legend__note--warn">
           <Icon name="info" size={12} /> No imagery for this layer yet
         </p>
@@ -126,7 +106,7 @@ function LayerRow({ meta }: { meta: LayerMeta }) {
           <Icon name="info" size={12} /> {reason}
         </p>
       )}
-      {on && <LayerLegend meta={meta} source={layers.info[meta.id]?.source ?? null} />}
+      {on && <LayerLegend meta={meta} />}
     </li>
   );
 }
@@ -137,9 +117,6 @@ function LayerRow({ meta }: { meta: LayerMeta }) {
  */
 function TraverseRow({ stops }: { stops: readonly TraverseStop[] }) {
   const on = useUi().traverseOn;
-  const first = stops[0]?.sol;
-  const last = stops[stops.length - 1]?.sol;
-  const sols = first === last ? `sol ${first}` : `sols ${first}–${last}`;
   return (
     <li className={`layer-row${on ? " layer-row--on" : ""}`}>
       <div className="layer-row__head">
@@ -148,7 +125,7 @@ function TraverseRow({ stops }: { stops: readonly TraverseStop[] }) {
             Curiosity traverse
           </span>
           <span id="layer-traverse-desc" className="layer-row__desc">
-            Where the rover actually drove here, {stops.length} stops. Hover a stop for its tilt and our slope.
+            Rover stops at this site ({stops.length})
           </span>
         </div>
         <button
@@ -173,9 +150,6 @@ function TraverseRow({ stops }: { stops: readonly TraverseStop[] }) {
               <span className="legend__text">Rover track and stops</span>
             </li>
           </ul>
-          <p className="legend__source">
-            Curiosity traverse, {sols} (snapshot). NASA/JPL-Caltech, MSL waypoints via MMGIS.
-          </p>
         </div>
       )}
     </li>
