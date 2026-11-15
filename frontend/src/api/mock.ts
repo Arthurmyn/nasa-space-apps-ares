@@ -14,9 +14,13 @@ import {
   type LonLat,
   type PointInput,
   type ProfilePoint,
+  type ConditionsResponse,
+  type RouteProfileId,
   type RouteRequest,
   type RouteResponse,
+  type RouteStats,
   type SafetyLevel,
+  type SensitivityResponse,
   type SitesResponse,
 } from "./types.ts";
 
@@ -167,12 +171,40 @@ function safetyFor(maxSlope: number): { safety: SafetyLevel; reason: string } {
   return { safety: "avoid", reason: `${steepest}, above the ${SLOPE_LIMITS.maxDeg}° limit.` };
 }
 
+const MOCK_EVA_LIMIT_S = 8 * 3600;
+/** Sample detour per profile: "fast" cuts closer to the straight line, "safe" bends further. */
+const PROFILE_MEANDER: Record<RouteProfileId, number> = { fast: 0.6, balanced: 1, safe: 1.5 };
+
+/** Share of the distance in each slope class, and the summed climb and descent, from the sampled profile. */
+function sampleStats(profile: readonly ProfilePoint[]): RouteStats {
+  const share = { ok: 0, caution: 0, avoid: 0 };
+  let climb = 0;
+  let descent = 0;
+  let total = 0;
+  for (let i = 1; i < profile.length; i += 1) {
+    const a = profile[i - 1];
+    const b = profile[i];
+    if (!a || !b) continue;
+    const d = b.dist_m - a.dist_m;
+    share[classifySlope(b.slope_deg, SLOPE_LIMITS)] += d;
+    total += d;
+    const dz = b.elev_m - a.elev_m;
+    if (dz > 0) climb += dz;
+    else descent -= dz;
+  }
+  const pct = (x: number) => (total > 0 ? Math.round((x / total) * 1000) / 10 : 0);
+  const ok = pct(share.ok);
+  const caution = pct(share.caution);
+  return { slope_class_pct: { ok, caution, avoid: Math.round((100 - ok - caution) * 10) / 10 }, climb_m: climb, descent_m: descent };
+}
+
 export async function mockRoute(req: RouteRequest, signal?: AbortSignal): Promise<RouteResponse> {
   await delay(LATENCY_MS, signal);
   if (req.stops.length === 0) throw new ApiError("http", "HTTP 422", 422);
 
   const waypoints = [req.start, ...req.stops];
-  const main = buildPath(waypoints, 1, 1);
+  const profileId = req.profile ?? "balanced";
+  const main = buildPath(waypoints, PROFILE_MEANDER[profileId], 1);
   const dist = pathLength(main.polyline);
   const profile = buildProfile(main.local, dist);
   const maxSlope = profile.reduce((m, p) => Math.max(m, p.slope_deg), 0);
@@ -193,13 +225,31 @@ export async function mockRoute(req: RouteRequest, signal?: AbortSignal): Promis
     };
   }
 
+  const estTime = distance / SAMPLE_SPEED_MPS;
+  const roundTrip = estTime * 2;
+  const status = roundTrip > MOCK_EVA_LIMIT_S ? "NO-GO" : maxSlope > SLOPE_LIMITS.cautionDeg ? "CAUTION" : "GO";
+  const reasons =
+    status === "NO-GO"
+      ? ["Sample data: the round trip is longer than the sample EVA limit."]
+      : status === "CAUTION"
+        ? [`Sample data: the steepest section is above the ${SLOPE_LIMITS.cautionDeg}° caution threshold.`]
+        : ["Sample data: the round trip fits the sample EVA limit and the slope is within the caution threshold."];
+
   return {
     supports_alternatives: true,
+    route_profile: profileId,
+    profile_fallback: false,
+    stats: sampleStats(profile),
+    return: { distance_m: distance, est_time_s: estTime },
+    round_trip_time_s: roundTrip,
+    eva_limit_s: MOCK_EVA_LIMIT_S,
+    status,
+    reasons,
     navigation: { vertex_dist_m: dist, heading_segments: main.polyline.slice(1).map((_, i) => i) },
     computed_at: new Date().toISOString(),
     distance_m: distance,
     max_slope_deg: maxSlope,
-    est_time_s: distance / SAMPLE_SPEED_MPS,
+    est_time_s: estTime,
     safety,
     safety_reason: reason,
     polyline: main.polyline,
@@ -221,6 +271,45 @@ export async function mockRoute(req: RouteRequest, signal?: AbortSignal): Promis
       { name: "Hazard zones", value: "Generated beside the route", source: SAMPLE_SOURCE },
     ],
     alternative,
+  };
+}
+
+/** Sample sensitivity: the same sample path, with a limit that either passes or does not. */
+export async function mockSensitivity(req: RouteRequest, signal?: AbortSignal): Promise<SensitivityResponse> {
+  const route = await mockRoute(req, signal);
+  return {
+    site_id: req.site_id ?? "gale-bx",
+    results: [10, 15, 20].map((limit) =>
+      route.max_slope_deg <= limit
+        ? { limit_deg: limit, reachable: true, distance_m: route.distance_m, est_time_s: route.est_time_s, max_slope_deg: route.max_slope_deg, reason: null }
+        : { limit_deg: limit, reachable: false, distance_m: null, est_time_s: null, max_slope_deg: null, reason: `Sample data: the sample path reaches ${route.max_slope_deg.toFixed(1)}°.` },
+    ),
+  };
+}
+
+export async function mockConditions(signal?: AbortSignal): Promise<ConditionsResponse> {
+  await delay(250, signal);
+  return {
+    available: true,
+    provider: "Sample data (mock), not the REMS feed",
+    disclaimer: "Sample values for development. Not measured.",
+    source_url: "https://mars.nasa.gov/",
+    sol: 0,
+    earth_date: null,
+    ls_deg: null,
+    season: null,
+    air_temp_min_c: -70,
+    air_temp_max_c: -10,
+    ground_temp_min_c: -80,
+    ground_temp_max_c: 0,
+    pressure_pa: 750,
+    pressure_note: null,
+    sunrise: "06:00",
+    sunset: "18:00",
+    uv_index: null,
+    opacity: null,
+    wind_speed: null,
+    fetched_at: null,
   };
 }
 

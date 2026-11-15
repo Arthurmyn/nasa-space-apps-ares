@@ -1,12 +1,14 @@
 // Types mirror backend/app/schemas/. Route types live in ./types.ts (proposal, see docs/api.md).
 import { requestJson } from "./request.ts";
 import { siteFileUrl } from "./siteFiles.ts";
-import { parseLayersResponse, parseRouteResponse, parseSiteMeta, parseSitesResponse, parseThermalInfo } from "./validate.ts";
+import { parseConditions, parseLayersResponse, parseRouteResponse, parseSensitivityResponse, parseSiteMeta, parseSitesResponse, parseThermalInfo } from "./validate.ts";
 import {
   ApiError,
+  type ConditionsResponse,
   type LayersResponse,
   type RouteRequest,
   type RouteResponse,
+  type SensitivityResponse,
   type SiteMeta,
   type SitesResponse,
   type ThermalInfo,
@@ -66,6 +68,29 @@ export const api = {
       return mockRoute(body, signal);
     }
     return requestJson(BASE + "/route", { method: "POST", body: JSON.stringify(body) }, signal, parseRouteResponse);
+  },
+
+  sensitivity: async (body: RouteRequest, signal?: AbortSignal): Promise<SensitivityResponse> => {
+    if (dataSource === "mock") {
+      const { mockSensitivity } = await import("./mock.ts");
+      return mockSensitivity(body, signal);
+    }
+    return requestJson(BASE + "/route/sensitivity", { method: "POST", body: JSON.stringify(body) }, signal, parseSensitivityResponse);
+  },
+
+  /** Never throws for "no data": a failed or unavailable feed comes back as { available: false }. */
+  conditions: async (signal?: AbortSignal): Promise<ConditionsResponse> => {
+    if (dataSource === "mock") {
+      const { mockConditions } = await import("./mock.ts");
+      return mockConditions(signal);
+    }
+    try {
+      return await requestJson(BASE + "/conditions", undefined, signal, parseConditions);
+    } catch (e) {
+      if (signal?.aborted) throw e;
+      console.warn("Conditions request failed", e);
+      return { available: false, reason: "The conditions service could not be reached" };
+    }
   },
 
   sites: async (signal?: AbortSignal): Promise<SitesResponse> => {

@@ -183,3 +183,32 @@ describe("buildRouteRequest and the site", () => {
     assert.equal("site_id" in (buildRouteRequest(s) ?? {}), false);
   });
 });
+
+describe("route profile", () => {
+  const placed = run([add(0), add(1)]);
+
+  it("is balanced by default and then left out of the request", () => {
+    assert.equal(placed.profile, "balanced");
+    assert.equal("profile" in (buildRouteRequest(placed) ?? {}), false);
+  });
+
+  it("is sent when it is not balanced", () => {
+    assert.equal(buildRouteRequest(run([{ type: "profile/set", profile: "safe" }], placed))?.profile, "safe");
+  });
+
+  it("makes the current route out of date, so it is recomputed", () => {
+    const withRoute = run([{ type: "route/success", route: fakeRoute, version: placed.planVersion }], placed);
+    assert.equal(isStale(withRoute), false);
+    const changed = run([{ type: "profile/set", profile: "fast" }], withRoute);
+    assert.equal(isStale(changed), true);
+    assert.equal(changed.route, fakeRoute, "the old route stays on screen until the new one arrives");
+  });
+
+  it("does nothing when the same profile is chosen again", () => {
+    assert.equal(plannerReducer(placed, { type: "profile/set", profile: "balanced" }), placed);
+  });
+
+  it("survives Clear", () => {
+    assert.equal(run([{ type: "profile/set", profile: "safe" }, { type: "reset" }], placed).profile, "safe");
+  });
+});

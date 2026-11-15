@@ -11,7 +11,7 @@ import {
 } from "react";
 import { api } from "../api/client.ts";
 import { describeError } from "../api/errors.ts";
-import { ApiError } from "../api/types.ts";
+import { ApiError, type RouteProfileId } from "../api/types.ts";
 import { stopLabel } from "../lib/format.ts";
 import { decodePlan, encodePlan } from "../lib/planUrl.ts";
 import { checkStopPoint, clampToBbox, insideBbox } from "../lib/siteGeo.ts";
@@ -58,6 +58,7 @@ export interface PlannerModel {
   removePoint: (id: string) => void;
   select: (id: string | null) => void;
   setCompare: (value: boolean) => void;
+  setProfile: (profile: RouteProfileId) => void;
   recalculate: () => void;
   reset: () => void;
 }
@@ -277,6 +278,7 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       removePoint: (id) => dispatch({ type: "point/remove", id }),
       select: (id) => dispatch({ type: "select", id }),
       setCompare: (value) => dispatch({ type: "compare/set", value }),
+      setProfile: (profile) => dispatch({ type: "profile/set", profile }),
       recalculate: () => void fetchRoute(),
       reset: () => dispatch({ type: "reset" }),
     }),
