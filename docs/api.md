@@ -226,3 +226,21 @@ The geologic unit at a point of a site, from the USGS Geologic Map of Mars (SIM 
 
 `unit` is the map's code and `name` its short unit description (the database field `UnitDesc`); the long descriptions are in the map's Description of Map Units, linked from `geology.json`. At this scale a site of a few square kilometres lies inside one unit, so the answer is a regional context, not a local mapping. When there is nothing to say the answer is `{ "available": false, "reason": "..." }`: the site has no `geology.json` (or it is malformed or for another bbox), the point is outside the site's bbox, or no mapped unit holds the point. `GET /layers` still reports `geology` as "No data for this site": there is no map image for it.
 
+### `GET /validation`
+
+How well our terrain agrees with Curiosity's own measured drive: the elevation of `elevation.bin` against the heights of the NASA/JPL MMGIS traverse (`MSL_traverse.json`) at every traverse vertex inside the site. Query: optional `site_id` (default `gale-bx`, unknown id `404`). The answer is the site's `validation.json` (`docs/DATA_CONTRACT.md`, section 12) with `available: true`, or `{ "available": false, "reason": "..." }` when there is no file, it could not be read, or it was made for another site, area or `elevation.bin` (its recorded hash no longer matches). Always `200` for a valid query.
+
+```json
+{
+  "available": true, "schema": "ares.validation/v1", "site_id": "gale-bx",
+  "status": "ok", "n_points": 14097, "correlation": 0.99,
+  "raw": { "mean_m": -4.66, "std_m": 2.74, "max_abs_m": 29.25, "rmse_m": 5.41 },
+  "offset_corrected": { "offset_m": -4.66, "mean_m": 0.0, "std_m": 2.74, "max_abs_m": 24.59, "rmse_m": 2.74 },
+  "method": "...", "offset_note": "...",
+  "source": { "title": "...", "url": "https://mars.nasa.gov/mmgis-maps/MSL/Layers/json/MSL_traverse.json", "fetched_utc": "...", "sha256": "...", "bytes": 1357951 },
+  "computed_utc": "..."
+}
+```
+
+`difference = traverse z minus our elevation`. `raw` is that difference; `offset_corrected` is the same after the constant offset between the two height references is removed. `status` is `ok`, `insufficient_points` (fewer than 30 vertices inside the site) or `not_comparable` (the heights do not vary together, or the traverse is flat); the last two carry a `reason` and no statistics. The numbers above are an example of the shape: the real values come from the run of `scripts/validate_traverse.py` and are in the file.
+
