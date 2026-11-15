@@ -15,7 +15,6 @@ import { useSite } from "../state/SiteContext.tsx";
 import { uiStore, useUi } from "../state/uiStore.ts";
 import { useSensitivity } from "../state/useSensitivity.ts";
 import { Drawer } from "./Drawer.tsx";
-import { MethodPanel } from "./MethodPanel.tsx";
 import { ProfileSelector } from "./ProfileSelector.tsx";
 import { RouteStatus } from "./RouteStatus.tsx";
 import { SensitivityTable } from "./SensitivityTable.tsx";
@@ -237,7 +236,6 @@ export function RouteSummary() {
       )}
 
       {route && <SensitivityDrawer enabled={!stale && !fetching} />}
-      <MethodPanel route={route} />
     </section>
   );
 }
