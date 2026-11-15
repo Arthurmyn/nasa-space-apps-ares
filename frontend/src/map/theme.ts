@@ -8,6 +8,7 @@ export interface MapTheme {
   accent: string;
   cyan: string;
   hazard: string;
+  traverse: string;
   classOk: string;
   classCaution: string;
   classAvoid: string;
@@ -32,6 +33,7 @@ export function getMapTheme(): MapTheme {
     accent: read("--accent"),
     cyan: read("--cyan"),
     hazard: read("--hazard"),
+    traverse: read("--traverse"),
     classOk: read("--ok"),
     classCaution: read("--amber"),
     classAvoid: read("--hazard"),

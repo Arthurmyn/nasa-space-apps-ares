@@ -2,8 +2,10 @@ import type { LayerId } from "../api/types.ts";
 import { CARD_LAYERS, LAYER_META, LAYER_SOURCE_LABEL, NO_DATA_REASON, type LayerMeta } from "../config/layers.ts";
 import { SLOPE_LIMITS } from "../config/route.ts";
 import { layerHasImagery } from "../config/tiles.ts";
-import { useLayers, type LayersModel } from "../state/PlannerContext.tsx";
+import { useApp, useLayers, type LayersModel } from "../state/PlannerContext.tsx";
 import { useSite } from "../state/SiteContext.tsx";
+import { uiStore, useUi } from "../state/uiStore.ts";
+import type { TraverseStop } from "../lib/traverse.ts";
 import { Icon } from "./Icon.tsx";
 import { GeologyCard, RadiationCard, ThermalInertiaCard } from "./LayerCards.tsx";
 
@@ -129,8 +131,59 @@ function LayerRow({ meta }: { meta: LayerMeta }) {
   );
 }
 
+/**
+ * Curiosity's own traverse. A frontend-only layer: it is not in the API layer list and appears
+ * only on a site that ships traverse.geojson.
+ */
+function TraverseRow({ stops }: { stops: readonly TraverseStop[] }) {
+  const on = useUi().traverseOn;
+  const first = stops[0]?.sol;
+  const last = stops[stops.length - 1]?.sol;
+  const sols = first === last ? `sol ${first}` : `sols ${first}–${last}`;
+  return (
+    <li className={`layer-row${on ? " layer-row--on" : ""}`}>
+      <div className="layer-row__head">
+        <div className="layer-row__text">
+          <span id="layer-traverse-label" className="layer-row__label">
+            Curiosity traverse
+          </span>
+          <span id="layer-traverse-desc" className="layer-row__desc">
+            Where the rover actually drove here, {stops.length} stops. Hover a stop for its tilt and our slope.
+          </span>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={on}
+          aria-labelledby="layer-traverse-label"
+          aria-describedby="layer-traverse-desc"
+          className="switch"
+          onClick={() => uiStore.toggleTraverse()}
+        >
+          <span className="switch__thumb" />
+          <span className="sr-only">{on ? "On" : "Off"}</span>
+        </button>
+      </div>
+      {on && (
+        <div className="layer-row__legend">
+          <ul className="legend" aria-label="Curiosity traverse legend">
+            <li className="legend__item">
+              <span className="legend__swatch legend__swatch--traverse" aria-hidden="true" />
+              <span className="legend__dot legend__dot--traverse" aria-hidden="true" />
+              <span className="legend__text">Rover track and stops</span>
+            </li>
+          </ul>
+          <p className="legend__source">
+            Curiosity traverse, {sols} (snapshot). NASA/JPL-Caltech, MSL waypoints via MMGIS.
+          </p>
+        </div>
+      )}
+    </li>
+  );
+}
+
 export function LayersPanel() {
-  const layers = useLayers();
+  const { layers, traverse } = useApp();
   const available = LAYER_META.filter((m) => layers.info[m.id]?.available).length;
   const partial = layers.status === "ready" && available < LAYER_META.length;
 
@@ -166,6 +219,7 @@ export function LayersPanel() {
         {LAYER_META.map((meta) => (
           <LayerRow key={meta.id} meta={meta} />
         ))}
+        {traverse && <TraverseRow stops={traverse} />}
       </ul>
     </section>
   );
