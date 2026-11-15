@@ -99,6 +99,15 @@ def test_route_avoids_hill_and_matches_contract(terrain):
         "alternative",
         "navigation",
         "supports_alternatives",
+        # added with route profiles, all additive
+        "route_profile",
+        "profile_fallback",
+        "stats",
+        "return",
+        "round_trip_time_s",
+        "eva_limit_s",
+        "status",
+        "reasons",
     }
     assert data["distance_m"] > 52
     assert data["max_slope_deg"] == 0
@@ -754,3 +763,250 @@ def test_frontend_elevation_copy_equals_the_backend_file(site_id):
     backend = DATA_ROOT / site_id / "elevation.bin"
     frontend = DATA_ROOT.parents[1] / "frontend/public/data" / site_id / "elevation.bin"
     assert backend.read_bytes() == frontend.read_bytes()
+
+
+# ---- route profiles, stats, return trip, status and sensitivity -------------------------------
+
+
+def band_terrain(path, slope, deg, cols=(10, 21), rows=(5, 26)):
+    """A band of `deg` slope across the test grid; rows outside `rows` stay flat (a corridor)."""
+    slope[:] = 0
+    slope[rows[0] : rows[1], cols[0] : cols[1]] = int(deg * 2)  # slope.bin is in 0.5 degree units
+    slope.tofile(path / "slope.bin")
+
+
+def set_assumptions(path, **changes):
+    file = path / "assumptions.json"
+    data = json.loads(file.read_text())
+    data.update(changes)
+    file.write_text(json.dumps(data), encoding="utf-8")
+
+
+def plan(client, meta, **extra):
+    body = {**request(meta), **extra}
+    body.pop("compare", None)
+    return client.post("/api/v1/route", json=body)
+
+
+def test_default_profile_is_balanced_and_the_new_fields_are_present(terrain):
+    path, meta, _ = terrain
+    with TestClient(create_app(path)) as client:
+        default = plan(client, meta).json()
+        balanced = plan(client, meta, profile="balanced").json()
+    assert default["route_profile"] == "balanced" and default["profile_fallback"] is False
+    assert default["distance_m"] == pytest.approx(balanced["distance_m"])
+    assert default["polyline"] == balanced["polyline"]
+    for key in ("stats", "return", "round_trip_time_s", "status", "reasons"):
+        assert key in default
+    assert default["return"].keys() == {"distance_m", "est_time_s"}
+
+
+def test_unknown_profile_is_rejected(terrain):
+    path, meta, _ = terrain
+    with TestClient(create_app(path)) as client:
+        assert plan(client, meta, profile="reckless").status_code == 422
+
+
+def test_return_trip_and_round_trip_time(terrain):
+    path, meta, _ = terrain
+    with TestClient(create_app(path)) as client:
+        data = plan(client, meta).json()
+    # Flat terrain: the way back along the same stops is as long as the way out.
+    assert data["return"]["distance_m"] == pytest.approx(data["distance_m"], rel=1e-6)
+    assert data["round_trip_time_s"] == pytest.approx(
+        data["est_time_s"] + data["return"]["est_time_s"]
+    )
+    assert data["return"]["est_time_s"] == pytest.approx(data["return"]["distance_m"] / (2 / 3.6))
+
+
+def test_stats_add_up_and_follow_the_terrain(terrain):
+    path, meta, slope = terrain
+    slope[:] = 0
+    slope[:, 14:17] = 24  # 12 degrees: above the 10 degree caution threshold, below the limit
+    slope.tofile(path / "slope.bin")
+    with TestClient(create_app(path)) as client:
+        data = plan(client, meta).json()
+    pct = data["stats"]["slope_class_pct"]
+    assert pct["ok"] + pct["caution"] + pct["avoid"] == pytest.approx(100.0)
+    assert pct["caution"] > 0 and pct["avoid"] == 0 and pct["ok"] > 50
+    assert (
+        data["stats"]["climb_m"] == 0 and data["stats"]["descent_m"] == 0
+    )  # the test grid is flat
+
+
+def test_climb_and_descent_are_summed_from_the_elevation_samples(terrain):
+    path, meta, _ = terrain
+    rise = np.linspace(0, 10, 31, dtype="<f4")  # 10 m up from west to east
+    np.tile(rise, (31, 1)).astype("<f4").tofile(path / "elevation.bin")
+    with TestClient(create_app(path)) as client:
+        forward = plan(client, meta).json()
+        backward_body = {
+            **request(meta),
+            "start": request(meta)["stops"][0],
+            "stops": [request(meta)["start"]],
+        }
+        backward = client.post("/api/v1/route", json=backward_body).json()
+    assert forward["stats"]["climb_m"] == pytest.approx(10 * 26 / 30, abs=1.0)
+    assert forward["stats"]["descent_m"] == pytest.approx(0, abs=1e-6)
+    assert backward["stats"]["descent_m"] == pytest.approx(forward["stats"]["climb_m"], abs=1e-6)
+
+
+def test_fast_profile_takes_the_steeper_shorter_way(terrain):
+    path, meta, slope = terrain
+    band_terrain(path, slope, 15, cols=(8, 23))  # steep but passable, 15 cells wide
+    with TestClient(create_app(path)) as client:
+        balanced = plan(client, meta, profile="balanced").json()
+        fast = plan(client, meta, profile="fast").json()
+    assert fast["route_profile"] == "fast"
+    assert fast["distance_m"] < balanced["distance_m"]  # balanced walks round the band
+    assert fast["max_slope_deg"] > balanced["max_slope_deg"]
+
+
+def test_safe_profile_stays_under_the_caution_threshold_when_it_can(terrain):
+    path, meta, slope = terrain
+    band_terrain(path, slope, 12)  # with a flat corridor round the band
+    with TestClient(create_app(path)) as client:
+        safe = plan(client, meta, profile="safe").json()
+    assert safe["max_slope_deg"] <= 10 and safe["profile_fallback"] is False
+    assert safe["status"] == "GO"
+
+
+def test_safe_profile_falls_back_to_the_normal_limit_and_says_so(terrain):
+    path, meta, slope = terrain
+    band_terrain(path, slope, 12, rows=(0, 31))  # a band across the whole grid: no way round
+    with TestClient(create_app(path)) as client:
+        safe = plan(client, meta, profile="safe")
+        balanced = plan(client, meta, profile="balanced").json()
+    assert safe.status_code == 200, safe.text
+    data = safe.json()
+    assert data["profile_fallback"] is True and data["route_profile"] == "safe"
+    assert data["max_slope_deg"] > 10 and data["distance_m"] == pytest.approx(
+        balanced["distance_m"]
+    )
+    assert data["status"] == "CAUTION"
+    assert any("safe profile" in r for r in data["reasons"])
+    assert any(
+        a["name"] == "Route profile" and "fell back" in a["value"] for a in data["assumptions"]
+    )
+
+
+def test_status_is_go_within_limits_and_caution_above_the_threshold(terrain):
+    path, meta, slope = terrain
+    with TestClient(create_app(path)) as client:
+        go = plan(client, meta).json()
+    assert go["status"] == "GO" and go["reasons"]
+    band_terrain(path, slope, 12, rows=(0, 31))
+    with TestClient(create_app(path)) as client:
+        caution = plan(client, meta).json()
+    assert caution["status"] == "CAUTION"
+    assert any("caution threshold" in r for r in caution["reasons"])
+
+
+def test_status_is_no_go_when_the_round_trip_exceeds_the_eva_limit(terrain):
+    path, meta, _ = terrain
+    set_assumptions(path, eva_limit_s=60)
+    with TestClient(create_app(path)) as client:
+        data = plan(client, meta).json()
+    assert data["eva_limit_s"] == 60 and data["round_trip_time_s"] > 60
+    assert data["status"] == "NO-GO"
+    assert any("EVA time limit" in r for r in data["reasons"])
+
+
+def test_a_missing_eva_limit_skips_that_rule(terrain):
+    path, meta, _ = terrain
+    with TestClient(create_app(path)) as client:
+        data = plan(client, meta).json()
+    assert data["eva_limit_s"] is None and data["status"] == "GO"
+
+
+def test_an_invalid_eva_limit_makes_the_data_unusable(terrain):
+    path, meta, _ = terrain
+    set_assumptions(path, eva_limit_s=-5)
+    with TestClient(create_app(path)) as client:
+        assert plan(client, meta).status_code == 503
+
+
+def test_no_path_is_a_422_that_says_no_go(terrain):
+    path, meta, slope = terrain
+    slope[:] = 0
+    slope[:, 14:17] = 255  # no-data wall
+    slope.tofile(path / "slope.bin")
+    with TestClient(create_app(path)) as client:
+        response = plan(client, meta)
+    assert response.status_code == 422
+    body = response.json()
+    assert (
+        body["status"] == "NO-GO"
+        and body["reasons"] == [body["detail"]]
+        and "No route" in body["detail"]
+    )
+
+
+def test_the_real_gale_data_has_an_eva_limit_marked_to_verify():
+    data = json.loads((DATA_ROOT / "gale-bx" / "assumptions.json").read_text())
+    assert data["eva_limit_s"] == 28800
+    item = next(i for i in data["items"] if i["name"] == "EVA time limit")
+    assert item["source"].startswith("TO VERIFY")
+
+
+def test_real_route_answers_with_every_new_field():
+    with TestClient(create_app(DATA_ROOT)) as client:
+        start, stop = two_passable_points(client.app.state.grids["gale-bx"])
+        body = {"start": start, "stops": [stop], "constraints": {"max_slope_deg": 15}}
+        data = client.post("/api/v1/route", json=body).json()
+    assert data["status"] in {"GO", "CAUTION"} and data["eva_limit_s"] == 28800
+    assert data["round_trip_time_s"] > data["est_time_s"] > 0
+    assert data["stats"]["climb_m"] >= 0 and data["stats"]["descent_m"] >= 0
+
+
+def test_sensitivity_reports_each_limit(terrain):
+    path, meta, slope = terrain
+    band_terrain(path, slope, 12, rows=(0, 31))  # a 12 degree band across the grid
+    with TestClient(create_app(path)) as client:
+        response = client.post(
+            "/api/v1/route/sensitivity", json={**request(meta), "profile": "safe"}
+        )
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["site_id"] == "gale-bx"
+    by_limit = {r["limit_deg"]: r for r in data["results"]}
+    assert set(by_limit) == {10.0, 15.0, 20.0}
+    blocked = by_limit[10.0]
+    assert blocked["reachable"] is False and "10 degrees" in blocked["reason"]
+    assert blocked["distance_m"] is None and blocked["est_time_s"] is None
+    for limit in (15.0, 20.0):
+        ok = by_limit[limit]
+        assert ok["reachable"] is True and ok["reason"] is None
+        assert ok["distance_m"] > 0 and ok["est_time_s"] > 0 and ok["max_slope_deg"] == 12
+
+
+def test_sensitivity_tries_20_degrees_even_though_the_site_caps_real_routes_at_15(terrain):
+    path, meta, slope = terrain
+    band_terrain(path, slope, 18, rows=(0, 31))
+    with TestClient(create_app(path)) as client:
+        results = client.post("/api/v1/route/sensitivity", json=request(meta)).json()["results"]
+        real = plan(client, meta)
+    by_limit = {r["limit_deg"]: r for r in results}
+    assert by_limit[15.0]["reachable"] is False and by_limit[20.0]["reachable"] is True
+    assert real.status_code == 422  # the real route still obeys the 15 degree data limit
+
+
+def test_sensitivity_rejects_points_outside_the_grid(terrain):
+    path, meta, _ = terrain
+    body = {**request(meta), "start": {"id": "start", "lon": 10.0, "lat": 10.0}}
+    with TestClient(create_app(path)) as client:
+        response = client.post("/api/v1/route/sensitivity", json=body)
+    assert response.status_code == 422 and response.json()["status"] == "NO-GO"
+
+
+def test_sensitivity_uses_the_requested_site():
+    with TestClient(create_app(DATA_ROOT)) as client:
+        start, stop = two_passable_points(client.app.state.grids["gale-001488"])
+        body = {
+            "site_id": "gale-001488",
+            "start": start,
+            "stops": [stop],
+            "constraints": {"max_slope_deg": 15},
+        }
+        data = client.post("/api/v1/route/sensitivity", json=body).json()
+    assert data["site_id"] == "gale-001488" and len(data["results"]) == 3

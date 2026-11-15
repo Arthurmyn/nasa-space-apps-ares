@@ -23,6 +23,8 @@ class Constraints(Model):
 class RouteRequest(Model):
     # Which site's terrain to plan on. Omitted means the default site (gale-bx).
     site_id: str | None = Field(default=None, max_length=64)
+    # Cost profile: "fast" accepts slopes more readily, "safe" keeps to the caution threshold.
+    profile: Literal["fast", "balanced", "safe"] = "balanced"
     start: PointInput
     stops: list[PointInput] = Field(min_length=1, max_length=5)
     constraints: Constraints
@@ -82,7 +84,26 @@ class RouteNavigation(Model):
     heading_segments: list[int]
 
 
+class SlopeClassPct(Model):
+    ok: float
+    caution: float
+    avoid: float
+
+
+class RouteStats(Model):
+    slope_class_pct: SlopeClassPct
+    climb_m: float
+    descent_m: float
+
+
+class ReturnTrip(Model):
+    distance_m: float
+    est_time_s: float
+
+
 class RouteResponse(Model):
+    model_config = ConfigDict(allow_inf_nan=False, populate_by_name=True)
+
     computed_at: str
     distance_m: float
     max_slope_deg: float
@@ -97,6 +118,30 @@ class RouteResponse(Model):
     alternative: RouteAlternative | None
     navigation: RouteNavigation | None = None
     supports_alternatives: bool = False
+    # Added later; all optional for older clients.
+    route_profile: Literal["fast", "balanced", "safe"] = "balanced"
+    profile_fallback: bool = False
+    stats: RouteStats | None = None
+    # JSON key "return": the walk back along the same stops reversed. None if there is no path back.
+    return_trip: ReturnTrip | None = Field(default=None, alias="return")
+    round_trip_time_s: float | None = None
+    eva_limit_s: float | None = None
+    status: Literal["GO", "CAUTION", "NO-GO"] = "GO"
+    reasons: list[str] = Field(default_factory=list)
+
+
+class SensitivityResult(Model):
+    limit_deg: float
+    reachable: bool
+    distance_m: float | None
+    est_time_s: float | None
+    max_slope_deg: float | None
+    reason: str | None
+
+
+class SensitivityResponse(Model):
+    site_id: str
+    results: list[SensitivityResult]
 
 
 class LayerInfo(Model):
