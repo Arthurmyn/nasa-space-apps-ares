@@ -6,6 +6,7 @@ import "./styles/fonts.css";
 import "./styles/base.css";
 import "./styles/shell.css";
 import "./styles/panels.css";
+import "./styles/insights.css";
 import "./styles/map.css";
 import "./styles/profile.css";
 import "./styles/card.css";

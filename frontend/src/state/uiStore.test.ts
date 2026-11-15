@@ -30,3 +30,16 @@ test("the Curiosity traverse is on by default and toggles", () => {
   uiStore.toggleTraverse();
   assert.equal(uiStore.get().traverseOn, true);
 });
+
+test("the drawer and the drive path overlay are stored and notify once per change", () => {
+  let calls = 0;
+  const off = uiStore.subscribe(() => (calls += 1));
+  uiStore.setSensitivityOpen(true);
+  uiStore.setSensitivityOpen(true);
+  uiStore.setDrivePathOn(true);
+  assert.deepEqual([uiStore.get().sensitivityOpen, uiStore.get().drivePathOn], [true, true]);
+  uiStore.setSensitivityOpen(false);
+  uiStore.setDrivePathOn(false);
+  off();
+  assert.equal(calls, 4);
+});

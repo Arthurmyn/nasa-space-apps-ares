@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useMemo } from "react";
 import type { RouteResponse } from "../api/types.ts";
 import {
   GCR_DOSE_EQUIVALENT_MSV_PER_DAY,
@@ -6,14 +6,20 @@ import {
   RADIATION_LABEL,
   RADIATION_NOTE,
 } from "../config/radiation.ts";
-import { REFERENCES } from "../config/references.ts";
-import { SLOPE_LIMITS } from "../config/route.ts";
 import { estimatedDoseMsv, formatDose } from "../lib/radiation.ts";
 import { formatDistance, formatDuration, formatSigned, formatSlope } from "../lib/format.ts";
 import { usePlanner } from "../state/PlannerContext.tsx";
+import { exportFileName, routeToGeoJson } from "../lib/exportGeoJson.ts";
+import { buildRouteRequest } from "../state/plannerReducer.ts";
 import { useSite } from "../state/SiteContext.tsx";
 import { uiStore, useUi } from "../state/uiStore.ts";
-import { SourceText } from "./SourceText.tsx";
+import { useSensitivity } from "../state/useSensitivity.ts";
+import { Drawer } from "./Drawer.tsx";
+import { MethodPanel } from "./MethodPanel.tsx";
+import { ProfileSelector } from "./ProfileSelector.tsx";
+import { RouteStatus } from "./RouteStatus.tsx";
+import { SensitivityTable } from "./SensitivityTable.tsx";
+import { TripStats } from "./TripStats.tsx";
 import { Icon } from "./Icon.tsx";
 import { SafetyBadge } from "./SafetyBadge.tsx";
 
@@ -80,74 +86,30 @@ function CompareTable({ route }: { route: RouteResponse }) {
   );
 }
 
-function HowComputed({ route }: { route: RouteResponse }) {
-  const { howComputedOpen: open } = useUi();
+/** Saves the route as a .geojson file, made in the browser: nothing is uploaded. */
+function downloadGeoJson(route: RouteResponse, siteId: string, siteName: string): void {
+  const text = JSON.stringify(routeToGeoJson(route, { siteId, siteName }), null, 2);
+  const url = URL.createObjectURL(new Blob([text], { type: "application/geo+json" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = exportFileName(siteId, route.computed_at);
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function SensitivityDrawer({ enabled }: { enabled: boolean }) {
+  const { state } = usePlanner();
   const { site } = useSite();
-  const regionId = useId();
+  const { sensitivityOpen } = useUi();
+  const request = useMemo(() => buildRouteRequest(state, site.id), [state, site.id]);
+  // Ask only for a plan that has a route that is up to date, and only while the drawer is open.
+  const sensitivity = useSensitivity(request, sensitivityOpen && enabled);
   return (
-    <div className="drawer">
-      <button
-        type="button"
-        className="drawer__toggle"
-        aria-expanded={open}
-        aria-controls={regionId}
-        onClick={() => uiStore.setHowComputedOpen(!open)}
-      >
-        <span>How this is computed</span>
-        <Icon name="chevron" className={open ? "chevron chevron--open" : "chevron"} />
-      </button>
-      <div id={regionId} className="drawer__body" hidden={!open}>
-        <p className="muted">Assumptions and sources returned by the route service</p>
-        {route.assumptions.length === 0 ? (
-          <p className="muted">The service returned no assumptions</p>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th scope="col">Assumption</th>
-                <th scope="col">Value</th>
-                <th scope="col">Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {route.assumptions.map((a) => (
-                <tr key={a.name}>
-                  <th scope="row">{a.name}</th>
-                  <td className="mono">{a.value}</td>
-                  <td>
-                    <SourceText text={a.source} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        {site.sources.length > 0 && (
-          <>
-            <h3 className="drawer__subtitle">Data sources</h3>
-            <ul className="source-list">
-              {site.sources.map((src) => (
-                <li key={src}>{src}</li>
-              ))}
-            </ul>
-          </>
-        )}
-        <h3 className="drawer__subtitle">Design reference</h3>
-        <ul className="source-list">
-          {REFERENCES.filter((r) => r.design).map((r) => (
-            <li key={r.n}>
-              <a href={r.url} target="_blank" rel="noreferrer">
-                {r.citation}
-              </a>
-            </li>
-          ))}
-        </ul>
-        {site.isTestData && <p className="muted drawer__foot">This grid is generated test data, not measured terrain.</p>}
-        <p className="muted drawer__foot">
-          Slope colours use app thresholds of {SLOPE_LIMITS.cautionDeg}° and {SLOPE_LIMITS.maxDeg}°.
-        </p>
-      </div>
-    </div>
+    <Drawer title="Slope limit sensitivity" open={sensitivityOpen} onToggle={(v) => uiStore.setSensitivityOpen(v)}>
+      <SensitivityTable state={sensitivity} />
+    </Drawer>
   );
 }
 
@@ -156,6 +118,7 @@ export function RouteSummary() {
   const { state, view, stale, fetching } = p;
   const route = state.route;
   const supportsAlternatives = route?.supports_alternatives === true;
+  const { site } = useSite();
 
   return (
     <section className="panel__section" aria-labelledby="summary-title">
@@ -165,6 +128,8 @@ export function RouteSummary() {
         </h2>
         {stale && <span className="tag tag--warn">Out of date</span>}
       </header>
+
+      {state.start && <ProfileSelector value={state.profile} onChange={p.setProfile} />}
 
       {view === "empty" && (
         <div className="empty">
@@ -209,11 +174,13 @@ export function RouteSummary() {
             <Stat label="Max slope" value={formatSlope(route.max_slope_deg)} />
             <Stat label="Est. time" value={formatDuration(route.est_time_s)} />
           </dl>
+          {route.status && <RouteStatus status={route.status} reasons={route.reasons ?? []} fallback={route.profile_fallback === true} />}
           <div className="safety">
-            <span className="stat__label">Safety status</span>
+            <span className="stat__label">Slope safety</span>
             <SafetyBadge level={route.safety} />
             <p className="safety__reason">{route.safety_reason}</p>
           </div>
+          <TripStats route={route} />
           <div className="dose">
             <span className="stat__label">{RADIATION_LABEL}</span>
             <span className="dose__value mono">{formatDose(estimatedDoseMsv(GCR_DOSE_EQUIVALENT_MSV_PER_DAY, route.est_time_s))}</span>
@@ -246,6 +213,11 @@ export function RouteSummary() {
           >
             <Icon name="compare" /> Compare
           </button>}
+          {route && (
+            <button type="button" className="btn" onClick={() => downloadGeoJson(route, site.id, site.name)} disabled={stale}>
+              <Icon name="download" /> Export GeoJSON
+            </button>
+          )}
           <button type="button" className="btn btn--ghost" onClick={p.reset}>
             <Icon name="trash" /> Clear
           </button>
@@ -264,7 +236,8 @@ export function RouteSummary() {
         </div>
       )}
 
-      {route && <HowComputed route={route} />}
+      {route && <SensitivityDrawer enabled={!stale && !fetching} />}
+      <MethodPanel route={route} />
     </section>
   );
 }

@@ -1,4 +1,4 @@
-import type { RouteRequest, RouteResponse, StopImage } from "../api/types.ts";
+import type { RouteProfileId, RouteRequest, RouteResponse, StopImage } from "../api/types.ts";
 import { orderFromStart } from "../lib/presets.ts";
 import { MAX_STOPS, SLOPE_LIMITS } from "../config/route.ts";
 
@@ -37,6 +37,8 @@ export interface PlannerState {
   error: string | null;
   selectedId: string | null;
   compare: boolean;
+  /** Cost profile of the next route request. */
+  profile: RouteProfileId;
   /** Short message for the live region, for example "Maximum of 5 stops reached". */
   notice: string | null;
 }
@@ -50,6 +52,7 @@ export type PlannerAction =
   | { type: "notice/set"; message: string }
   | { type: "select"; id: string | null }
   | { type: "compare/set"; value: boolean }
+  | { type: "profile/set"; profile: RouteProfileId }
   | { type: "route/loading" }
   | { type: "route/success"; route: RouteResponse; version: number }
   | { type: "route/failure"; message: string }
@@ -67,6 +70,7 @@ export const initialPlannerState: PlannerState = {
   error: null,
   selectedId: null,
   compare: false,
+  profile: "balanced",
   notice: null,
 };
 
@@ -144,6 +148,9 @@ export function plannerReducer(s: PlannerState, a: PlannerAction): PlannerState 
       return s.selectedId === a.id ? s : { ...s, selectedId: a.id };
     case "compare/set":
       return { ...s, compare: a.value };
+    case "profile/set":
+      // A different profile is a different route: the points did not change, but the route is out of date.
+      return s.profile === a.profile ? s : edited(s, { profile: a.profile });
     case "route/loading":
       return { ...s, status: "loading", error: null };
     case "route/success":
@@ -153,7 +160,7 @@ export function plannerReducer(s: PlannerState, a: PlannerAction): PlannerState 
     case "notice/clear":
       return s.notice === null ? s : { ...s, notice: null };
     case "reset":
-      return { ...initialPlannerState, compare: s.compare, planVersion: s.planVersion + 1 };
+      return { ...initialPlannerState, compare: s.compare, profile: s.profile, planVersion: s.planVersion + 1 };
   }
 }
 
@@ -164,6 +171,7 @@ export function buildRouteRequest(s: PlannerState, siteId?: string): RouteReques
     start: { id: s.start.id, lon: s.start.lon, lat: s.start.lat },
     stops: s.stops.map((p) => ({ id: p.id, lon: p.lon, lat: p.lat, ...(p.name ? { name: p.name } : {}) })),
     constraints: { max_slope_deg: SLOPE_LIMITS.maxDeg },
+    ...(s.profile !== "balanced" ? { profile: s.profile } : {}),
     ...(s.compare ? { compare: true } : {}),
   };
 }
